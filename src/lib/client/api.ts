@@ -1,0 +1,124 @@
+import type {
+  ArtistData,
+  FragmentData,
+  MarkdownEntity,
+  ProjectData,
+  SearchResult,
+  TrackData,
+  UserData
+} from "@/lib/client/types";
+
+async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "content-type": "application/json",
+      ...(init?.headers ?? {})
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: { message?: string } }
+      | null;
+    throw new Error(payload?.error?.message ?? `Request failed: ${response.status}`);
+  }
+
+  return (await response.json()) as T;
+}
+
+export const api = {
+  getUser: (userSlug: string) => apiRequest<MarkdownEntity<UserData>>(`/api/user/${userSlug}`),
+  patchUser: (userSlug: string, data: Partial<UserData>, content?: string) =>
+    apiRequest<MarkdownEntity<UserData>>(`/api/user/${userSlug}`, {
+      method: "PATCH",
+      body: JSON.stringify({ data, content })
+    }),
+
+  listArtists: (userSlug: string) =>
+    apiRequest<{ items: Array<MarkdownEntity<ArtistData> & { artistSlug: string }> }>(
+      `/api/artists/${userSlug}`
+    ),
+
+  listProjects: (userSlug: string, artistSlug: string) =>
+    apiRequest<{ items: Array<MarkdownEntity<ProjectData> & { projectSlug: string }> }>(
+      `/api/projects/${userSlug}/${artistSlug}`
+    ),
+
+  listTracks: (userSlug: string, artistSlug: string, projectSlug: string) =>
+    apiRequest<{ items: Array<MarkdownEntity<TrackData> & { trackSlug: string }> }>(
+      `/api/tracks/${userSlug}/${artistSlug}/${projectSlug}`
+    ),
+
+  getTrack: (userSlug: string, artistSlug: string, projectSlug: string, trackSlug: string) =>
+    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}/${artistSlug}/${projectSlug}/${trackSlug}`),
+
+  putTrack: (
+    userSlug: string,
+    artistSlug: string,
+    projectSlug: string,
+    trackSlug: string,
+    data: TrackData,
+    content: string
+  ) =>
+    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}/${artistSlug}/${projectSlug}/${trackSlug}`, {
+      method: "PUT",
+      body: JSON.stringify({ data, content })
+    }),
+
+  listSandboxTracks: (userSlug: string) =>
+    apiRequest<{ items: Array<MarkdownEntity<TrackData> & { trackSlug: string }> }>(
+      `/api/sandbox/tracks/${userSlug}`
+    ),
+
+  getSandboxTrack: (userSlug: string, trackSlug: string) =>
+    apiRequest<MarkdownEntity<TrackData>>(`/api/sandbox/tracks/${userSlug}/${trackSlug}`),
+
+  postSandboxTrack: (userSlug: string, data: TrackData, content: string) =>
+    apiRequest<MarkdownEntity<TrackData>>(`/api/sandbox/tracks/${userSlug}`, {
+      method: "POST",
+      body: JSON.stringify({ data, content })
+    }),
+
+  putSandboxTrack: (userSlug: string, trackSlug: string, data: TrackData, content: string) =>
+    apiRequest<MarkdownEntity<TrackData>>(`/api/sandbox/tracks/${userSlug}/${trackSlug}`, {
+      method: "PUT",
+      body: JSON.stringify({ data, content })
+    }),
+
+  listFragments: (userSlug: string) =>
+    apiRequest<{ items: Array<MarkdownEntity<FragmentData> & { fragmentSlug: string }> }>(
+      `/api/sandbox/fragments/${userSlug}`
+    ),
+
+  getFragment: (userSlug: string, fragmentSlug: string) =>
+    apiRequest<MarkdownEntity<FragmentData>>(`/api/sandbox/fragments/${userSlug}/${fragmentSlug}`),
+
+  postFragment: (userSlug: string, data: FragmentData, content: string) =>
+    apiRequest<MarkdownEntity<FragmentData>>(`/api/sandbox/fragments/${userSlug}`, {
+      method: "POST",
+      body: JSON.stringify({ data, content })
+    }),
+
+  putFragment: (userSlug: string, fragmentSlug: string, data: FragmentData, content: string) =>
+    apiRequest<MarkdownEntity<FragmentData>>(`/api/sandbox/fragments/${userSlug}/${fragmentSlug}`, {
+      method: "PUT",
+      body: JSON.stringify({ data, content })
+    }),
+
+  search: (userSlug: string, q: string, tags: string[], type?: SearchResult["type"] | "all") => {
+    const url = new URL(`/api/search/${userSlug}`, window.location.origin);
+    if (q.trim()) {
+      url.searchParams.set("q", q.trim());
+    }
+    if (tags.length > 0) {
+      url.searchParams.set("tags", tags.join(","));
+    }
+    if (type && type !== "all") {
+      url.searchParams.set("type", type);
+    }
+    return apiRequest<{ items: SearchResult[] }>(`${url.pathname}${url.search}`);
+  }
+};
+
