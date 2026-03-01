@@ -5,6 +5,7 @@ import type {
   ProjectData,
   SearchResult,
   TrackData,
+  TrackImportSummary,
   UserData
 } from "@/lib/client/types";
 
@@ -60,7 +61,10 @@ export const api = {
     if (options?.scope === "sandbox") {
       url.searchParams.set("scope", "sandbox");
     }
-    return apiRequest<{ items: Array<MarkdownEntity<TrackData> & { trackSlug: string }> }>(
+    return apiRequest<{
+      items: Array<MarkdownEntity<TrackData> & { trackSlug: string }>;
+      summary: TrackImportSummary;
+    }>(
       `${url.pathname}${url.search}`
     );
   },

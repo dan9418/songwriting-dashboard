@@ -17,12 +17,19 @@ import {
   trackSchema,
   userSchema
 } from "@/lib/domain/schemas";
-import { listDirectories, removeFileIfExists } from "@/lib/fs/walk";
+import { listDirectories, pathExists, removeFileIfExists } from "@/lib/fs/walk";
 
 interface TrackListFilters {
   projectSlug?: string;
   artistSlug?: string;
   unassignedOnly?: boolean;
+}
+
+export interface TrackImportSummary {
+  loaded: number;
+  matched: number;
+  total: number;
+  failed: number;
 }
 
 export async function getUser(userSlug: string) {
@@ -99,15 +106,31 @@ export async function getTrack(userSlug: string, trackSlug: string) {
 }
 
 export async function listTracks(userSlug: string, filters: TrackListFilters = {}) {
+  const result = await listTracksWithSummary(userSlug, filters);
+  return result.items;
+}
+
+export async function listTracksWithSummary(userSlug: string, filters: TrackListFilters = {}) {
   const trackSlugs = await listDirectories(tracksRoot(userSlug));
-  const tracks = await Promise.all(
+  const items = await Promise.all(
     trackSlugs.map(async (slug) => {
-      const track = await getTrack(userSlug, slug);
-      return { ...track, trackSlug: slug };
+      const markdownPath = trackMarkdownPath(userSlug, slug);
+      if (!(await pathExists(markdownPath))) {
+        return null;
+      }
+      try {
+        const track = await getTrack(userSlug, slug);
+        return { ...track, trackSlug: slug };
+      } catch {
+        return null;
+      }
     })
   );
 
-  return tracks.filter((track) => {
+  const filtered = items.filter((track): track is NonNullable<typeof track> => {
+    if (!track) {
+      return false;
+    }
     if (filters.projectSlug && track.data.projectSlug !== filters.projectSlug) {
       return false;
     }
@@ -119,6 +142,16 @@ export async function listTracks(userSlug: string, filters: TrackListFilters = {
     }
     return true;
   });
+
+  return {
+    items: filtered,
+    summary: {
+      loaded: items.filter(Boolean).length,
+      matched: filtered.length,
+      total: trackSlugs.length,
+      failed: trackSlugs.length - items.filter(Boolean).length
+    } satisfies TrackImportSummary
+  };
 }
 
 export async function saveTrack(

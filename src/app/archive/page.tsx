@@ -7,7 +7,7 @@ import { ActionButton } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import { DEFAULT_USER_SLUG } from "@/lib/client/config";
-import type { TrackData } from "@/lib/client/types";
+import type { TrackData, TrackImportSummary } from "@/lib/client/types";
 
 export default function ArchivePage() {
   const searchParams = useSearchParams();
@@ -17,6 +17,7 @@ export default function ArchivePage() {
   const [artists, setArtists] = useState<Array<{ artistSlug: string; title: string }>>([]);
   const [projects, setProjects] = useState<Array<{ projectSlug: string; title: string }>>([]);
   const [tracks, setTracks] = useState<Array<{ trackSlug: string; title: string }>>([]);
+  const [trackImportSummary, setTrackImportSummary] = useState<TrackImportSummary | null>(null);
 
   const [artistSlug, setArtistSlug] = useState<string>("");
   const [projectSlug, setProjectSlug] = useState<string>("");
@@ -97,6 +98,7 @@ export default function ArchivePage() {
   useEffect(() => {
     if (!artistSlug || !projectSlug) {
       setTracks([]);
+      setTrackImportSummary(null);
       return;
     }
     let ignore = false;
@@ -106,6 +108,7 @@ export default function ArchivePage() {
         if (ignore) {
           return;
         }
+        setTrackImportSummary(response.summary);
         const nextTracks = response.items.map((item) => ({
           trackSlug: item.trackSlug,
           title: item.data.title
@@ -224,6 +227,13 @@ export default function ArchivePage() {
 
         <div className="panel p-3">
           <h3 className="mb-2 text-sm font-semibold">Tracks</h3>
+          {trackImportSummary ? (
+            <p className="mb-2 text-xs text-[color:var(--muted)]">
+              Imported {trackImportSummary.loaded}/{trackImportSummary.total} tracks
+              {trackImportSummary.failed > 0 ? ` (${trackImportSummary.failed} failed)` : ""}.
+              {` Showing ${trackImportSummary.matched}.`}
+            </p>
+          ) : null}
           <div className="grid gap-2">
             {tracks.map((track) => (
               <button

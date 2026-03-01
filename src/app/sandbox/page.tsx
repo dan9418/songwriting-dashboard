@@ -8,7 +8,7 @@ import { ActionButton, Field, TextInput } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import { DEFAULT_USER_SLUG } from "@/lib/client/config";
-import type { FragmentData, TrackData } from "@/lib/client/types";
+import type { FragmentData, TrackData, TrackImportSummary } from "@/lib/client/types";
 
 function nowStamp() {
   return new Date().toISOString();
@@ -56,6 +56,7 @@ export default function SandboxPage() {
   const [fragments, setFragments] = useState<Array<{ fragmentSlug: string; title: string }>>([]);
   const [trackEntity, setTrackEntity] = useState<{ data: TrackData; content: string } | null>(null);
   const [fragmentEntity, setFragmentEntity] = useState<{ data: FragmentData; content: string } | null>(null);
+  const [trackImportSummary, setTrackImportSummary] = useState<TrackImportSummary | null>(null);
 
   const [newSlug, setNewSlug] = useState("");
   const [saving, setSaving] = useState(false);
@@ -80,6 +81,7 @@ export default function SandboxPage() {
     async function loadTracks() {
       try {
         const response = await api.listTracks(userSlug, { scope: "sandbox" });
+        setTrackImportSummary(response.summary);
         const nextTracks = response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title }));
         setTracks(nextTracks);
         setTrackSlug((prev) => prev || nextTracks[0]?.trackSlug || "");
@@ -164,6 +166,7 @@ export default function SandboxPage() {
                   setTrackSlug(created.data.slug);
                   showToast("Sandbox track created.");
                   const response = await api.listTracks(userSlug, { scope: "sandbox" });
+                  setTrackImportSummary(response.summary);
                   setTracks(response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title })));
                 } else {
                   const created = await api.postFragment(
@@ -190,6 +193,13 @@ export default function SandboxPage() {
           </ActionButton>
 
           <div className="mt-4 grid gap-2">
+            {tab === "tracks" && trackImportSummary ? (
+              <p className="text-xs text-[color:var(--muted)]">
+                Imported {trackImportSummary.loaded}/{trackImportSummary.total} tracks
+                {trackImportSummary.failed > 0 ? ` (${trackImportSummary.failed} failed)` : ""}.
+                {` Showing ${trackImportSummary.matched}.`}
+              </p>
+            ) : null}
             {(tab === "tracks" ? tracks : fragments).map((item) => {
               const slug = tab === "tracks" ? (item as { trackSlug: string }).trackSlug : (item as { fragmentSlug: string }).fragmentSlug;
               const title = item.title;
@@ -229,6 +239,7 @@ export default function SandboxPage() {
                     setTrackEntity(saved);
                     showToast("Sandbox track saved.");
                     const response = await api.listTracks(userSlug, { scope: "sandbox" });
+                    setTrackImportSummary(response.summary);
                     setTracks(response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title })));
                   } catch (err) {
                     showToast(err instanceof Error ? err.message : "Save failed.", "error");

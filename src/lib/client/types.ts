@@ -28,6 +28,13 @@ export interface AudioVersionData {
   description?: string;
 }
 
+export interface TrackImportSummary {
+  loaded: number;
+  matched: number;
+  total: number;
+  failed: number;
+}
+
 export interface TrackData {
   slug: string;
   title: string;
@@ -81,4 +88,3 @@ export interface SearchResult {
   snippet: string;
   score: number;
 }
-

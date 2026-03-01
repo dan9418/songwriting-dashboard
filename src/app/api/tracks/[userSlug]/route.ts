@@ -2,7 +2,7 @@ import { apiErrorResponse, badRequest } from "@/lib/api/errors";
 import { parseJsonBody, type WriteMarkdownBody } from "@/lib/api/request";
 import { ok } from "@/lib/api/response";
 import { enforceTrackAudioNaming } from "@/lib/domain/track-audio";
-import { getTrack, listTracks, saveTrack } from "@/lib/fs/repositories";
+import { getTrack, listTracksWithSummary, saveTrack } from "@/lib/fs/repositories";
 
 export async function GET(request: Request, context: { params: Promise<{ userSlug: string }> }) {
   try {
@@ -11,12 +11,12 @@ export async function GET(request: Request, context: { params: Promise<{ userSlu
     const projectSlug = url.searchParams.get("projectSlug") ?? undefined;
     const artistSlug = url.searchParams.get("artistSlug") ?? undefined;
     const scope = url.searchParams.get("scope");
-    const items = await listTracks(userSlug, {
+    const result = await listTracksWithSummary(userSlug, {
       projectSlug,
       artistSlug,
       unassignedOnly: scope === "sandbox"
     });
-    return ok({ items });
+    return ok(result);
   } catch (error) {
     return apiErrorResponse(error);
   }
