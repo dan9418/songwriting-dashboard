@@ -49,7 +49,7 @@ export const projectSchema = baseEntitySchema.extend({
 export const trackStatusSchema = z.enum(TRACK_STATUSES);
 
 export const audioVersionSchema = z.object({
-  fileName: z.string().min(1).endsWith(".mp3"),
+  fileName: z.string().min(1).regex(/\.(mp3|m4a)$/i, "Audio file must end with .mp3 or .m4a"),
   slug: slugSchema,
   category: z
     .string()
@@ -62,7 +62,7 @@ export const audioVersionSchema = z.object({
 
 export const trackSchema = baseEntitySchema.extend({
   userSlug: slugSchema,
-  artistSlugs: z.array(slugSchema).min(1),
+  artistSlugs: z.array(slugSchema).default([]),
   projectSlug: slugSchema.optional(),
   status: trackStatusSchema,
   bpm: z.number().int().positive().max(400).optional(),

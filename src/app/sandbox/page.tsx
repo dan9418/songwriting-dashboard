@@ -79,7 +79,7 @@ export default function SandboxPage() {
   useEffect(() => {
     async function loadTracks() {
       try {
-        const response = await api.listSandboxTracks(userSlug);
+        const response = await api.listTracks(userSlug, { scope: "sandbox" });
         const nextTracks = response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title }));
         setTracks(nextTracks);
         setTrackSlug((prev) => prev || nextTracks[0]?.trackSlug || "");
@@ -112,7 +112,7 @@ export default function SandboxPage() {
       setTrackEntity(null);
       return;
     }
-    api.getSandboxTrack(userSlug, trackSlug).then(setTrackEntity).catch((err) => {
+    api.getTrack(userSlug, trackSlug).then(setTrackEntity).catch((err) => {
       setError(err instanceof Error ? err.message : "Failed to load track.");
     });
   }, [trackSlug, userSlug]);
@@ -160,10 +160,10 @@ export default function SandboxPage() {
               setSaving(true);
               try {
                 if (tab === "tracks") {
-                  const created = await api.postSandboxTrack(userSlug, buildNewTrack(userSlug, newSlug.trim()), "");
+                  const created = await api.postTrack(userSlug, buildNewTrack(userSlug, newSlug.trim()), "");
                   setTrackSlug(created.data.slug);
                   showToast("Sandbox track created.");
-                  const response = await api.listSandboxTracks(userSlug);
+                  const response = await api.listTracks(userSlug, { scope: "sandbox" });
                   setTracks(response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title })));
                 } else {
                   const created = await api.postFragment(
@@ -225,10 +225,10 @@ export default function SandboxPage() {
                 onSave={async (nextData, nextContent) => {
                   setSaving(true);
                   try {
-                    const saved = await api.putSandboxTrack(userSlug, nextData.slug, nextData, nextContent);
+                    const saved = await api.putTrack(userSlug, nextData.slug, nextData, nextContent);
                     setTrackEntity(saved);
                     showToast("Sandbox track saved.");
-                    const response = await api.listSandboxTracks(userSlug);
+                    const response = await api.listTracks(userSlug, { scope: "sandbox" });
                     setTracks(response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title })));
                   } catch (err) {
                     showToast(err instanceof Error ? err.message : "Save failed.", "error");
@@ -270,4 +270,3 @@ export default function SandboxPage() {
     </section>
   );
 }
-

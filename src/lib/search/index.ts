@@ -45,10 +45,10 @@ function inferTypeFromPath(filePath: string): SearchType | null {
   if (filePath.endsWith("/project.md")) {
     return "project";
   }
-  if (filePath.endsWith("/track.md") || filePath.includes("/sandbox/tracks/")) {
+  if (filePath.endsWith("/track.md") && filePath.includes("/tracks/")) {
     return "track";
   }
-  if (filePath.endsWith("/fragment.md") || filePath.includes("/sandbox/fragments/")) {
+  if (filePath.endsWith("/fragment.md") && filePath.includes("/fragments/")) {
     return "fragment";
   }
   return null;

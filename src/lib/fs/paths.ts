@@ -21,57 +21,46 @@ export function userMarkdownPath(userSlug: string): string {
   return path.join(userRoot(userSlug), "user.md");
 }
 
-export function sandboxTracksRoot(userSlug: string): string {
-  return path.join(userRoot(userSlug), "sandbox", "tracks");
-}
-
-export function sandboxFragmentsRoot(userSlug: string): string {
-  return path.join(userRoot(userSlug), "sandbox", "fragments");
-}
-
 export function artistRoot(userSlug: string, artistSlug: string): string {
   return path.join(userRoot(userSlug), "artists", assertSafeSegment(artistSlug));
+}
+
+export function artistsRoot(userSlug: string): string {
+  return path.join(userRoot(userSlug), "artists");
 }
 
 export function artistMarkdownPath(userSlug: string, artistSlug: string): string {
   return path.join(artistRoot(userSlug, artistSlug), "artist.md");
 }
 
-export function projectRoot(userSlug: string, artistSlug: string, projectSlug: string): string {
-  return path.join(artistRoot(userSlug, artistSlug), "projects", assertSafeSegment(projectSlug));
+export function projectsRoot(userSlug: string): string {
+  return path.join(userRoot(userSlug), "projects");
 }
 
-export function projectMarkdownPath(userSlug: string, artistSlug: string, projectSlug: string): string {
-  return path.join(projectRoot(userSlug, artistSlug, projectSlug), "project.md");
+export function projectRoot(userSlug: string, projectSlug: string): string {
+  return path.join(projectsRoot(userSlug), assertSafeSegment(projectSlug));
 }
 
-export function trackRoot(
-  userSlug: string,
-  artistSlug: string,
-  projectSlug: string,
-  trackSlug: string
-): string {
-  return path.join(
-    projectRoot(userSlug, artistSlug, projectSlug),
-    "tracks",
-    assertSafeSegment(trackSlug)
-  );
+export function projectMarkdownPath(userSlug: string, projectSlug: string): string {
+  return path.join(projectRoot(userSlug, projectSlug), "project.md");
 }
 
-export function trackMarkdownPath(
-  userSlug: string,
-  artistSlug: string,
-  projectSlug: string,
-  trackSlug: string
-): string {
-  return path.join(trackRoot(userSlug, artistSlug, projectSlug, trackSlug), "track.md");
+export function tracksRoot(userSlug: string): string {
+  return path.join(userRoot(userSlug), "tracks");
 }
 
-export function sandboxTrackMarkdownPath(userSlug: string, trackSlug: string): string {
-  return path.join(sandboxTracksRoot(userSlug), assertSafeSegment(trackSlug), "track.md");
+export function trackRoot(userSlug: string, trackSlug: string): string {
+  return path.join(tracksRoot(userSlug), assertSafeSegment(trackSlug));
 }
 
-export function sandboxFragmentMarkdownPath(userSlug: string, fragmentSlug: string): string {
-  return path.join(sandboxFragmentsRoot(userSlug), assertSafeSegment(fragmentSlug), "fragment.md");
+export function trackMarkdownPath(userSlug: string, trackSlug: string): string {
+  return path.join(trackRoot(userSlug, trackSlug), "track.md");
 }
 
+export function fragmentsRoot(userSlug: string): string {
+  return path.join(userRoot(userSlug), "fragments");
+}
+
+export function fragmentMarkdownPath(userSlug: string, fragmentSlug: string): string {
+  return path.join(fragmentsRoot(userSlug), assertSafeSegment(fragmentSlug), "fragment.md");
+}

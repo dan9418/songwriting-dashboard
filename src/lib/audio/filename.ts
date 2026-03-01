@@ -1,8 +1,9 @@
 import { ensureNonEmptySlug } from "@/lib/utils/slug";
 
-const MP3_EXTENSION = ".mp3";
+const AUDIO_EXTENSIONS = [".mp3", ".m4a"] as const;
+type AudioExtension = (typeof AUDIO_EXTENSIONS)[number];
 const AUDIO_FILENAME_REGEX =
-  /^(?<trackName>.+?) - (?<category>[a-zA-Z][a-zA-Z0-9-]*) (?<versionNumber>\d+) \((?<recordedDate>\d{2}-\d{2}-\d{2})\)(?: \[(?<description>[^\]]+)\])?\.mp3$/;
+  /^(?<trackName>.+?) - (?<category>[a-zA-Z][a-zA-Z0-9-]*) (?<versionNumber>\d+) \((?<recordedDate>\d{2}-\d{2}-\d{2})\)(?: \[(?<description>[^\]]+)\])?(?<extension>\.mp3|\.m4a)$/;
 
 export interface ParsedAudioFilename {
   trackName: string;
@@ -10,6 +11,7 @@ export interface ParsedAudioFilename {
   versionNumber: number;
   recordedDate: string;
   description?: string;
+  extension: AudioExtension;
   slug: string;
   originalFileName: string;
 }
@@ -46,7 +48,7 @@ export function parseAudioFilename(fileName: string): ParsedAudioFilename {
   const match = AUDIO_FILENAME_REGEX.exec(fileName);
   if (!match?.groups) {
     throw new Error(
-      "Invalid filename. Expected: {Track Name} - {category} {versionNumber} ({MM-DD-YY}) [optionalDescription].mp3"
+      "Invalid filename. Expected: {Track Name} - {category} {versionNumber} ({MM-DD-YY}) [optionalDescription].{mp3|m4a}"
     );
   }
 
@@ -55,7 +57,8 @@ export function parseAudioFilename(fileName: string): ParsedAudioFilename {
     category: match.groups.category.toLowerCase(),
     versionNumber: Number(match.groups.versionNumber),
     recordedDate: match.groups.recordedDate,
-    description: match.groups.description?.trim()
+    description: match.groups.description?.trim(),
+    extension: match.groups.extension.toLowerCase() as AudioExtension
   };
 
   if (!isValidDateToken(parsed.recordedDate)) {
@@ -87,6 +90,7 @@ export function formatAudioFilename(input: {
   versionNumber: number;
   recordedDate: string;
   description?: string;
+  extension?: string;
 }): string {
   if (!input.trackName.trim()) {
     throw new Error("trackName is required.");
@@ -100,11 +104,15 @@ export function formatAudioFilename(input: {
   if (!isValidDateToken(input.recordedDate)) {
     throw new Error("recordedDate must be a valid MM-DD-YY date.");
   }
+  const extension = (input.extension ?? ".mp3").toLowerCase();
+  if (!AUDIO_EXTENSIONS.includes(extension as AudioExtension)) {
+    throw new Error("extension must be .mp3 or .m4a");
+  }
 
   const descriptionToken = input.description?.trim()
     ? ` [${input.description.trim().replace(/[\[\]]/g, "")}]`
     : "";
-  return `${input.trackName.trim()} - ${input.category.toLowerCase()} ${input.versionNumber} (${input.recordedDate})${descriptionToken}${MP3_EXTENSION}`;
+  return `${input.trackName.trim()} - ${input.category.toLowerCase()} ${input.versionNumber} (${input.recordedDate})${descriptionToken}${extension}`;
 }
 
 export function renameAudioFilename(
@@ -115,6 +123,7 @@ export function renameAudioFilename(
     versionNumber: number;
     recordedDate: string;
     description?: string;
+    extension?: string;
   }
 ): { shouldRename: boolean; nextFileName: string } {
   const nextFileName = formatAudioFilename(nextMetadata);
@@ -123,4 +132,3 @@ export function renameAudioFilename(
     nextFileName
   };
 }
-

@@ -102,7 +102,7 @@ export default function ArchivePage() {
     let ignore = false;
     async function loadTracks() {
       try {
-        const response = await api.listTracks(userSlug, artistSlug, projectSlug);
+        const response = await api.listTracks(userSlug, { projectSlug, artistSlug });
         if (ignore) {
           return;
         }
@@ -123,15 +123,21 @@ export default function ArchivePage() {
   }, [artistSlug, projectSlug, userSlug]);
 
   useEffect(() => {
-    if (!artistSlug || !projectSlug || !trackSlug) {
+    if (!trackSlug) {
       setTrackEntity(null);
       return;
     }
     let ignore = false;
     async function loadTrack() {
       try {
-        const track = await api.getTrack(userSlug, artistSlug, projectSlug, trackSlug);
+        const track = await api.getTrack(userSlug, trackSlug);
         if (!ignore) {
+          if (!artistSlug && track.data.artistSlugs[0]) {
+            setArtistSlug(track.data.artistSlugs[0]);
+          }
+          if (!projectSlug && track.data.projectSlug) {
+            setProjectSlug(track.data.projectSlug);
+          }
           setTrackEntity(track);
         }
       } catch (err) {
@@ -247,8 +253,6 @@ export default function ArchivePage() {
                 try {
                   const next = await api.putTrack(
                     userSlug,
-                    artistSlug,
-                    projectSlug,
                     trackSlug,
                     nextData,
                     nextContent
@@ -270,4 +274,3 @@ export default function ArchivePage() {
     </section>
   );
 }
-

@@ -27,11 +27,10 @@ export async function POST(
     if (!projectSlug) {
       throw badRequest("Project slug is required in payload data.slug");
     }
-    await saveProject(userSlug, artistSlug, projectSlug, body.data, body.content ?? "");
-    const entity = await getProject(userSlug, artistSlug, projectSlug);
+    await saveProject(userSlug, projectSlug, { ...body.data, artistSlug }, body.content ?? "");
+    const entity = await getProject(userSlug, projectSlug);
     return ok(entity, 201);
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
-

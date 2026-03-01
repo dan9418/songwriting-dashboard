@@ -11,18 +11,8 @@ function openResultRoute(result: SearchResult): string {
   if (result.type === "fragment") {
     return `/sandbox?tab=fragments&fragment=${result.slug}`;
   }
-  if (result.path.includes("/sandbox/tracks/")) {
-    return `/sandbox?tab=tracks&track=${result.slug}`;
-  }
   if (result.type === "track") {
-    const parts = result.path.split("/");
-    const artistIdx = parts.findIndex((part) => part === "artists");
-    const projectIdx = parts.findIndex((part) => part === "projects");
-    if (artistIdx >= 0 && projectIdx >= 0) {
-      const artistSlug = parts[artistIdx + 1];
-      const projectSlug = parts[projectIdx + 1];
-      return `/archive?artist=${artistSlug}&project=${projectSlug}&track=${result.slug}`;
-    }
+    return `/archive?track=${result.slug}`;
   }
   if (result.type === "project") {
     return `/archive?project=${result.slug}`;
@@ -109,4 +99,3 @@ export default function SearchPage() {
     </section>
   );
 }
-

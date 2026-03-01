@@ -26,14 +26,16 @@ export function enforceTrackAudioNaming(input: unknown): TrackFrontmatter {
       category: version.category,
       versionNumber: version.versionNumber,
       recordedDate: version.recordedDate,
-      description: version.description
+      description: version.description,
+      extension: parsed.extension
     });
     const renamed = renameAudioFilename(version.fileName, {
       trackName: track.title,
       category: version.category,
       versionNumber: version.versionNumber,
       recordedDate: version.recordedDate,
-      description: version.description
+      description: version.description,
+      extension: parsed.extension
     });
 
     return {

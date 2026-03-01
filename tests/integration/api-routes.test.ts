@@ -31,16 +31,12 @@ describe("API integration", () => {
   });
 
   it("validates track audio naming and auto-renames on title updates", async () => {
-    const trackListRoute = await import(
-      "@/app/api/tracks/[userSlug]/[artistSlug]/[projectSlug]/route"
-    );
-    const trackItemRoute = await import(
-      "@/app/api/tracks/[userSlug]/[artistSlug]/[projectSlug]/[trackSlug]/route"
-    );
+    const trackListRoute = await import("@/app/api/tracks/[userSlug]/route");
+    const trackItemRoute = await import("@/app/api/tracks/[userSlug]/[trackSlug]/route");
     const repositories = await import("@/lib/fs/repositories");
 
-    const params: RouteContext<{ userSlug: string; artistSlug: string; projectSlug: string }> = {
-      params: Promise.resolve({ userSlug: "dan", artistSlug: "neon-park", projectSlug: "city-lights" })
+    const params: RouteContext<{ userSlug: string }> = {
+      params: Promise.resolve({ userSlug: "dan" })
     };
 
     const invalidCreate = await trackListRoute.POST(
@@ -57,7 +53,7 @@ describe("API integration", () => {
           status: "in-progress",
           audioVersions: [
             {
-              fileName: "Midnight Drive - demo 2 (02-14-25).mp3",
+              fileName: "Midnight Drive - demo 2 (02-14-25).m4a",
               slug: "ignored",
               category: "demo",
               versionNumber: 3,
@@ -85,7 +81,7 @@ describe("API integration", () => {
           status: "in-progress",
           audioVersions: [
             {
-              fileName: "Midnight Drive - demo 2 (02-14-25).mp3",
+              fileName: "Midnight Drive - demo 2 (02-14-25).m4a",
               slug: "ignored",
               category: "demo",
               versionNumber: 2,
@@ -99,16 +95,9 @@ describe("API integration", () => {
 
     expect(validCreate.status).toBe(201);
 
-    const itemParams: RouteContext<{
-      userSlug: string;
-      artistSlug: string;
-      projectSlug: string;
-      trackSlug: string;
-    }> = {
+    const itemParams: RouteContext<{ userSlug: string; trackSlug: string }> = {
       params: Promise.resolve({
         userSlug: "dan",
-        artistSlug: "neon-park",
-        projectSlug: "city-lights",
         trackSlug: "midnight-drive"
       })
     };
@@ -119,14 +108,14 @@ describe("API integration", () => {
     );
     expect(patchResponse.status).toBe(200);
 
-    const saved = await repositories.getTrack("dan", "neon-park", "city-lights", "midnight-drive");
+    const saved = await repositories.getTrack("dan", "midnight-drive");
     expect(saved.data.audioVersions[0]?.fileName).toBe(
-      "Midnight Drive Revised - demo 2 (02-14-25).mp3"
+      "Midnight Drive Revised - demo 2 (02-14-25).m4a"
     );
   });
 
   it("lists fragments and finds them via search endpoint", async () => {
-    const fragmentListRoute = await import("@/app/api/sandbox/fragments/[userSlug]/route");
+    const fragmentListRoute = await import("@/app/api/fragments/[userSlug]/route");
     const searchRoute = await import("@/app/api/search/[userSlug]/route");
 
     const fragmentParams: RouteContext<{ userSlug: string }> = {
@@ -180,4 +169,3 @@ describe("API integration", () => {
     expect(searchPayload.items.map((item) => item.slug)).toContain("frag-a");
   });
 });
-

@@ -46,63 +46,61 @@ export const api = {
       `/api/projects/${userSlug}/${artistSlug}`
     ),
 
-  listTracks: (userSlug: string, artistSlug: string, projectSlug: string) =>
-    apiRequest<{ items: Array<MarkdownEntity<TrackData> & { trackSlug: string }> }>(
-      `/api/tracks/${userSlug}/${artistSlug}/${projectSlug}`
-    ),
+  listTracks: (
+    userSlug: string,
+    options?: { projectSlug?: string; artistSlug?: string; scope?: "archive" | "sandbox" }
+  ) => {
+    const url = new URL(`/api/tracks/${userSlug}`, window.location.origin);
+    if (options?.projectSlug) {
+      url.searchParams.set("projectSlug", options.projectSlug);
+    }
+    if (options?.artistSlug) {
+      url.searchParams.set("artistSlug", options.artistSlug);
+    }
+    if (options?.scope === "sandbox") {
+      url.searchParams.set("scope", "sandbox");
+    }
+    return apiRequest<{ items: Array<MarkdownEntity<TrackData> & { trackSlug: string }> }>(
+      `${url.pathname}${url.search}`
+    );
+  },
 
-  getTrack: (userSlug: string, artistSlug: string, projectSlug: string, trackSlug: string) =>
-    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}/${artistSlug}/${projectSlug}/${trackSlug}`),
+  getTrack: (userSlug: string, trackSlug: string) =>
+    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}/${trackSlug}`),
 
   putTrack: (
     userSlug: string,
-    artistSlug: string,
-    projectSlug: string,
     trackSlug: string,
     data: TrackData,
     content: string
   ) =>
-    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}/${artistSlug}/${projectSlug}/${trackSlug}`, {
+    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}/${trackSlug}`, {
       method: "PUT",
       body: JSON.stringify({ data, content })
     }),
 
-  listSandboxTracks: (userSlug: string) =>
-    apiRequest<{ items: Array<MarkdownEntity<TrackData> & { trackSlug: string }> }>(
-      `/api/sandbox/tracks/${userSlug}`
-    ),
-
-  getSandboxTrack: (userSlug: string, trackSlug: string) =>
-    apiRequest<MarkdownEntity<TrackData>>(`/api/sandbox/tracks/${userSlug}/${trackSlug}`),
-
-  postSandboxTrack: (userSlug: string, data: TrackData, content: string) =>
-    apiRequest<MarkdownEntity<TrackData>>(`/api/sandbox/tracks/${userSlug}`, {
+  postTrack: (userSlug: string, data: TrackData, content: string) =>
+    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}`, {
       method: "POST",
-      body: JSON.stringify({ data, content })
-    }),
-
-  putSandboxTrack: (userSlug: string, trackSlug: string, data: TrackData, content: string) =>
-    apiRequest<MarkdownEntity<TrackData>>(`/api/sandbox/tracks/${userSlug}/${trackSlug}`, {
-      method: "PUT",
       body: JSON.stringify({ data, content })
     }),
 
   listFragments: (userSlug: string) =>
     apiRequest<{ items: Array<MarkdownEntity<FragmentData> & { fragmentSlug: string }> }>(
-      `/api/sandbox/fragments/${userSlug}`
+      `/api/fragments/${userSlug}`
     ),
 
   getFragment: (userSlug: string, fragmentSlug: string) =>
-    apiRequest<MarkdownEntity<FragmentData>>(`/api/sandbox/fragments/${userSlug}/${fragmentSlug}`),
+    apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments/${userSlug}/${fragmentSlug}`),
 
   postFragment: (userSlug: string, data: FragmentData, content: string) =>
-    apiRequest<MarkdownEntity<FragmentData>>(`/api/sandbox/fragments/${userSlug}`, {
+    apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments/${userSlug}`, {
       method: "POST",
       body: JSON.stringify({ data, content })
     }),
 
   putFragment: (userSlug: string, fragmentSlug: string, data: FragmentData, content: string) =>
-    apiRequest<MarkdownEntity<FragmentData>>(`/api/sandbox/fragments/${userSlug}/${fragmentSlug}`, {
+    apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments/${userSlug}/${fragmentSlug}`, {
       method: "PUT",
       body: JSON.stringify({ data, content })
     }),
@@ -121,4 +119,3 @@ export const api = {
     return apiRequest<{ items: SearchResult[] }>(`${url.pathname}${url.search}`);
   }
 };
-
