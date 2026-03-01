@@ -88,3 +88,16 @@ export interface SearchResult {
   snippet: string;
   score: number;
 }
+
+export interface TrackImportSummary {
+  loaded: number;
+  matched: number;
+  total: number;
+  failed: number;
+}
+
+export interface FragmentImportSummary {
+  loaded: number;
+  total: number;
+  failed: number;
+}

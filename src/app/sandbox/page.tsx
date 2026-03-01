@@ -8,7 +8,12 @@ import { ActionButton, Field, TextInput } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import { DEFAULT_USER_SLUG } from "@/lib/client/config";
-import type { FragmentData, TrackData, TrackImportSummary } from "@/lib/client/types";
+import type {
+  FragmentData,
+  FragmentImportSummary,
+  TrackData,
+  TrackImportSummary
+} from "@/lib/client/types";
 
 function nowStamp() {
   return new Date().toISOString();
@@ -57,6 +62,7 @@ export default function SandboxPage() {
   const [trackEntity, setTrackEntity] = useState<{ data: TrackData; content: string } | null>(null);
   const [fragmentEntity, setFragmentEntity] = useState<{ data: FragmentData; content: string } | null>(null);
   const [trackImportSummary, setTrackImportSummary] = useState<TrackImportSummary | null>(null);
+  const [fragmentImportSummary, setFragmentImportSummary] = useState<FragmentImportSummary | null>(null);
 
   const [newSlug, setNewSlug] = useState("");
   const [saving, setSaving] = useState(false);
@@ -78,9 +84,13 @@ export default function SandboxPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (tab !== "tracks") {
+      return;
+    }
     async function loadTracks() {
       try {
-        const response = await api.listTracks(userSlug, { scope: "sandbox" });
+        setError(null);
+        const response = await api.listTracks(userSlug);
         setTrackImportSummary(response.summary);
         const nextTracks = response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title }));
         setTracks(nextTracks);
@@ -90,12 +100,17 @@ export default function SandboxPage() {
       }
     }
     loadTracks();
-  }, [userSlug]);
+  }, [tab, userSlug]);
 
   useEffect(() => {
+    if (tab !== "fragments") {
+      return;
+    }
     async function loadFragments() {
       try {
+        setError(null);
         const response = await api.listFragments(userSlug);
+        setFragmentImportSummary(response.summary);
         const nextFragments = response.items.map((item) => ({
           fragmentSlug: item.fragmentSlug,
           title: item.data.title
@@ -107,9 +122,12 @@ export default function SandboxPage() {
       }
     }
     loadFragments();
-  }, [userSlug]);
+  }, [tab, userSlug]);
 
   useEffect(() => {
+    if (tab !== "tracks") {
+      return;
+    }
     if (!trackSlug) {
       setTrackEntity(null);
       return;
@@ -117,9 +135,12 @@ export default function SandboxPage() {
     api.getTrack(userSlug, trackSlug).then(setTrackEntity).catch((err) => {
       setError(err instanceof Error ? err.message : "Failed to load track.");
     });
-  }, [trackSlug, userSlug]);
+  }, [tab, trackSlug, userSlug]);
 
   useEffect(() => {
+    if (tab !== "fragments") {
+      return;
+    }
     if (!fragmentSlug) {
       setFragmentEntity(null);
       return;
@@ -127,7 +148,7 @@ export default function SandboxPage() {
     api.getFragment(userSlug, fragmentSlug).then(setFragmentEntity).catch((err) => {
       setError(err instanceof Error ? err.message : "Failed to load fragment.");
     });
-  }, [fragmentSlug, userSlug]);
+  }, [tab, fragmentSlug, userSlug]);
 
   const activeLabel = useMemo(() => (tab === "tracks" ? "Tracks" : "Fragments"), [tab]);
 
@@ -165,7 +186,7 @@ export default function SandboxPage() {
                   const created = await api.postTrack(userSlug, buildNewTrack(userSlug, newSlug.trim()), "");
                   setTrackSlug(created.data.slug);
                   showToast("Sandbox track created.");
-                  const response = await api.listTracks(userSlug, { scope: "sandbox" });
+                  const response = await api.listTracks(userSlug);
                   setTrackImportSummary(response.summary);
                   setTracks(response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title })));
                 } else {
@@ -177,6 +198,7 @@ export default function SandboxPage() {
                   setFragmentSlug(created.data.slug);
                   showToast("Fragment created.");
                   const response = await api.listFragments(userSlug);
+                  setFragmentImportSummary(response.summary);
                   setFragments(
                     response.items.map((item) => ({ fragmentSlug: item.fragmentSlug, title: item.data.title }))
                   );
@@ -198,6 +220,12 @@ export default function SandboxPage() {
                 Imported {trackImportSummary.loaded}/{trackImportSummary.total} tracks
                 {trackImportSummary.failed > 0 ? ` (${trackImportSummary.failed} failed)` : ""}.
                 {` Showing ${trackImportSummary.matched}.`}
+              </p>
+            ) : null}
+            {tab === "fragments" && fragmentImportSummary ? (
+              <p className="text-xs text-[color:var(--muted)]">
+                Loaded {fragmentImportSummary.loaded}/{fragmentImportSummary.total} fragments
+                {fragmentImportSummary.failed > 0 ? ` (${fragmentImportSummary.failed} failed)` : ""}.
               </p>
             ) : null}
             {(tab === "tracks" ? tracks : fragments).map((item) => {
@@ -238,7 +266,7 @@ export default function SandboxPage() {
                     const saved = await api.putTrack(userSlug, nextData.slug, nextData, nextContent);
                     setTrackEntity(saved);
                     showToast("Sandbox track saved.");
-                    const response = await api.listTracks(userSlug, { scope: "sandbox" });
+                    const response = await api.listTracks(userSlug);
                     setTrackImportSummary(response.summary);
                     setTracks(response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title })));
                   } catch (err) {
@@ -263,6 +291,7 @@ export default function SandboxPage() {
                   setFragmentEntity(saved);
                   showToast("Fragment saved.");
                   const response = await api.listFragments(userSlug);
+                  setFragmentImportSummary(response.summary);
                   setFragments(
                     response.items.map((item) => ({ fragmentSlug: item.fragmentSlug, title: item.data.title }))
                   );

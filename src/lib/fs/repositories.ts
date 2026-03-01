@@ -32,6 +32,12 @@ export interface TrackImportSummary {
   failed: number;
 }
 
+export interface FragmentImportSummary {
+  loaded: number;
+  total: number;
+  failed: number;
+}
+
 export async function getUser(userSlug: string) {
   return readMarkdownFile(userMarkdownPath(userSlug), userSchema);
 }
@@ -173,13 +179,35 @@ export async function getFragment(userSlug: string, fragmentSlug: string) {
 }
 
 export async function listFragments(userSlug: string) {
+  const result = await listFragmentsWithSummary(userSlug);
+  return result.items;
+}
+
+export async function listFragmentsWithSummary(userSlug: string) {
   const fragmentSlugs = await listDirectories(fragmentsRoot(userSlug));
-  return Promise.all(
+  const items = await Promise.all(
     fragmentSlugs.map(async (slug) => {
-      const fragment = await getFragment(userSlug, slug);
-      return { ...fragment, fragmentSlug: slug };
+      const markdownPath = fragmentMarkdownPath(userSlug, slug);
+      if (!(await pathExists(markdownPath))) {
+        return null;
+      }
+      try {
+        const fragment = await getFragment(userSlug, slug);
+        return { ...fragment, fragmentSlug: slug };
+      } catch {
+        return null;
+      }
     })
   );
+
+  return {
+    items: items.filter((item): item is NonNullable<typeof item> => item !== null),
+    summary: {
+      loaded: items.filter(Boolean).length,
+      total: fragmentSlugs.length,
+      failed: fragmentSlugs.length - items.filter(Boolean).length
+    } satisfies FragmentImportSummary
+  };
 }
 
 export async function saveFragment(

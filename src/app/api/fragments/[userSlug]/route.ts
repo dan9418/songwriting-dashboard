@@ -1,13 +1,13 @@
 import { apiErrorResponse, badRequest } from "@/lib/api/errors";
 import { parseJsonBody, type WriteMarkdownBody } from "@/lib/api/request";
 import { ok } from "@/lib/api/response";
-import { getFragment, listFragments, saveFragment } from "@/lib/fs/repositories";
+import { getFragment, listFragmentsWithSummary, saveFragment } from "@/lib/fs/repositories";
 
 export async function GET(_: Request, context: { params: Promise<{ userSlug: string }> }) {
   try {
     const { userSlug } = await context.params;
-    const items = await listFragments(userSlug);
-    return ok({ items });
+    const result = await listFragmentsWithSummary(userSlug);
+    return ok(result);
   } catch (error) {
     return apiErrorResponse(error);
   }

@@ -5,6 +5,7 @@ import type {
   ProjectData,
   SearchResult,
   TrackData,
+  FragmentImportSummary,
   TrackImportSummary,
   UserData
 } from "@/lib/client/types";
@@ -90,7 +91,10 @@ export const api = {
     }),
 
   listFragments: (userSlug: string) =>
-    apiRequest<{ items: Array<MarkdownEntity<FragmentData> & { fragmentSlug: string }> }>(
+    apiRequest<{
+      items: Array<MarkdownEntity<FragmentData> & { fragmentSlug: string }>;
+      summary: FragmentImportSummary;
+    }>(
       `/api/fragments/${userSlug}`
     ),
 
