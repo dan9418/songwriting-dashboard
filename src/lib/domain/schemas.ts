@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { PROJECT_TYPES, TRACK_STATUSES } from "@/lib/domain/models";
 
-const isoDateTimeString = z.string().datetime({ offset: true });
+const isoDateTimeString = z.iso.datetime({ offset: true });
 const slugSchema = z
   .string()
   .min(1)
@@ -84,4 +84,3 @@ export type ArtistFrontmatter = z.infer<typeof artistSchema>;
 export type ProjectFrontmatter = z.infer<typeof projectSchema>;
 export type TrackFrontmatter = z.infer<typeof trackSchema>;
 export type FragmentFrontmatter = z.infer<typeof fragmentSchema>;
-
