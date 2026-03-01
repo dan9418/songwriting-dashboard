@@ -91,11 +91,11 @@ User metadata and app settings.
 ## Filesystem Architecture
 
 Root:
-songwriter-data/
+songwriting-data/
 
 Key Structure:
 
-songwriter-data/
+songwriting-data/
   users/
     {user}/
       user.md

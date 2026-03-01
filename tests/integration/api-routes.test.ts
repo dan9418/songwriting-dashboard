@@ -19,7 +19,7 @@ describe("API integration", () => {
   let tempRoot: string;
 
   beforeEach(async () => {
-    tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "songwriter-data-"));
+    tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "songwriting-data-"));
     process.env.SONGWRITER_DATA_ROOT = tempRoot;
     vi.resetModules();
   });

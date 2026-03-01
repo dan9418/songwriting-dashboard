@@ -1,6 +1,6 @@
 import path from "node:path";
 
-export const DATA_ROOT = process.env.SONGWRITER_DATA_ROOT ?? path.join(process.cwd(), "songwriter-data");
+export const DATA_ROOT = process.env.SONGWRITER_DATA_ROOT ?? path.join(process.cwd(), "songwriting-data");
 
 function assertSafeSegment(segment: string): string {
   const normalized = segment.trim();
