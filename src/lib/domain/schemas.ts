@@ -60,7 +60,7 @@ export const audioVersionSchema = z.object({
     .min(1)
     .regex(/^[a-z0-9-]+$/i, "Category must be alphanumeric or hyphen"),
   versionNumber: z.number().int().positive(),
-  recordedDate: z.string().regex(/^\d{2}-\d{2}-\d{2}$/, "Use MM-DD-YY format"),
+  recordedDate: z.string().regex(/^\d{1,2}-\d{1,2}-\d{2}$/, "Use M-D-YY format"),
   description: z.string().optional()
 });
 

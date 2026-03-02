@@ -3,7 +3,7 @@ import { ensureNonEmptySlug } from "@/lib/utils/slug";
 const AUDIO_EXTENSIONS = [".mp3", ".m4a"] as const;
 type AudioExtension = (typeof AUDIO_EXTENSIONS)[number];
 const AUDIO_FILENAME_REGEX =
-  /^(?<trackName>.+?) - (?<category>[a-zA-Z][a-zA-Z0-9-]*) (?<versionNumber>\d+) \((?<recordedDate>\d{2}-\d{2}-\d{2})\)(?: \[(?<description>[^\]]+)\])?(?<extension>\.mp3|\.m4a)$/;
+  /^(?<trackName>.+?) - (?<category>[a-zA-Z][a-zA-Z0-9-]*) (?<versionNumber>\d+) \((?<recordedDate>\d{1,2}-\d{1,2}-\d{2})\)(?: \[(?<description>[^\]]+)\])?(?<extension>\.mp3|\.m4a)$/;
 
 export interface ParsedAudioFilename {
   trackName: string;
@@ -48,7 +48,7 @@ export function parseAudioFilename(fileName: string): ParsedAudioFilename {
   const match = AUDIO_FILENAME_REGEX.exec(fileName);
   if (!match?.groups) {
     throw new Error(
-      "Invalid filename. Expected: {Track Name} - {category} {versionNumber} ({MM-DD-YY}) [optionalDescription].{mp3|m4a}"
+      "Invalid filename. Expected: {Track Name} - {category} {versionNumber} ({M-D-YY}) [optionalDescription].{mp3|m4a}"
     );
   }
 
@@ -62,7 +62,7 @@ export function parseAudioFilename(fileName: string): ParsedAudioFilename {
   };
 
   if (!isValidDateToken(parsed.recordedDate)) {
-    throw new Error("Invalid date in filename. Use a real calendar date in MM-DD-YY format.");
+    throw new Error("Invalid date in filename. Use a real calendar date in M-D-YY format.");
   }
   if (!Number.isInteger(parsed.versionNumber) || parsed.versionNumber < 1) {
     throw new Error("versionNumber must be a positive integer.");
@@ -102,7 +102,7 @@ export function formatAudioFilename(input: {
     throw new Error("versionNumber must be a positive integer.");
   }
   if (!isValidDateToken(input.recordedDate)) {
-    throw new Error("recordedDate must be a valid MM-DD-YY date.");
+    throw new Error("recordedDate must be a valid M-D-YY date.");
   }
   const extension = (input.extension ?? ".mp3").toLowerCase();
   if (!AUDIO_EXTENSIONS.includes(extension as AudioExtension)) {
