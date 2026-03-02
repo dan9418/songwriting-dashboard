@@ -1,4 +1,6 @@
-﻿songwriting-data/users/dan/
+﻿songwriting-data/**/*.mp3
+songwriting-data/**/*.mp4
+songwriting-data/**/*.m4a
 
 node_modules
 

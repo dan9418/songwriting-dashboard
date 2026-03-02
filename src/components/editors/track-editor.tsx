@@ -116,7 +116,7 @@ export function TrackEditor({ value, content, onSave, saving }: TrackEditorProps
         </Field>
       </div>
 
-      <Field label="Audio Versions (fileName | category | versionNumber | M-D-YY | optionalDescription)">
+      <Field label="Audio Versions (fileName | category | versionNumber | M-D-YY or descriptor | optionalDescription)">
         <TextArea
           rows={6}
           value={audioRows}
