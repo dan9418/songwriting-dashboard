@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ActionButton, Field, PillInput, SelectInput, TextArea, TextInput } from "@/components/ui/form-controls";
 import { useUnsavedWarning } from "@/lib/client/use-unsaved-warning";
@@ -17,7 +18,6 @@ interface ProjectEditorProps {
 export function ProjectEditor({ value, content, onSave, saving }: ProjectEditorProps) {
   const [draft, setDraft] = useState<ProjectData>(value);
   const [draftContent, setDraftContent] = useState(content);
-  const [trackSlugRows, setTrackSlugRows] = useState(value.trackSlugs.join("\n"));
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
 
@@ -26,14 +26,18 @@ export function ProjectEditor({ value, content, onSave, saving }: ProjectEditorP
   useEffect(() => {
     setDraft(value);
     setDraftContent(content);
-    setTrackSlugRows(value.trackSlugs.join("\n"));
     setDirty(false);
   }, [value, content]);
 
   function setTrackOrder(nextTrackSlugs: string[]) {
     setDirty(true);
-    setTrackSlugRows(nextTrackSlugs.join("\n"));
     setDraft((prev) => ({ ...prev, trackSlugs: nextTrackSlugs }));
+  }
+
+  function setTrackSlugAt(index: number, nextSlug: string) {
+    const next = [...draft.trackSlugs];
+    next[index] = nextSlug;
+    setTrackOrder(next);
   }
 
   return (
@@ -101,85 +105,104 @@ export function ProjectEditor({ value, content, onSave, saving }: ProjectEditorP
           }}
         />
       </Field>
-      <Field label="Ordered Track Slugs (one per line)">
-        <TextArea
-          rows={8}
-          value={trackSlugRows}
-          onChange={(event) => {
-            const nextRows = event.currentTarget.value;
-            setDirty(true);
-            setTrackSlugRows(nextRows);
-            setDraft((prev) => ({
-              ...prev,
-              trackSlugs: nextRows
-                .split("\n")
-                .map((item) => item.trim())
-                .filter(Boolean)
-            }));
-          }}
-        />
-      </Field>
-      {draft.trackSlugs.length > 0 ? (
-        <div className="grid gap-2">
-          <p className="text-sm font-medium text-[color:var(--muted)]">Track Order Preview</p>
-          <p className="text-xs text-[color:var(--muted)]">Drag and drop rows to reorder tracks.</p>
-          {draft.trackSlugs.map((slug, index) => (
-            <div
-              key={`${slug}-${index}`}
-              draggable
-              onDragStart={() => setDragIndex(index)}
-              onDragOver={(event) => {
-                event.preventDefault();
-              }}
-              onDrop={() => {
-                if (dragIndex === null || dragIndex === index) {
-                  setDragIndex(null);
-                  return;
-                }
-                const next = [...draft.trackSlugs];
-                const [dragged] = next.splice(dragIndex, 1);
-                next.splice(index, 0, dragged);
-                setTrackOrder(next);
-                setDragIndex(null);
-              }}
-              onDragEnd={() => setDragIndex(null)}
-              className={`flex items-center justify-between rounded-lg px-3 py-2 ${
-                dragIndex === index ? "bg-[#eadcc8]" : "bg-[#f8efe3]"
-              }`}
-            >
-              <span className="text-sm">
-                {index + 1}. {slug}
-              </span>
-              <div className="flex gap-2">
-                <ActionButton
-                  type="button"
-                  tone="ghost"
-                  disabled={index === 0}
-                  onClick={() => {
-                    const next = [...draft.trackSlugs];
-                    [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                    setTrackOrder(next);
-                  }}
-                >
-                  Up
-                </ActionButton>
-                <ActionButton
-                  type="button"
-                  tone="ghost"
-                  disabled={index === draft.trackSlugs.length - 1}
-                  onClick={() => {
-                    const next = [...draft.trackSlugs];
-                    [next[index + 1], next[index]] = [next[index], next[index + 1]];
-                    setTrackOrder(next);
-                  }}
-                >
-                  Down
-                </ActionButton>
-              </div>
-            </div>
-          ))}
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-[color:var(--muted)]">Ordered Track Slugs</p>
+          <ActionButton
+            type="button"
+            tone="ghost"
+            onClick={() => setTrackOrder([...draft.trackSlugs, ""])}
+          >
+            Add Track
+          </ActionButton>
         </div>
-      ) : null}
+        <p className="text-xs text-[color:var(--muted)]">
+          Edit slugs inline. Drag rows or use Up/Down to reorder.
+        </p>
+        {draft.trackSlugs.length === 0 ? (
+          <p className="rounded-lg bg-[#f8efe3] px-3 py-2 text-sm text-[color:var(--muted)]">
+            No tracks in this project yet.
+          </p>
+        ) : null}
+        {draft.trackSlugs.map((slug, index) => (
+          <div
+            key={`${index}-${slug}`}
+            draggable
+            onDragStart={() => setDragIndex(index)}
+            onDragOver={(event) => {
+              event.preventDefault();
+            }}
+            onDrop={() => {
+              if (dragIndex === null || dragIndex === index) {
+                setDragIndex(null);
+                return;
+              }
+              const next = [...draft.trackSlugs];
+              const [dragged] = next.splice(dragIndex, 1);
+              next.splice(index, 0, dragged);
+              setTrackOrder(next);
+              setDragIndex(null);
+            }}
+            onDragEnd={() => setDragIndex(null)}
+            className={`grid gap-2 rounded-lg px-3 py-2 ${
+              dragIndex === index ? "bg-[#d8e3ff]" : "bg-[#f8efe3]"
+            }`}
+          >
+            <div className="grid items-center gap-2 md:grid-cols-[auto_minmax(0,1fr)_auto]">
+              <span className="text-sm text-[color:var(--muted)]">{index + 1}.</span>
+              <TextInput
+                value={slug}
+                placeholder="track-slug"
+                onChange={(event) => setTrackSlugAt(index, event.currentTarget.value)}
+              />
+              <ActionButton
+                type="button"
+                tone="danger"
+                onClick={() => {
+                  const next = draft.trackSlugs.filter((_, i) => i !== index);
+                  setTrackOrder(next);
+                }}
+              >
+                Remove
+              </ActionButton>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {slug.trim() ? (
+                <Link
+                  href={`/tracks/${slug.trim()}?from=archive&artist=${draft.artistSlug}&project=${draft.slug}&track=${slug.trim()}`}
+                  className="rounded-lg bg-[#d8e3ff] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#c8d8ff]"
+                >
+                  Open
+                </Link>
+              ) : null}
+              <ActionButton
+                type="button"
+                tone="ghost"
+                disabled={index === 0}
+                onClick={() => {
+                  const next = [...draft.trackSlugs];
+                  [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                  setTrackOrder(next);
+                }}
+              >
+                Up
+              </ActionButton>
+              <ActionButton
+                type="button"
+                tone="ghost"
+                disabled={index === draft.trackSlugs.length - 1}
+                onClick={() => {
+                  const next = [...draft.trackSlugs];
+                  [next[index + 1], next[index]] = [next[index], next[index + 1]];
+                  setTrackOrder(next);
+                }}
+              >
+                Down
+              </ActionButton>
+            </div>
+          </div>
+        ))}
+      </div>
       <Field label="Markdown Content">
         <TextArea
           rows={8}

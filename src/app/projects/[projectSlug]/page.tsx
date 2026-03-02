@@ -10,36 +10,6 @@ import { api } from "@/lib/client/api";
 import { DEFAULT_USER_SLUG } from "@/lib/client/config";
 import type { ProjectData } from "@/lib/client/types";
 
-async function resolveOrderedTrackLinks(userSlug: string, trackSlugs: string[]) {
-  const items = await Promise.all(
-    trackSlugs.map(async (trackSlug) => {
-      try {
-        const track = await api.getTrack(userSlug, trackSlug);
-        return { trackSlug, title: track.data.title };
-      } catch {
-        return { trackSlug, title: `${trackSlug} (missing)` };
-      }
-    })
-  );
-  return items;
-}
-
-async function resolveProjectTrackLinks(
-  userSlug: string,
-  projectSlug: string,
-  artistSlug: string,
-  orderedTrackSlugs: string[]
-) {
-  if (orderedTrackSlugs.length > 0) {
-    return resolveOrderedTrackLinks(userSlug, orderedTrackSlugs);
-  }
-
-  // Backward compatibility: infer project membership from track.projectSlug when
-  // older project frontmatter does not yet have trackSlugs.
-  const inferred = await api.listTracks(userSlug, { projectSlug, artistSlug });
-  return inferred.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title }));
-}
-
 export default function ProjectDetailPage() {
   const params = useParams<{ projectSlug: string }>();
   const searchParams = useSearchParams();
@@ -50,7 +20,6 @@ export default function ProjectDetailPage() {
   const artistHint = searchParams.get("artist") ?? "artist";
 
   const [entity, setEntity] = useState<{ data: ProjectData; content: string } | null>(null);
-  const [trackLinks, setTrackLinks] = useState<Array<{ trackSlug: string; title: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,15 +33,6 @@ export default function ProjectDetailPage() {
         const project = await api.getProject(userSlug, artistHint, projectSlug);
         if (!ignore) {
           setEntity(project);
-          const tracks = await resolveProjectTrackLinks(
-            userSlug,
-            projectSlug,
-            project.data.artistSlug,
-            project.data.trackSlugs ?? []
-          );
-          if (!ignore) {
-            setTrackLinks(tracks);
-          }
         }
       } catch (err) {
         if (!ignore) {
@@ -118,16 +78,6 @@ export default function ProjectDetailPage() {
                   href: `/artists/${entity.data.artistSlug}`
                 }
               ]
-            },
-            {
-              key: "tracks",
-              title: "Tracks",
-              items: trackLinks.map((track) => ({
-                id: track.trackSlug,
-                label: track.title,
-                href: `/tracks/${track.trackSlug}?from=archive&artist=${entity.data.artistSlug}&project=${projectSlug}&track=${track.trackSlug}`
-              })),
-              emptyText: "No linked tracks."
             }
           ]}
         />
@@ -152,14 +102,6 @@ export default function ProjectDetailPage() {
                 nextContent
               );
               setEntity(saved);
-              setTrackLinks(
-                await resolveProjectTrackLinks(
-                  userSlug,
-                  projectSlug,
-                  saved.data.artistSlug,
-                  saved.data.trackSlugs ?? []
-                )
-              );
               showToast("Project updated.");
             } catch (err) {
               showToast(err instanceof Error ? err.message : "Failed to save project.", "error");

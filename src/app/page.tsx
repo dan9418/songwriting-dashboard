@@ -5,8 +5,8 @@ export default function HomePage() {
   return (
     <section className="grid gap-4">
       <div className="panel overflow-hidden p-8">
-        <p className="text-xs uppercase tracking-[0.15em] text-[color:var(--muted)]">Songwriting Atlas</p>
-        <h1 className="mt-2 text-4xl font-semibold md:text-5xl">Local-First Metadata Studio</h1>
+        <p className="text-xs uppercase tracking-[0.15em] text-[color:var(--muted)]">Dan Bednarczyk's</p>
+        <h1 className="mt-2 text-4xl font-semibold md:text-5xl">Songwriting Dashboard</h1>
         <p className="mt-3 max-w-2xl text-base text-[color:var(--muted)]">
           Organize tracks, projects, and fragments from your filesystem while keeping markdown frontmatter as the
           single source of truth.
