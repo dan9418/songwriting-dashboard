@@ -42,11 +42,31 @@ export const api = {
     apiRequest<{ items: Array<MarkdownEntity<ArtistData> & { artistSlug: string }> }>(
       `/api/artists/${userSlug}`
     ),
+  getArtist: (userSlug: string, artistSlug: string) =>
+    apiRequest<MarkdownEntity<ArtistData>>(`/api/artists/${userSlug}/${artistSlug}`),
+  putArtist: (userSlug: string, artistSlug: string, data: ArtistData, content: string) =>
+    apiRequest<MarkdownEntity<ArtistData>>(`/api/artists/${userSlug}/${artistSlug}`, {
+      method: "PUT",
+      body: JSON.stringify({ data, content })
+    }),
 
   listProjects: (userSlug: string, artistSlug: string) =>
     apiRequest<{ items: Array<MarkdownEntity<ProjectData> & { projectSlug: string }> }>(
       `/api/projects/${userSlug}/${artistSlug}`
     ),
+  getProject: (userSlug: string, artistSlug: string, projectSlug: string) =>
+    apiRequest<MarkdownEntity<ProjectData>>(`/api/projects/${userSlug}/${artistSlug}/${projectSlug}`),
+  putProject: (
+    userSlug: string,
+    artistSlug: string,
+    projectSlug: string,
+    data: ProjectData,
+    content: string
+  ) =>
+    apiRequest<MarkdownEntity<ProjectData>>(`/api/projects/${userSlug}/${artistSlug}/${projectSlug}`, {
+      method: "PUT",
+      body: JSON.stringify({ data, content })
+    }),
 
   listTracks: (
     userSlug: string,

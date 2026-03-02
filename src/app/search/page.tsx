@@ -15,9 +15,9 @@ function openResultRoute(result: SearchResult): string {
     return `/tracks/${result.slug}?from=search`;
   }
   if (result.type === "project") {
-    return `/archive?project=${result.slug}`;
+    return `/projects/${result.slug}`;
   }
-  return `/archive?artist=${result.slug}`;
+  return `/artists/${result.slug}`;
 }
 
 export default function SearchPage() {

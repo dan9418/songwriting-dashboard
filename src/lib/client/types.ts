@@ -7,16 +7,24 @@ export interface ArtistData {
   slug: string;
   title: string;
   tags: string[];
+  createdAt: string;
+  updatedAt: string;
   userSlug: string;
+  aliases: string[];
+  bio?: string;
 }
 
 export interface ProjectData {
   slug: string;
   title: string;
   tags: string[];
+  createdAt: string;
+  updatedAt: string;
   type: "album" | "ep" | "single" | "setlist";
   userSlug: string;
   artistSlug: string;
+  year?: number;
+  description?: string;
 }
 
 export interface AudioVersionData {
@@ -87,13 +95,6 @@ export interface SearchResult {
   path: string;
   snippet: string;
   score: number;
-}
-
-export interface TrackImportSummary {
-  loaded: number;
-  matched: number;
-  total: number;
-  failed: number;
 }
 
 export interface FragmentImportSummary {
