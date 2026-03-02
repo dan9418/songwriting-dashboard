@@ -31,6 +31,7 @@ export interface Project extends BaseEntity {
   userSlug: string;
   artistSlug: string;
   type: ProjectType;
+  trackSlugs: string[];
   year?: number;
   description?: string;
 }
@@ -61,4 +62,3 @@ export interface Fragment extends BaseEntity {
   text: string;
   relatedTrackSlugs: string[];
 }
-

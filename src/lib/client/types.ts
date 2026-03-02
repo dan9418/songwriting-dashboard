@@ -23,6 +23,7 @@ export interface ProjectData {
   type: "album" | "ep" | "single" | "setlist";
   userSlug: string;
   artistSlug: string;
+  trackSlugs: string[];
   year?: number;
   description?: string;
 }

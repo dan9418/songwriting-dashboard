@@ -8,7 +8,7 @@ import { DEFAULT_USER_SLUG } from "@/lib/client/config";
 interface ArtistNode {
   artistSlug: string;
   title: string;
-  projects: Array<{ projectSlug: string; title: string }>;
+  projects: Array<{ projectSlug: string; title: string; trackCount: number }>;
 }
 
 export default function ArchivePage() {
@@ -36,7 +36,8 @@ export default function ArchivePage() {
               ...artist,
               projects: projectsResponse.items.map((project) => ({
                 projectSlug: project.projectSlug,
-                title: project.data.title
+                title: project.data.title,
+                trackCount: project.data.trackSlugs?.length ?? 0
               }))
             };
           })
@@ -94,9 +95,12 @@ export default function ArchivePage() {
                   <Link
                     key={project.projectSlug}
                     href={`/projects/${project.projectSlug}?artist=${artist.artistSlug}`}
-                    className="rounded-lg bg-[#f8efe3] px-3 py-2 text-sm transition hover:bg-[#f0e1cf]"
+                    className="flex items-center justify-between rounded-lg bg-[#f8efe3] px-3 py-2 text-sm transition hover:bg-[#f0e1cf]"
                   >
-                    {project.title}
+                    <span>{project.title}</span>
+                    <span className="text-xs text-[color:var(--muted)]">
+                      {project.trackCount} track{project.trackCount === 1 ? "" : "s"}
+                    </span>
                   </Link>
                 ))}
               </div>
@@ -112,4 +116,3 @@ export default function ArchivePage() {
     </section>
   );
 }
-

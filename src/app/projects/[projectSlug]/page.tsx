@@ -3,11 +3,42 @@
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LinkedEntitiesPanel } from "@/components/entities/linked-entities-panel";
 import { ProjectEditor } from "@/components/editors/project-editor";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import { DEFAULT_USER_SLUG } from "@/lib/client/config";
 import type { ProjectData } from "@/lib/client/types";
+
+async function resolveOrderedTrackLinks(userSlug: string, trackSlugs: string[]) {
+  const items = await Promise.all(
+    trackSlugs.map(async (trackSlug) => {
+      try {
+        const track = await api.getTrack(userSlug, trackSlug);
+        return { trackSlug, title: track.data.title };
+      } catch {
+        return { trackSlug, title: `${trackSlug} (missing)` };
+      }
+    })
+  );
+  return items;
+}
+
+async function resolveProjectTrackLinks(
+  userSlug: string,
+  projectSlug: string,
+  artistSlug: string,
+  orderedTrackSlugs: string[]
+) {
+  if (orderedTrackSlugs.length > 0) {
+    return resolveOrderedTrackLinks(userSlug, orderedTrackSlugs);
+  }
+
+  // Backward compatibility: infer project membership from track.projectSlug when
+  // older project frontmatter does not yet have trackSlugs.
+  const inferred = await api.listTracks(userSlug, { projectSlug, artistSlug });
+  return inferred.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title }));
+}
 
 export default function ProjectDetailPage() {
   const params = useParams<{ projectSlug: string }>();
@@ -33,17 +64,14 @@ export default function ProjectDetailPage() {
         const project = await api.getProject(userSlug, artistHint, projectSlug);
         if (!ignore) {
           setEntity(project);
-          const tracks = await api.listTracks(userSlug, {
+          const tracks = await resolveProjectTrackLinks(
+            userSlug,
             projectSlug,
-            artistSlug: project.data.artistSlug
-          });
+            project.data.artistSlug,
+            project.data.trackSlugs ?? []
+          );
           if (!ignore) {
-            setTrackLinks(
-              tracks.items.map((item) => ({
-                trackSlug: item.trackSlug,
-                title: item.data.title
-              }))
-            );
+            setTrackLinks(tracks);
           }
         }
       } catch (err) {
@@ -78,34 +106,31 @@ export default function ProjectDetailPage() {
       </div>
 
       {entity ? (
-        <div className="panel p-4">
-          <h3 className="text-sm font-semibold">Linked Artist</h3>
-          <div className="mt-2">
-            <Link
-              href={`/artists/${entity.data.artistSlug}`}
-              className="rounded-lg bg-[#f8efe3] px-3 py-2 text-sm transition hover:bg-[#f0e1cf]"
-            >
-              {entity.data.artistSlug}
-            </Link>
-          </div>
-        </div>
-      ) : null}
-
-      {trackLinks.length > 0 ? (
-        <div className="panel p-4">
-          <h3 className="text-sm font-semibold">Linked Tracks</h3>
-          <div className="mt-2 grid gap-2 md:grid-cols-2">
-            {trackLinks.map((track) => (
-              <Link
-                key={track.trackSlug}
-                href={`/tracks/${track.trackSlug}?from=archive&artist=${entity?.data.artistSlug ?? ""}&project=${projectSlug}&track=${track.trackSlug}`}
-                className="rounded-lg bg-[#f8efe3] px-3 py-2 text-sm transition hover:bg-[#f0e1cf]"
-              >
-                {track.title}
-              </Link>
-            ))}
-          </div>
-        </div>
+        <LinkedEntitiesPanel
+          sections={[
+            {
+              key: "artist",
+              title: "Artist",
+              items: [
+                {
+                  id: entity.data.artistSlug,
+                  label: entity.data.artistSlug,
+                  href: `/artists/${entity.data.artistSlug}`
+                }
+              ]
+            },
+            {
+              key: "tracks",
+              title: "Tracks",
+              items: trackLinks.map((track) => ({
+                id: track.trackSlug,
+                label: track.title,
+                href: `/tracks/${track.trackSlug}?from=archive&artist=${entity.data.artistSlug}&project=${projectSlug}&track=${track.trackSlug}`
+              })),
+              emptyText: "No linked tracks."
+            }
+          ]}
+        />
       ) : null}
 
       {loading ? <div className="panel p-4 text-sm text-[color:var(--muted)]">Loading project...</div> : null}
@@ -127,6 +152,14 @@ export default function ProjectDetailPage() {
                 nextContent
               );
               setEntity(saved);
+              setTrackLinks(
+                await resolveProjectTrackLinks(
+                  userSlug,
+                  projectSlug,
+                  saved.data.artistSlug,
+                  saved.data.trackSlugs ?? []
+                )
+              );
               showToast("Project updated.");
             } catch (err) {
               showToast(err instanceof Error ? err.message : "Failed to save project.", "error");

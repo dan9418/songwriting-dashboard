@@ -18,6 +18,7 @@ import {
   userSchema
 } from "@/lib/domain/schemas";
 import { listDirectories, pathExists, removeFileIfExists } from "@/lib/fs/walk";
+import type { ProjectFrontmatter, TrackFrontmatter } from "@/lib/domain/schemas";
 
 interface TrackListFilters {
   projectSlug?: string;
@@ -100,10 +101,43 @@ export async function saveProject(
   content = ""
 ) {
   const validated = projectSchema.parse(data);
-  await writeMarkdownFile(projectMarkdownPath(userSlug, projectSlug), validated, content);
+  const existing = await getProjectIfExists(userSlug, projectSlug);
+  const previousTrackSlugs =
+    existing && existing.data.trackSlugs.length > 0
+      ? existing.data.trackSlugs
+      : existing
+        ? (await listTracks(userSlug, { projectSlug })).map((item) => item.trackSlug)
+        : [];
+
+  await writeProjectFile(userSlug, projectSlug, validated, content);
+  await syncTracksFromProject(userSlug, projectSlug, validated, previousTrackSlugs);
 }
 
 export async function deleteProject(userSlug: string, projectSlug: string) {
+  const existing = await getProjectIfExists(userSlug, projectSlug);
+  if (existing) {
+    const trackedSlugs =
+      existing.data.trackSlugs.length > 0
+        ? existing.data.trackSlugs
+        : (await listTracks(userSlug, { projectSlug })).map((item) => item.trackSlug);
+
+    for (const trackSlug of trackedSlugs) {
+      const track = await getTrackIfExists(userSlug, trackSlug);
+      if (!track || track.data.projectSlug !== projectSlug) {
+        continue;
+      }
+      await writeTrackFile(
+        userSlug,
+        trackSlug,
+        {
+          ...track.data,
+          projectSlug: undefined,
+          updatedAt: new Date().toISOString()
+        },
+        track.content
+      );
+    }
+  }
   return removeFileIfExists(projectMarkdownPath(userSlug, projectSlug));
 }
 
@@ -166,11 +200,36 @@ export async function saveTrack(
   data: unknown,
   content = ""
 ) {
+  const existing = await getTrackIfExists(userSlug, trackSlug);
   const validated = trackSchema.parse(data);
-  await writeMarkdownFile(trackMarkdownPath(userSlug, trackSlug), validated, content);
+  const normalized = await normalizeTrackAgainstProject(userSlug, validated);
+
+  await writeTrackFile(userSlug, trackSlug, normalized, content);
+  await syncProjectMembershipForTrack(
+    userSlug,
+    trackSlug,
+    existing?.data.projectSlug,
+    normalized.projectSlug
+  );
 }
 
 export async function deleteTrack(userSlug: string, trackSlug: string) {
+  const existing = await getTrackIfExists(userSlug, trackSlug);
+  if (existing?.data.projectSlug) {
+    const project = await getProjectIfExists(userSlug, existing.data.projectSlug);
+    if (project && project.data.trackSlugs.includes(trackSlug)) {
+      await writeProjectFile(
+        userSlug,
+        existing.data.projectSlug,
+        {
+          ...project.data,
+          trackSlugs: project.data.trackSlugs.filter((slug) => slug !== trackSlug),
+          updatedAt: new Date().toISOString()
+        },
+        project.content
+      );
+    }
+  }
   return removeFileIfExists(trackMarkdownPath(userSlug, trackSlug));
 }
 
@@ -230,4 +289,166 @@ export function getTrackMarkdownPath(userSlug: string, trackSlug: string) {
 
 export function getFragmentPath(userSlug: string, fragmentSlug: string) {
   return fragmentMarkdownPath(userSlug, fragmentSlug);
+}
+
+async function getProjectIfExists(userSlug: string, projectSlug: string) {
+  try {
+    return await getProject(userSlug, projectSlug);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function getTrackIfExists(userSlug: string, trackSlug: string) {
+  try {
+    return await getTrack(userSlug, trackSlug);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function writeProjectFile(
+  userSlug: string,
+  projectSlug: string,
+  data: ProjectFrontmatter,
+  content: string
+) {
+  await writeMarkdownFile(projectMarkdownPath(userSlug, projectSlug), projectSchema.parse(data), content);
+}
+
+async function writeTrackFile(
+  userSlug: string,
+  trackSlug: string,
+  data: TrackFrontmatter,
+  content: string
+) {
+  await writeMarkdownFile(trackMarkdownPath(userSlug, trackSlug), trackSchema.parse(data), content);
+}
+
+async function normalizeTrackAgainstProject(
+  userSlug: string,
+  track: TrackFrontmatter
+): Promise<TrackFrontmatter> {
+  if (!track.projectSlug) {
+    return track;
+  }
+  const project = await getProjectIfExists(userSlug, track.projectSlug);
+  if (!project) {
+    return track;
+  }
+  const artistSlugs = track.artistSlugs.includes(project.data.artistSlug)
+    ? track.artistSlugs
+    : [...track.artistSlugs, project.data.artistSlug];
+  return {
+    ...track,
+    artistSlugs
+  };
+}
+
+async function syncProjectMembershipForTrack(
+  userSlug: string,
+  trackSlug: string,
+  previousProjectSlug: string | undefined,
+  nextProjectSlug: string | undefined
+) {
+  if (previousProjectSlug && previousProjectSlug !== nextProjectSlug) {
+    const previousProject = await getProjectIfExists(userSlug, previousProjectSlug);
+    if (previousProject && previousProject.data.trackSlugs.includes(trackSlug)) {
+      await writeProjectFile(
+        userSlug,
+        previousProjectSlug,
+        {
+          ...previousProject.data,
+          trackSlugs: previousProject.data.trackSlugs.filter((slug) => slug !== trackSlug),
+          updatedAt: new Date().toISOString()
+        },
+        previousProject.content
+      );
+    }
+  }
+
+  if (nextProjectSlug) {
+    const nextProject = await getProjectIfExists(userSlug, nextProjectSlug);
+    if (!nextProject) {
+      return;
+    }
+    if (!nextProject.data.trackSlugs.includes(trackSlug)) {
+      await writeProjectFile(
+        userSlug,
+        nextProjectSlug,
+        {
+          ...nextProject.data,
+          trackSlugs: [...nextProject.data.trackSlugs, trackSlug],
+          updatedAt: new Date().toISOString()
+        },
+        nextProject.content
+      );
+    }
+  }
+}
+
+async function syncTracksFromProject(
+  userSlug: string,
+  projectSlug: string,
+  nextProject: ProjectFrontmatter,
+  previousTrackSlugs: string[]
+) {
+  const previousSet = new Set(previousTrackSlugs);
+  const nextSet = new Set(nextProject.trackSlugs);
+
+  for (const trackSlug of previousSet) {
+    if (nextSet.has(trackSlug)) {
+      continue;
+    }
+    const track = await getTrackIfExists(userSlug, trackSlug);
+    if (!track || track.data.projectSlug !== projectSlug) {
+      continue;
+    }
+    await writeTrackFile(
+      userSlug,
+      trackSlug,
+      {
+        ...track.data,
+        projectSlug: undefined,
+        updatedAt: new Date().toISOString()
+      },
+      track.content
+    );
+  }
+
+  for (const trackSlug of nextProject.trackSlugs) {
+    const track = await getTrackIfExists(userSlug, trackSlug);
+    if (!track) {
+      continue;
+    }
+    const artistSlugs = track.data.artistSlugs.includes(nextProject.artistSlug)
+      ? track.data.artistSlugs
+      : [...track.data.artistSlugs, nextProject.artistSlug];
+
+    const needsUpdate =
+      track.data.projectSlug !== projectSlug ||
+      artistSlugs.length !== track.data.artistSlugs.length;
+
+    if (!needsUpdate) {
+      continue;
+    }
+
+    await writeTrackFile(
+      userSlug,
+      trackSlug,
+      {
+        ...track.data,
+        projectSlug,
+        artistSlugs,
+        updatedAt: new Date().toISOString()
+      },
+      track.content
+    );
+  }
 }

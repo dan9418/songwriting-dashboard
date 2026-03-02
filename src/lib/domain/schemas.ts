@@ -42,6 +42,10 @@ export const projectSchema = baseEntitySchema.extend({
   userSlug: slugSchema,
   artistSlug: slugSchema,
   type: projectTypeSchema,
+  trackSlugs: z
+    .array(slugSchema)
+    .default([])
+    .refine((value) => new Set(value).size === value.length, "trackSlugs must not contain duplicates"),
   year: z.number().int().min(1900).max(3000).optional(),
   description: z.string().optional()
 });

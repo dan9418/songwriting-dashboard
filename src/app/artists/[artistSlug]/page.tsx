@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArtistEditor } from "@/components/editors/artist-editor";
+import { LinkedEntitiesPanel } from "@/components/entities/linked-entities-panel";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import { DEFAULT_USER_SLUG } from "@/lib/client/config";
@@ -75,22 +76,20 @@ export default function ArtistDetailPage() {
       {loading ? <div className="panel p-4 text-sm text-[color:var(--muted)]">Loading artist...</div> : null}
       {error ? <div className="panel border-red-300 p-3 text-sm text-red-800">{error}</div> : null}
 
-      {projectLinks.length > 0 ? (
-        <div className="panel p-4">
-          <h3 className="text-sm font-semibold">Linked Projects</h3>
-          <div className="mt-2 grid gap-2">
-            {projectLinks.map((project) => (
-              <Link
-                key={project.projectSlug}
-                href={`/projects/${project.projectSlug}?artist=${artistSlug}`}
-                className="rounded-lg bg-[#f8efe3] px-3 py-2 text-sm transition hover:bg-[#f0e1cf]"
-              >
-                {project.title}
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <LinkedEntitiesPanel
+        sections={[
+          {
+            key: "projects",
+            title: "Projects",
+            items: projectLinks.map((project) => ({
+              id: project.projectSlug,
+              label: project.title,
+              href: `/projects/${project.projectSlug}?artist=${artistSlug}`
+            })),
+            emptyText: "No linked projects."
+          }
+        ]}
+      />
 
       {entity ? (
         <ArtistEditor
@@ -114,4 +113,3 @@ export default function ArtistDetailPage() {
     </section>
   );
 }
-
