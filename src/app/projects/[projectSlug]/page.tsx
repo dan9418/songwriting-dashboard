@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LinkedEntitiesPanel } from "@/components/entities/linked-entities-panel";
 import { ProjectEditor } from "@/components/editors/project-editor";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
@@ -57,31 +56,23 @@ export default function ProjectDetailPage() {
           <h2 className="text-2xl font-semibold">Project Detail</h2>
           <p className="text-sm text-[color:var(--muted)]">{projectSlug}</p>
         </div>
-        <Link
-          href="/archive"
-          className="rounded-lg bg-[#f4eadb] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
-        >
-          Back To Archive
-        </Link>
+        <div className="flex items-center gap-2">
+          {entity ? (
+            <Link
+              href={`/artists/${entity.data.artistSlug}`}
+              className="rounded-lg bg-[#d8e3ff] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#c8d8ff]"
+            >
+              Artist: {entity.data.artistSlug}
+            </Link>
+          ) : null}
+          <Link
+            href="/archive"
+            className="rounded-lg bg-[#f4eadb] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
+          >
+            Back To Archive
+          </Link>
+        </div>
       </div>
-
-      {entity ? (
-        <LinkedEntitiesPanel
-          sections={[
-            {
-              key: "artist",
-              title: "Artist",
-              items: [
-                {
-                  id: entity.data.artistSlug,
-                  label: entity.data.artistSlug,
-                  href: `/artists/${entity.data.artistSlug}`
-                }
-              ]
-            }
-          ]}
-        />
-      ) : null}
 
       {loading ? <div className="panel p-4 text-sm text-[color:var(--muted)]">Loading project...</div> : null}
       {error ? <div className="panel border-red-300 p-3 text-sm text-red-800">{error}</div> : null}
