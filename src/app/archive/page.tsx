@@ -1,18 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { TrackEditor } from "@/components/editors/track-editor";
 import { ActionButton } from "@/components/ui/form-controls";
-import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import { DEFAULT_USER_SLUG } from "@/lib/client/config";
-import type { TrackData, TrackImportSummary } from "@/lib/client/types";
+import type { TrackImportSummary } from "@/lib/client/types";
 
 export default function ArchivePage() {
   const searchParams = useSearchParams();
   const userSlug = DEFAULT_USER_SLUG;
-  const { showToast } = useToast();
 
   const [artists, setArtists] = useState<Array<{ artistSlug: string; title: string }>>([]);
   const [projects, setProjects] = useState<Array<{ projectSlug: string; title: string }>>([]);
@@ -23,9 +21,7 @@ export default function ArchivePage() {
   const [projectSlug, setProjectSlug] = useState<string>("");
   const [trackSlug, setTrackSlug] = useState<string>("");
 
-  const [trackEntity, setTrackEntity] = useState<{ data: TrackData; content: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -125,34 +121,6 @@ export default function ArchivePage() {
     };
   }, [artistSlug, projectSlug, userSlug]);
 
-  useEffect(() => {
-    if (!trackSlug) {
-      setTrackEntity(null);
-      return;
-    }
-    let ignore = false;
-    async function loadTrack() {
-      try {
-        const track = await api.getTrack(userSlug, trackSlug);
-        if (!ignore) {
-          if (!artistSlug && track.data.artistSlugs[0]) {
-            setArtistSlug(track.data.artistSlugs[0]);
-          }
-          if (!projectSlug && track.data.projectSlug) {
-            setProjectSlug(track.data.projectSlug);
-          }
-          setTrackEntity(track);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load track detail.");
-      }
-    }
-    loadTrack();
-    return () => {
-      ignore = true;
-    };
-  }, [artistSlug, projectSlug, trackSlug, userSlug]);
-
   const headerMeta = useMemo(() => {
     const artistTitle = artists.find((artist) => artist.artistSlug === artistSlug)?.title ?? "No artist";
     const projectTitle = projects.find((project) => project.projectSlug === projectSlug)?.title ?? "No project";
@@ -181,7 +149,7 @@ export default function ArchivePage() {
       {error ? <div className="panel border-red-300 p-3 text-sm text-red-800">{error}</div> : null}
       {loading ? <div className="panel p-4 text-sm text-[color:var(--muted)]">Loading archive...</div> : null}
 
-      <div className="grid gap-4 lg:grid-cols-[220px_220px_260px_minmax(0,1fr)]">
+      <div className="grid gap-4 lg:grid-cols-[220px_220px_minmax(0,1fr)]">
         <div className="panel p-3">
           <h3 className="mb-2 text-sm font-semibold">Artists</h3>
           <div className="grid gap-2">
@@ -236,50 +204,20 @@ export default function ArchivePage() {
           ) : null}
           <div className="grid gap-2">
             {tracks.map((track) => (
-              <button
+              <Link
                 key={track.trackSlug}
+                href={`/tracks/${track.trackSlug}?from=archive&artist=${artistSlug}&project=${projectSlug}&track=${track.trackSlug}`}
                 className={`rounded-lg px-2 py-1 text-left text-sm ${
                   track.trackSlug === trackSlug ? "bg-[color:var(--accent-soft)]" : "hover:bg-[#f2eadf]"
                 }`}
-                onClick={() => {
-                  setTrackSlug(track.trackSlug);
-                }}
               >
                 {track.title}
-              </button>
+              </Link>
             ))}
             {tracks.length === 0 ? <p className="text-sm text-[color:var(--muted)]">No tracks found.</p> : null}
           </div>
         </div>
 
-        <div>
-          {trackEntity ? (
-            <TrackEditor
-              value={trackEntity.data}
-              content={trackEntity.content}
-              saving={saving}
-              onSave={async (nextData, nextContent) => {
-                setSaving(true);
-                try {
-                  const next = await api.putTrack(
-                    userSlug,
-                    trackSlug,
-                    nextData,
-                    nextContent
-                  );
-                  setTrackEntity(next);
-                  showToast("Track updated.");
-                } catch (err) {
-                  showToast(err instanceof Error ? err.message : "Failed to save track.", "error");
-                } finally {
-                  setSaving(false);
-                }
-              }}
-            />
-          ) : (
-            <div className="panel p-4 text-sm text-[color:var(--muted)]">Select a track to start editing.</div>
-          )}
-        </div>
       </div>
     </section>
   );

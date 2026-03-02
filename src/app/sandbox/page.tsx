@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FragmentEditor } from "@/components/editors/fragment-editor";
-import { TrackEditor } from "@/components/editors/track-editor";
 import { ActionButton, Field, TextInput } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
@@ -59,7 +59,6 @@ export default function SandboxPage() {
 
   const [tracks, setTracks] = useState<Array<{ trackSlug: string; title: string }>>([]);
   const [fragments, setFragments] = useState<Array<{ fragmentSlug: string; title: string }>>([]);
-  const [trackEntity, setTrackEntity] = useState<{ data: TrackData; content: string } | null>(null);
   const [fragmentEntity, setFragmentEntity] = useState<{ data: FragmentData; content: string } | null>(null);
   const [trackImportSummary, setTrackImportSummary] = useState<TrackImportSummary | null>(null);
   const [fragmentImportSummary, setFragmentImportSummary] = useState<FragmentImportSummary | null>(null);
@@ -123,19 +122,6 @@ export default function SandboxPage() {
     }
     loadFragments();
   }, [tab, userSlug]);
-
-  useEffect(() => {
-    if (tab !== "tracks") {
-      return;
-    }
-    if (!trackSlug) {
-      setTrackEntity(null);
-      return;
-    }
-    api.getTrack(userSlug, trackSlug).then(setTrackEntity).catch((err) => {
-      setError(err instanceof Error ? err.message : "Failed to load track.");
-    });
-  }, [tab, trackSlug, userSlug]);
 
   useEffect(() => {
     if (tab !== "fragments") {
@@ -228,57 +214,42 @@ export default function SandboxPage() {
                 {fragmentImportSummary.failed > 0 ? ` (${fragmentImportSummary.failed} failed)` : ""}.
               </p>
             ) : null}
-            {(tab === "tracks" ? tracks : fragments).map((item) => {
-              const slug = tab === "tracks" ? (item as { trackSlug: string }).trackSlug : (item as { fragmentSlug: string }).fragmentSlug;
-              const title = item.title;
-              const active = tab === "tracks" ? trackSlug === slug : fragmentSlug === slug;
-              return (
-                <button
-                  key={slug}
-                  className={`rounded-lg px-2 py-1 text-left text-sm ${
-                    active ? "bg-[color:var(--accent-soft)]" : "hover:bg-[#f2eadf]"
-                  }`}
-                  onClick={() => {
-                    if (tab === "tracks") {
-                      setTrackSlug(slug);
-                    } else {
-                      setFragmentSlug(slug);
-                    }
-                  }}
-                >
-                  {title}
-                </button>
-              );
-            })}
+
+            {tab === "tracks"
+              ? tracks.map((track) => (
+                  <Link
+                    key={track.trackSlug}
+                    href={`/tracks/${track.trackSlug}?from=sandbox&tab=tracks&track=${track.trackSlug}`}
+                    className={`rounded-lg px-2 py-1 text-left text-sm ${
+                      track.trackSlug === trackSlug ? "bg-[color:var(--accent-soft)]" : "hover:bg-[#f2eadf]"
+                    }`}
+                  >
+                    {track.title}
+                  </Link>
+                ))
+              : fragments.map((fragment) => (
+                  <button
+                    key={fragment.fragmentSlug}
+                    className={`rounded-lg px-2 py-1 text-left text-sm ${
+                      fragment.fragmentSlug === fragmentSlug
+                        ? "bg-[color:var(--accent-soft)]"
+                        : "hover:bg-[#f2eadf]"
+                    }`}
+                    onClick={() => {
+                      setFragmentSlug(fragment.fragmentSlug);
+                    }}
+                  >
+                    {fragment.title}
+                  </button>
+                ))}
           </div>
         </div>
 
         <div>
           {tab === "tracks" ? (
-            trackEntity ? (
-              <TrackEditor
-                value={trackEntity.data}
-                content={trackEntity.content}
-                saving={saving}
-                onSave={async (nextData, nextContent) => {
-                  setSaving(true);
-                  try {
-                    const saved = await api.putTrack(userSlug, nextData.slug, nextData, nextContent);
-                    setTrackEntity(saved);
-                    showToast("Sandbox track saved.");
-                    const response = await api.listTracks(userSlug);
-                    setTrackImportSummary(response.summary);
-                    setTracks(response.items.map((item) => ({ trackSlug: item.trackSlug, title: item.data.title })));
-                  } catch (err) {
-                    showToast(err instanceof Error ? err.message : "Save failed.", "error");
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
-              />
-            ) : (
-              <div className="panel p-4 text-sm text-[color:var(--muted)]">Select or create a sandbox track.</div>
-            )
+            <div className="panel p-4 text-sm text-[color:var(--muted)]">
+              Track editing moved to a dedicated page. Select a track to open its standalone editor.
+            </div>
           ) : fragmentEntity ? (
             <FragmentEditor
               value={fragmentEntity.data}
@@ -310,3 +281,4 @@ export default function SandboxPage() {
     </section>
   );
 }
+

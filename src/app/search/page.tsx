@@ -12,7 +12,7 @@ function openResultRoute(result: SearchResult): string {
     return `/sandbox?tab=fragments&fragment=${result.slug}`;
   }
   if (result.type === "track") {
-    return `/archive?track=${result.slug}`;
+    return `/tracks/${result.slug}?from=search`;
   }
   if (result.type === "project") {
     return `/archive?project=${result.slug}`;
