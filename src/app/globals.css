@@ -3,19 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f6f1e8;
-  --bg-panel: #fffdf7;
-  --surface: #fef9ef;
-  --ink: #1a1b1e;
-  --muted: #5f6470;
-  --accent: #0f766e;
-  --accent-soft: #ccfbf1;
+  --bg: #eef2f7;
+  --bg-panel: #f8fbff;
+  --surface: #eaf0f9;
+  --ink: #1d2634;
+  --muted: #5f6d83;
+  --accent: #4f6db8;
+  --accent-soft: #d8e3ff;
   --warn: #b91c1c;
   color-scheme: light;
 }
 
 body {
-  background: radial-gradient(circle at 20% -5%, #fce7c6 0%, var(--bg) 45%, #efe7da 100%);
+  background: radial-gradient(circle at 18% -5%, #ddd9f6 0%, #e6f0ff 30%, var(--bg) 58%, #dff2ea 100%);
   color: var(--ink);
   font-family: var(--font-body), sans-serif;
   min-height: 100vh;
@@ -31,9 +31,9 @@ h4 {
 
 .panel {
   background: var(--bg-panel);
-  border: 1px solid #e7ddcd;
+  border: 1px solid #d6e0ee;
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(35, 32, 21, 0.07);
+  box-shadow: 0 8px 24px rgba(31, 48, 78, 0.08);
 }
 
 .fade-up {
