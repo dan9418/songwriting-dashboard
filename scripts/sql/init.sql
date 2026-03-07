@@ -29,9 +29,9 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS tracks (
   user_id INTEGER NOT NULL,
   slug TEXT NOT NULL CHECK (length(trim(slug)) > 0),
-  lyrics_path TEXT NOT NULL,
-  notes_path TEXT NOT NULL,
-  chords_path TEXT NOT NULL,
+  lyrics_path TEXT,
+  notes_path TEXT,
+  chords_path TEXT,
   PRIMARY KEY (user_id, slug),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
