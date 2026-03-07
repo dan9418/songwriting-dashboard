@@ -2,6 +2,8 @@
 songwriting-data/**/*.mp4
 songwriting-data/**/*.m4a
 
+tsconfig.buildinfo
+
 node_modules
 
 .next
