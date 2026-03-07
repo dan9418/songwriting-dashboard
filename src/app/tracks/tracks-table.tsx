@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 export interface TracksTableItem {
@@ -45,7 +46,11 @@ export function TracksTable({ items }: { items: TracksTableItem[] }) {
         <tbody>
           {sortedItems.map((item) => (
             <tr key={item.slug} className="border-b border-[#efe3d3] align-top">
-              <td className="px-2 py-2 font-medium text-[color:var(--ink)]">{item.name}</td>
+              <td className="px-2 py-2 font-medium text-[color:var(--ink)]">
+                <Link href={`/tracks/${item.slug}`} className="underline-offset-4 hover:underline">
+                  {item.name}
+                </Link>
+              </td>
               <td className="px-2 py-2">
                 {item.audioCount} total ({item.noteCount} note, {item.demoCount} demo, {item.liveCount} live)
               </td>
