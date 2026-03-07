@@ -1,0 +1,15 @@
+{
+  "d1_databases": [
+    {
+      "binding": "songwriting_dashboard",
+      "database_name": "songwriting-dashboard",
+      "database_id": "37342617-4e98-4680-b4d1-7b4bcd1fc67b"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "bucket_name": "songwriting-media",
+      "binding": "songwriting_media"
+    }
+  ]
+}
