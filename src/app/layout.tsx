@@ -16,7 +16,7 @@ const bodyFont = Source_Sans_3({
 
 export const metadata: Metadata = {
   title: "Songwriting Dashboard",
-  description: "Local-first songwriter metadata manager"
+  description: "Cloudflare-backed songwriter metadata manager"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

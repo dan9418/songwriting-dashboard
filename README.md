@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is a local-first songwriter data management system designed to replace ad hoc filesystem organization with a structured, enforceable metadata-driven architecture.
+This is a songwriter data management system backed by Cloudflare D1 (metadata) and R2 (media/files), designed to replace ad hoc filesystem organization with a structured, enforceable metadata-driven architecture.
 
 The app manages:
 - Archived music projects (albums, EPs, singles, setlists)
@@ -12,12 +12,9 @@ The app manages:
 
 ## Core Principles
 
-1. Filesystem is the source of truth.
-2. Markdown files store all metadata and structured content.
-3. Audio and image files are manually managed outside the app.
-4. The app edits metadata only.
-5. Audio filenames are strictly validated by naming convention.
-6. Slugs are derived from required metadata.
+1. D1 stores relational metadata used by the app.
+2. R2 stores media and file assets referenced by metadata.
+3. Slugs and relationships are enforced in the database layer.
 
 ## Entity Model
 
@@ -35,28 +32,10 @@ Relationship model:
 Sandbox behavior:
 - Sandbox tracks are tracks with no `projectSlug`.
 
-## Filesystem Architecture
+## Data Architecture
 
-```text
-songwriting-data/
-  users/
-    {user}/
-      user.md
-      artists/
-        {artist}/
-          artist.md
-      projects/
-        {project}/
-          project.md
-      tracks/
-        {track}/
-          track.md
-          audio/
-          img/
-      fragments/
-        {fragment}/
-          fragment.md
-```
+- D1 schema and seed scripts: `scripts/sql/` and `scripts/seed-d1.js`
+- R2 media upload helper: `scripts/upload-media.js`
 
 ## Audio Filename Convention
 

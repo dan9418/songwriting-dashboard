@@ -6,8 +6,7 @@ import type { ReactNode } from "react";
 
 const PRIMARY_NAV_ITEMS = [
   { href: "/", label: "Home" },
-  { href: "/archive", label: "Archive" },
-  { href: "/sandbox", label: "Sandbox" }
+  { href: "/tracks", label: "Tracks" }
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -39,36 +38,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {item.label}
               </Link>
             ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/search"
-              aria-label="Search"
-              className={`rounded-lg p-2 transition ${
-                pathname?.startsWith("/search")
-                  ? "bg-[color:var(--accent)] text-white"
-                  : "bg-[color:var(--surface)] text-[color:var(--ink)] hover:bg-[#f3e8d7]"
-              }`}
-            >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-            </Link>
-            <Link
-              href="/account"
-              aria-label="Account"
-              className={`rounded-lg p-2 transition ${
-                pathname?.startsWith("/account")
-                  ? "bg-[color:var(--accent)] text-white"
-                  : "bg-[color:var(--surface)] text-[color:var(--ink)] hover:bg-[#f3e8d7]"
-              }`}
-            >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 20c1.8-3.2 4.5-5 8-5s6.2 1.8 8 5" />
-              </svg>
-            </Link>
           </div>
         </header>
         <main className="fade-up">{children}</main>

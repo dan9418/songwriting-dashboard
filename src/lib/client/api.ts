@@ -3,11 +3,9 @@ import type {
   FragmentData,
   MarkdownEntity,
   ProjectData,
-  SearchResult,
+  TrackListItem,
   TrackData,
-  FragmentImportSummary,
-  TrackImportSummary,
-  UserData
+  FragmentImportSummary
 } from "@/lib/client/types";
 
 async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
@@ -31,13 +29,6 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  getUser: (userSlug: string) => apiRequest<MarkdownEntity<UserData>>(`/api/user/${userSlug}`),
-  patchUser: (userSlug: string, data: Partial<UserData>, content?: string) =>
-    apiRequest<MarkdownEntity<UserData>>(`/api/user/${userSlug}`, {
-      method: "PATCH",
-      body: JSON.stringify({ data, content })
-    }),
-
   listArtists: (userSlug: string) =>
     apiRequest<{ items: Array<MarkdownEntity<ArtistData> & { artistSlug: string }> }>(
       `/api/artists/${userSlug}`
@@ -68,27 +59,7 @@ export const api = {
       body: JSON.stringify({ data, content })
     }),
 
-  listTracks: (
-    userSlug: string,
-    options?: { projectSlug?: string; artistSlug?: string; scope?: "archive" | "sandbox" }
-  ) => {
-    const url = new URL(`/api/tracks/${userSlug}`, window.location.origin);
-    if (options?.projectSlug) {
-      url.searchParams.set("projectSlug", options.projectSlug);
-    }
-    if (options?.artistSlug) {
-      url.searchParams.set("artistSlug", options.artistSlug);
-    }
-    if (options?.scope === "sandbox") {
-      url.searchParams.set("scope", "sandbox");
-    }
-    return apiRequest<{
-      items: Array<MarkdownEntity<TrackData> & { trackSlug: string }>;
-      summary: TrackImportSummary;
-    }>(
-      `${url.pathname}${url.search}`
-    );
-  },
+  listTracks: (userSlug: string) => apiRequest<{ items: TrackListItem[] }>(`/api/tracks/${userSlug}`),
 
   getTrack: (userSlug: string, trackSlug: string) =>
     apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}/${trackSlug}`),
@@ -131,19 +102,5 @@ export const api = {
     apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments/${userSlug}/${fragmentSlug}`, {
       method: "PUT",
       body: JSON.stringify({ data, content })
-    }),
-
-  search: (userSlug: string, q: string, tags: string[], type?: SearchResult["type"] | "all") => {
-    const url = new URL(`/api/search/${userSlug}`, window.location.origin);
-    if (q.trim()) {
-      url.searchParams.set("q", q.trim());
-    }
-    if (tags.length > 0) {
-      url.searchParams.set("tags", tags.join(","));
-    }
-    if (type && type !== "all") {
-      url.searchParams.set("type", type);
-    }
-    return apiRequest<{ items: SearchResult[] }>(`${url.pathname}${url.search}`);
-  }
+    })
 };
