@@ -12,6 +12,10 @@ interface DocResponse {
   exists: boolean;
   content: string;
   etag: string | null;
+  parsed: {
+    data: Record<string, unknown>;
+    content: string;
+  } | null;
 }
 
 function toLabel(type: DocType): string {
@@ -23,6 +27,7 @@ function buildStarterText(type: DocType): string {
 }
 
 export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: DocType }) {
+  const [mode, setMode] = useState<"published" | "edit">("published");
   const label = useMemo(() => toLabel(type), [type]);
   const endpoint = useMemo(
     () => `/api/tracks/dan/${encodeURIComponent(trackSlug)}/docs/${type}`,
@@ -85,6 +90,7 @@ export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: 
       setRecord(payload as DocResponse);
       setContent((payload as DocResponse).content);
       setMessage(`${label} file created.`);
+      setMode("edit");
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : `Failed to create ${type} file.`);
     } finally {
@@ -109,6 +115,7 @@ export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: 
       setRecord(payload as DocResponse);
       setContent((payload as DocResponse).content);
       setMessage(`${label} file saved.`);
+      setMode("published");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : `Failed to save ${type} file.`);
     } finally {
@@ -134,10 +141,12 @@ export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: 
           path: null,
           exists: false,
           content: "",
-          etag: null
+          etag: null,
+          parsed: null
         });
         setContent("");
         setMessage(`${label} file deleted.`);
+        setMode("published");
       } else {
         setMessage(`${label} file did not exist.`);
       }
@@ -150,7 +159,29 @@ export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: 
 
   return (
     <div className="panel p-4">
-      <h2 className="text-lg font-semibold">{label}</h2>
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="text-lg font-semibold">{label}</h2>
+
+        {record?.exists ? (
+          <div className="flex items-center gap-2">
+            {mode === "edit" ? (
+              <>
+                <ActionButton tone="danger" disabled={saving || deleting} onClick={removeDoc}>
+                  {deleting ? "Deleting..." : "Delete"}
+                </ActionButton>
+                <ActionButton disabled={saving || deleting} onClick={saveDoc}>
+                  {saving ? "Saving..." : "Save"}
+                </ActionButton>
+              </>
+            ) : (
+              <ActionButton disabled={saving || deleting} onClick={() => setMode("edit")}>
+                Edit
+              </ActionButton>
+            )}
+          </div>
+        ) : null}
+      </div>
+
       {loading ? <p className="mt-2 text-sm text-[color:var(--muted)]">Loading...</p> : null}
       {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
       {message ? <p className="mt-2 text-sm text-[color:var(--muted)]">{message}</p> : null}
@@ -167,15 +198,21 @@ export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: 
       {!loading && record && record.exists ? (
         <div data-color-mode="light" className="mt-3 grid gap-3">
           <p className="text-xs text-[color:var(--muted)] break-all">{record.path}</p>
-          <MDEditor value={content} onChange={(next) => setContent(next ?? "")} preview="edit" height={240} />
-          <div className="flex items-center gap-2">
-            <ActionButton disabled={saving || deleting} onClick={saveDoc}>
-              {saving ? "Saving..." : "Save"}
-            </ActionButton>
-            <ActionButton tone="danger" disabled={saving || deleting} onClick={removeDoc}>
-              {deleting ? "Deleting..." : "Delete"}
-            </ActionButton>
-          </div>
+
+          {mode === "published" ? (
+            <MDEditor.Markdown
+              source={
+                record.parsed?.content && record.parsed.content.trim().length > 0
+                  ? record.parsed.content
+                  : "_No content yet._"
+              }
+              style={{ backgroundColor: "transparent", padding: 0 }}
+            />
+          ) : null}
+
+          {mode === "edit" ? (
+            <MDEditor value={content} onChange={(next) => setContent(next ?? "")} preview="edit" height={240} />
+          ) : null}
         </div>
       ) : null}
     </div>
