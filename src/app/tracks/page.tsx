@@ -1,24 +1,19 @@
 import { listTracksFromCloudflare } from "@/lib/cloudflare/tracks";
 import { TracksTable, type TracksTableItem } from "@/app/tracks/tracks-table";
+import { slugToTitle } from "@/lib/utils/slug-display";
 
 export const dynamic = "force-dynamic";
 
 const USER_SLUG = "dan";
-
-function formatTrackNameFromSlug(slug: string): string {
-  return slug
-    .split("-")
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
-}
 
 export default async function TracksPage() {
   try {
     const sourceItems = await listTracksFromCloudflare(USER_SLUG);
     const items: TracksTableItem[] = sourceItems.map((item) => ({
       slug: item.slug,
-      name: formatTrackNameFromSlug(item.slug),
+      name: slugToTitle(item.slug),
+      projectSlug: item.projectSlug,
+      artistSlugs: item.artistSlugs,
       audioCount: item.audioCount,
       noteCount: item.noteCount,
       demoCount: item.demoCount,

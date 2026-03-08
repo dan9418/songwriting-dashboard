@@ -15,9 +15,15 @@ interface TrackRow {
   liveCount: number | string;
 }
 
+interface TrackArtistRow {
+  trackSlug: string;
+  artistSlug: string;
+}
+
 export interface CloudflareTrackListItem {
   slug: string;
   projectSlug: string | null;
+  artistSlugs: string[];
   projectPosition: number | null;
   lyricsPath: string | null;
   notesPath: string | null;
@@ -89,10 +95,27 @@ export async function listTracksFromCloudflare(userSlug: string): Promise<Cloudf
     `,
     [userId]
   );
+  const trackArtistRows = await queryD1<TrackArtistRow>(
+    `
+    SELECT
+      track_slug AS trackSlug,
+      artist_slug AS artistSlug
+    FROM track_artists
+    WHERE user_id = ?;
+    `,
+    [userId]
+  );
+  const artistSlugsByTrack = new Map<string, string[]>();
+  for (const row of trackArtistRows) {
+    const existing = artistSlugsByTrack.get(row.trackSlug) ?? [];
+    existing.push(row.artistSlug);
+    artistSlugsByTrack.set(row.trackSlug, existing);
+  }
 
   return rows.map((row) => ({
     slug: row.slug,
     projectSlug: row.projectSlug,
+    artistSlugs: artistSlugsByTrack.get(row.slug) ?? [],
     projectPosition: row.projectPosition,
     lyricsPath: row.lyricsPath,
     notesPath: row.notesPath,
@@ -153,12 +176,21 @@ export async function getTrackMetadataFromCloudflare(
     `,
     [userId, trackSlug]
   );
+  const artistRows = await queryD1<{ artistSlug: string }>(
+    `
+    SELECT artist_slug AS artistSlug
+    FROM track_artists
+    WHERE user_id = ? AND track_slug = ?;
+    `,
+    [userId, trackSlug]
+  );
   const audioFiles = await listTrackAudioFilesFromR2(userSlug, trackSlug);
   const audioFileBySlug = new Map(audioFiles.map((item) => [item.slug, item]));
 
   return {
     slug: track.slug,
     projectSlug: track.projectSlug,
+    artistSlugs: artistRows.map((item) => item.artistSlug),
     projectPosition: track.projectPosition,
     lyricsPath: track.lyricsPath,
     notesPath: track.notesPath,

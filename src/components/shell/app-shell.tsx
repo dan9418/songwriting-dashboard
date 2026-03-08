@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 
 const PRIMARY_NAV_ITEMS = [
   { href: "/", label: "Home" },
+  { href: "/artists", label: "Artists" },
+  { href: "/projects", label: "Projects" },
   { href: "/tracks", label: "Tracks" }
 ];
 
