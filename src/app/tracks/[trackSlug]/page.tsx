@@ -14,6 +14,39 @@ function formatTrackNameFromSlug(slug: string): string {
     .join(" ");
 }
 
+function hasPath(value: string | null): boolean {
+  return Boolean(value && value.trim().length > 0);
+}
+
+function MarkdownCard({
+  title,
+  pathValue
+}: {
+  title: "Lyrics" | "Chords" | "Notes";
+  pathValue: string | null;
+}) {
+  const exists = hasPath(pathValue);
+
+  return (
+    <div className="panel p-4">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      {exists ? (
+        <p className="mt-2 text-sm text-[color:var(--muted)]">Configured path: {pathValue}</p>
+      ) : (
+        <>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">No {title.toLowerCase()} markdown file exists yet.</p>
+          <button
+            type="button"
+            className="mt-3 rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
+          >
+            Add {title} File
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default async function TrackByIdPage({
   params
 }: {
@@ -41,25 +74,10 @@ export default async function TrackByIdPage({
         </Link>
       </div>
 
-      <div className="panel overflow-x-auto p-4">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b border-[#ddcfbd] text-xs uppercase tracking-wide text-[color:var(--muted)]">
-              <th className="px-2 py-2 font-semibold">Name</th>
-              <th className="px-2 py-2 font-semibold">Lyrics</th>
-              <th className="px-2 py-2 font-semibold">Chords</th>
-              <th className="px-2 py-2 font-semibold">Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b border-[#efe3d3]">
-              <td className="px-2 py-3 font-medium text-[color:var(--ink)]">{formatTrackNameFromSlug(track.slug)}</td>
-              <td className="px-2 py-3">&nbsp;</td>
-              <td className="px-2 py-3">&nbsp;</td>
-              <td className="px-2 py-3">&nbsp;</td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="grid gap-4 md:grid-cols-3">
+        <MarkdownCard title="Lyrics" pathValue={track.lyricsPath} />
+        <MarkdownCard title="Chords" pathValue={track.chordsPath} />
+        <MarkdownCard title="Notes" pathValue={track.notesPath} />
       </div>
 
       <div className="panel overflow-x-auto p-4">
