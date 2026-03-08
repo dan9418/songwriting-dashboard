@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
+import "@uiw/react-md-editor/markdown-editor.css";
+import "@uiw/react-markdown-preview/markdown.css";
 import { ToastProvider } from "@/components/ui/toast";
 import { AppShell } from "@/components/shell/app-shell";
 

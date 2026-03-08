@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
+import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
 
 export const dynamic = "force-dynamic";
 
@@ -12,39 +13,6 @@ function formatTrackNameFromSlug(slug: string): string {
     .filter(Boolean)
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join(" ");
-}
-
-function hasPath(value: string | null): boolean {
-  return Boolean(value && value.trim().length > 0);
-}
-
-function MarkdownCard({
-  title,
-  pathValue
-}: {
-  title: "Lyrics" | "Chords" | "Notes";
-  pathValue: string | null;
-}) {
-  const exists = hasPath(pathValue);
-
-  return (
-    <div className="panel p-4">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      {exists ? (
-        <p className="mt-2 text-sm text-[color:var(--muted)]">Configured path: {pathValue}</p>
-      ) : (
-        <>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">No {title.toLowerCase()} markdown file exists yet.</p>
-          <button
-            type="button"
-            className="mt-3 rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
-          >
-            Add {title} File
-          </button>
-        </>
-      )}
-    </div>
-  );
 }
 
 export default async function TrackByIdPage({
@@ -75,9 +43,9 @@ export default async function TrackByIdPage({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MarkdownCard title="Lyrics" pathValue={track.lyricsPath} />
-        <MarkdownCard title="Chords" pathValue={track.chordsPath} />
-        <MarkdownCard title="Notes" pathValue={track.notesPath} />
+        <MarkdownDocCard trackSlug={track.slug} type="lyrics" />
+        <MarkdownDocCard trackSlug={track.slug} type="chords" />
+        <MarkdownDocCard trackSlug={track.slug} type="notes" />
       </div>
 
       <div className="panel overflow-x-auto p-4">
