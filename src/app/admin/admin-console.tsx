@@ -10,6 +10,17 @@ type BucketRowsMap = Record<string, R2ObjectSummary[]>;
 type ErrorMap = Record<string, string>;
 type LoadingMap = Record<string, boolean>;
 
+const JOIN_TABLE_NAMES = new Set([
+  "artist_images",
+  "artist_social_links",
+  "project_artists",
+  "project_tracks",
+  "project_images",
+  "project_social_links",
+  "track_artists",
+  "track_images"
+]);
+
 export function AdminConsole({
   tables,
   buckets
@@ -23,6 +34,9 @@ export function AdminConsole({
   const [bucketErrors, setBucketErrors] = useState<ErrorMap>({});
   const [tableLoading, setTableLoading] = useState<LoadingMap>({});
   const [bucketLoading, setBucketLoading] = useState<LoadingMap>({});
+  const [loadingAll, setLoadingAll] = useState(false);
+  const coreTables = tables.filter((table) => !JOIN_TABLE_NAMES.has(table.name));
+  const joinTables = tables.filter((table) => JOIN_TABLE_NAMES.has(table.name));
 
   async function loadTableRows(tableName: string) {
     setTableLoading((prev) => ({ ...prev, [tableName]: true }));
@@ -64,11 +78,29 @@ export function AdminConsole({
     }
   }
 
+  async function loadAllData() {
+    setLoadingAll(true);
+    try {
+      await Promise.all([
+        ...tables.map((table) => loadTableRows(table.name)),
+        ...buckets.map((bucket) => loadBucketRows(bucket.name))
+      ]);
+    } finally {
+      setLoadingAll(false);
+    }
+  }
+
   return (
     <div className="grid gap-6">
+      <section className="panel flex items-center justify-end p-4">
+        <ActionButton disabled={loadingAll} onClick={loadAllData}>
+          {loadingAll ? "Loading All..." : "Load All"}
+        </ActionButton>
+      </section>
+
       <section className="grid gap-3">
-        <h2 className="text-xl font-semibold">D1 Tables</h2>
-        {tables.map((table) => (
+        <h2 className="text-xl font-semibold">D1 Core Tables</h2>
+        {coreTables.map((table) => (
           <div key={table.name} className="panel grid gap-3 p-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-lg font-semibold">{table.name}</h3>
@@ -107,9 +139,68 @@ export function AdminConsole({
 
             {tableErrors[table.name] ? <p className="text-sm text-red-700">{tableErrors[table.name]}</p> : null}
             {tableRows[table.name] ? (
-              <pre className="overflow-x-auto rounded-lg bg-[#f8efe3] p-3 text-xs text-[color:var(--ink)]">
-                {JSON.stringify(tableRows[table.name], null, 2)}
-              </pre>
+              <details className="rounded-lg bg-[#f8efe3]">
+                <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
+                  Loaded Data ({tableRows[table.name].length} rows)
+                </summary>
+                <pre className="overflow-x-auto border-t border-[#e2d4c1] p-3 text-xs text-[color:var(--ink)]">
+                  {JSON.stringify(tableRows[table.name], null, 2)}
+                </pre>
+              </details>
+            ) : null}
+          </div>
+        ))}
+      </section>
+
+      <section className="grid gap-3">
+        <h2 className="text-xl font-semibold">D1 Join Tables</h2>
+        {joinTables.map((table) => (
+          <div key={table.name} className="panel grid gap-3 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-lg font-semibold">{table.name}</h3>
+              <ActionButton
+                disabled={tableLoading[table.name] === true}
+                onClick={() => loadTableRows(table.name)}
+              >
+                {tableLoading[table.name] ? "Loading..." : "Load Data"}
+              </ActionButton>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="border-b border-[#ddcfbd] uppercase tracking-wide text-[color:var(--muted)]">
+                    <th className="px-2 py-2">Column</th>
+                    <th className="px-2 py-2">Type</th>
+                    <th className="px-2 py-2">Not Null</th>
+                    <th className="px-2 py-2">Primary Key</th>
+                    <th className="px-2 py-2">Default</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {table.columns.map((column) => (
+                    <tr key={`${table.name}-${column.cid}`} className="border-b border-[#efe3d3]">
+                      <td className="px-2 py-2">{column.name}</td>
+                      <td className="px-2 py-2">{column.type || "-"}</td>
+                      <td className="px-2 py-2">{column.notNull ? "yes" : "no"}</td>
+                      <td className="px-2 py-2">{column.isPrimaryKey ? "yes" : "no"}</td>
+                      <td className="px-2 py-2">{column.defaultValue === null ? "-" : String(column.defaultValue)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {tableErrors[table.name] ? <p className="text-sm text-red-700">{tableErrors[table.name]}</p> : null}
+            {tableRows[table.name] ? (
+              <details className="rounded-lg bg-[#f8efe3]">
+                <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
+                  Loaded Data ({tableRows[table.name].length} rows)
+                </summary>
+                <pre className="overflow-x-auto border-t border-[#e2d4c1] p-3 text-xs text-[color:var(--ink)]">
+                  {JSON.stringify(tableRows[table.name], null, 2)}
+                </pre>
+              </details>
             ) : null}
           </div>
         ))}
@@ -132,9 +223,14 @@ export function AdminConsole({
             <p className="text-xs text-[color:var(--muted)]">Object shape: {bucket.fields.join(", ")}</p>
             {bucketErrors[bucket.name] ? <p className="text-sm text-red-700">{bucketErrors[bucket.name]}</p> : null}
             {bucketRows[bucket.name] ? (
-              <pre className="overflow-x-auto rounded-lg bg-[#f8efe3] p-3 text-xs text-[color:var(--ink)]">
-                {JSON.stringify(bucketRows[bucket.name], null, 2)}
-              </pre>
+              <details className="rounded-lg bg-[#f8efe3]">
+                <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
+                  Loaded Data ({bucketRows[bucket.name].length} objects)
+                </summary>
+                <pre className="overflow-x-auto border-t border-[#e2d4c1] p-3 text-xs text-[color:var(--ink)]">
+                  {JSON.stringify(bucketRows[bucket.name], null, 2)}
+                </pre>
+              </details>
             ) : null}
           </div>
         ))}
