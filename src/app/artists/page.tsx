@@ -1,4 +1,4 @@
-import { SortableNameTable } from "@/components/entities/sortable-name-table";
+import { SortableNameCardList } from "@/components/entities/sortable-name-card-list";
 import { listArtistsFromCloudflare } from "@/lib/cloudflare/catalog";
 import { slugToTitle } from "@/lib/utils/slug-display";
 
@@ -17,30 +17,29 @@ export default async function ArtistsPage() {
           <p className="text-sm text-[color:var(--muted)]">Showing {sourceItems.length} artists for Dan.</p>
         </div>
 
-        <SortableNameTable
-          columnHeaders={["Projects", "Tracks"]}
+        <SortableNameCardList
           emptyMessage="No artists found."
           items={sourceItems.map((artist) => ({
             id: artist.slug,
             name: artist.name || slugToTitle(artist.slug),
             nameHref: `/artists#${artist.slug}`,
-            cells: [
-              artist.projectSlugs.length > 0
-                ? {
-                    links: artist.projectSlugs.map((project) => ({
-                      label: project.name || slugToTitle(project.slug),
-                      href: `/projects#${project.slug}`
-                    }))
-                  }
-                : { text: "-" },
-              artist.trackSlugs.length > 0
-                ? {
-                    links: artist.trackSlugs.map((trackSlug) => ({
-                      label: slugToTitle(trackSlug),
-                      href: `/tracks/${trackSlug}`
-                    }))
-                  }
-                : { text: "-" }
+            fields: [
+              {
+                label: "Projects",
+                links: artist.projectSlugs.map((project) => ({
+                  label: project.name || slugToTitle(project.slug),
+                  href: `/projects#${project.slug}`
+                })),
+                linkStyle: "stacked"
+              },
+              {
+                label: "Tracks",
+                links: artist.trackSlugs.map((trackSlug) => ({
+                  label: slugToTitle(trackSlug),
+                  href: `/tracks/${trackSlug}`
+                })),
+                linkStyle: "ordered"
+              }
             ]
           }))}
         />

@@ -1,4 +1,4 @@
-import { SortableNameTable } from "@/components/entities/sortable-name-table";
+import { SortableNameCardList } from "@/components/entities/sortable-name-card-list";
 import { listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
 import { slugToTitle } from "@/lib/utils/slug-display";
 
@@ -24,31 +24,30 @@ export default async function ProjectsPage() {
           <p className="text-sm text-[color:var(--muted)]">Showing {sourceItems.length} projects for Dan.</p>
         </div>
 
-        <SortableNameTable
-          columnHeaders={["Type", "Artists", "Tracks"]}
+        <SortableNameCardList
           emptyMessage="No projects found."
           items={sourceItems.map((project) => ({
             id: project.slug,
             name: project.name || slugToTitle(project.slug),
             nameHref: `/projects#${project.slug}`,
-            cells: [
-              { text: toTypeLabel(project.type) },
-              project.artistSlugs.length > 0
-                ? {
-                    links: project.artistSlugs.map((artist) => ({
-                      label: artist.name || slugToTitle(artist.slug),
-                      href: `/artists#${artist.slug}`
-                    }))
-                  }
-                : { text: "-" },
-              project.trackSlugs.length > 0
-                ? {
-                    links: project.trackSlugs.map((trackSlug) => ({
-                      label: slugToTitle(trackSlug),
-                      href: `/tracks/${trackSlug}`
-                    }))
-                  }
-                : { text: "-" }
+            subtitle: toTypeLabel(project.type),
+            fields: [
+              {
+                label: "Artists",
+                links: project.artistSlugs.map((artist) => ({
+                  label: artist.name || slugToTitle(artist.slug),
+                  href: `/artists#${artist.slug}`
+                })),
+                linkStyle: "stacked"
+              },
+              {
+                label: "Tracks",
+                links: project.trackSlugs.map((trackSlug) => ({
+                  label: slugToTitle(trackSlug),
+                  href: `/tracks/${trackSlug}`
+                })),
+                linkStyle: "ordered"
+              }
             ]
           }))}
         />
