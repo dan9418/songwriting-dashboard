@@ -15,6 +15,20 @@ function formatTrackNameFromSlug(slug: string): string {
     .join(" ");
 }
 
+function formatDateForTable(value: string): string {
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) {
+    return value;
+  }
+  const yearTwo = year.slice(-2);
+  const monthNumber = Number(month);
+  const dayNumber = Number(day);
+  if (!Number.isInteger(monthNumber) || !Number.isInteger(dayNumber)) {
+    return value;
+  }
+  return `${monthNumber}/${dayNumber}/${yearTwo}`;
+}
+
 export default async function TrackByIdPage({
   params
 }: {
@@ -56,8 +70,7 @@ export default async function TrackByIdPage({
               <th className="px-2 py-2 font-semibold">Filename</th>
               <th className="px-2 py-2 font-semibold">Version</th>
               <th className="px-2 py-2 font-semibold">Description</th>
-              <th className="px-2 py-2 font-semibold">Date Descriptor</th>
-              <th className="px-2 py-2 font-semibold">Date Uploaded</th>
+              <th className="px-2 py-2 font-semibold">Date</th>
             </tr>
           </thead>
           <tbody>
@@ -79,8 +92,7 @@ export default async function TrackByIdPage({
                 </td>
                 <td className="px-2 py-2">{`${audioItem.type} v${audioItem.typeVersion}`}</td>
                 <td className="px-2 py-2">{audioItem.description ?? "-"}</td>
-                <td className="px-2 py-2">{audioItem.dateDescriptor}</td>
-                <td className="px-2 py-2">{audioItem.dateUploaded ?? "-"}</td>
+                <td className="px-2 py-2">{audioItem.dateOverride ?? formatDateForTable(audioItem.date)}</td>
               </tr>
             ))}
           </tbody>

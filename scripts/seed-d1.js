@@ -47,6 +47,61 @@ function sqlNullableString(value) {
   return sqlString(value);
 }
 
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function toIsoDateOrNull(year, month, day) {
+  const y = Number(year);
+  const m = Number(month);
+  const d = Number(day);
+  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) {
+    return null;
+  }
+  const date = new Date(Date.UTC(y, m - 1, d));
+  if (
+    date.getUTCFullYear() !== y ||
+    date.getUTCMonth() !== m - 1 ||
+    date.getUTCDate() !== d
+  ) {
+    return null;
+  }
+  return `${y}-${pad2(m)}-${pad2(d)}`;
+}
+
+function parseDateToken(token) {
+  const trimmed = String(token ?? "").trim();
+  if (!trimmed) {
+    return { date: "1970-01-01", dateOverride: null };
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [year, month, day] = trimmed.split("-");
+    const iso = toIsoDateOrNull(year, month, day);
+    if (iso) {
+      return { date: iso, dateOverride: null };
+    }
+  }
+
+  if (/^\d{1,2}-\d{1,2}-\d{2}$/.test(trimmed)) {
+    const [month, day, yearTwo] = trimmed.split("-");
+    const year = Number(yearTwo) >= 70 ? 1900 + Number(yearTwo) : 2000 + Number(yearTwo);
+    const iso = toIsoDateOrNull(year, month, day);
+    if (iso) {
+      return { date: iso, dateOverride: null };
+    }
+  }
+
+  if (/^\d{4}$/.test(trimmed)) {
+    const iso = toIsoDateOrNull(trimmed, 1, 1);
+    if (iso) {
+      return { date: iso, dateOverride: trimmed };
+    }
+  }
+
+  return { date: "1970-01-01", dateOverride: trimmed };
+}
+
 function runWrangler(args, options = {}) {
   if (process.platform === "win32") {
     const quoted = args
@@ -165,7 +220,7 @@ function parseAudioFilename(trackSlug, fileName) {
   const parsedSlug = parts[0];
   const type = parts[1];
   const versionToken = parts[2];
-  const dateDescriptor = parts[3];
+  const dateToken = parts[3];
   const description = parts.length > 4 ? parts.slice(4).join("_") : null;
 
   if (parsedSlug !== trackSlug) {
@@ -194,12 +249,15 @@ function parseAudioFilename(trackSlug, fileName) {
     );
   }
 
+  const { date, dateOverride } = parseDateToken(dateToken);
+
   return {
     slug: base,
     trackSlug,
     type,
     typeVersion,
-    dateDescriptor,
+    date,
+    dateOverride,
     description
   };
 }
@@ -243,7 +301,8 @@ function buildSeedData() {
         trackSlug: parsed.trackSlug,
         type: parsed.type,
         typeVersion: parsed.typeVersion,
-        dateDescriptor: parsed.dateDescriptor,
+        date: parsed.date,
+        dateOverride: parsed.dateOverride,
         description: parsed.description,
         fileName
       });
@@ -290,7 +349,8 @@ function buildSeedData() {
         trackSlug: row.trackSlug,
         type: row.type,
         typeVersion: resolvedVersion,
-        dateDescriptor: row.dateDescriptor,
+        date: row.date,
+        dateOverride: row.dateOverride,
         description: row.description
       });
     }
@@ -390,13 +450,13 @@ function buildSql(seedData) {
 
   for (const row of seedData.audioRows) {
     lines.push(
-      `INSERT INTO audio (user_id, slug, track_slug, type, type_version, description, date_descriptor, date_uploaded) VALUES (${USER_ID}, ${sqlString(
+      `INSERT INTO audio (user_id, slug, track_slug, type, type_version, description, date, date_override) VALUES (${USER_ID}, ${sqlString(
         row.slug
       )}, ${sqlString(row.trackSlug)}, ${sqlString(row.type)}, ${
         row.typeVersion
       }, ${sqlNullableString(row.description)}, ${sqlString(
-        row.dateDescriptor
-      )}, NULL) ON CONFLICT(user_id, slug) DO UPDATE SET track_slug = excluded.track_slug, type = excluded.type, type_version = excluded.type_version, description = excluded.description, date_descriptor = excluded.date_descriptor, date_uploaded = excluded.date_uploaded;`
+        row.date
+      )}, ${sqlNullableString(row.dateOverride)}) ON CONFLICT(user_id, slug) DO UPDATE SET track_slug = excluded.track_slug, type = excluded.type, type_version = excluded.type_version, description = excluded.description, date = excluded.date, date_override = excluded.date_override;`
     );
   }
 

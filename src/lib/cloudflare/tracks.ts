@@ -41,8 +41,8 @@ interface AudioRow {
   type: string;
   typeVersion: number | string;
   description: string | null;
-  dateDescriptor: string;
-  dateUploaded: string | null;
+  date: string;
+  dateOverride: string | null;
 }
 
 export interface CloudflareTrackAudioItem {
@@ -52,8 +52,8 @@ export interface CloudflareTrackAudioItem {
   type: string;
   typeVersion: number;
   description: string | null;
-  dateDescriptor: string;
-  dateUploaded: string | null;
+  date: string;
+  dateOverride: string | null;
 }
 
 export interface CloudflareTrackMetadata extends CloudflareTrackListItem {
@@ -190,8 +190,8 @@ export async function getTrackMetadataFromCloudflare(
       type,
       type_version AS typeVersion,
       description,
-      date_descriptor AS dateDescriptor,
-      date_uploaded AS dateUploaded
+      date,
+      date_override AS dateOverride
     FROM audio
     WHERE user_id = ? AND track_slug = ?
     ORDER BY type ASC, type_version ASC, slug ASC;
@@ -238,8 +238,8 @@ export async function getTrackMetadataFromCloudflare(
       type: item.type,
       typeVersion: toInt(item.typeVersion),
       description: item.description,
-      dateDescriptor: item.dateDescriptor,
-      dateUploaded: item.dateUploaded
+      date: item.date,
+      dateOverride: item.dateOverride
     }))
   };
 }
