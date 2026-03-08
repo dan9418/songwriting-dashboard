@@ -53,9 +53,8 @@ export default async function TrackByIdPage({
         <table className="mt-3 min-w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-[#ddcfbd] text-xs uppercase tracking-wide text-[color:var(--muted)]">
-              <th className="px-2 py-2 font-semibold">Slug</th>
-              <th className="px-2 py-2 font-semibold">Type</th>
-              <th className="px-2 py-2 font-semibold">Type Version</th>
+              <th className="px-2 py-2 font-semibold">Filename</th>
+              <th className="px-2 py-2 font-semibold">Version</th>
               <th className="px-2 py-2 font-semibold">Description</th>
               <th className="px-2 py-2 font-semibold">Date Descriptor</th>
               <th className="px-2 py-2 font-semibold">Date Uploaded</th>
@@ -64,9 +63,21 @@ export default async function TrackByIdPage({
           <tbody>
             {track.audio.map((audioItem) => (
               <tr key={audioItem.slug} className="border-b border-[#efe3d3]">
-                <td className="px-2 py-2">{audioItem.slug}</td>
-                <td className="px-2 py-2">{audioItem.type}</td>
-                <td className="px-2 py-2">{audioItem.typeVersion}</td>
+                <td className="px-2 py-2">
+                  {audioItem.fileHref ? (
+                    <a
+                      href={audioItem.fileHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline decoration-[#ccb089] underline-offset-4 hover:text-[color:var(--accent)]"
+                    >
+                      {audioItem.fileName}
+                    </a>
+                  ) : (
+                    audioItem.fileName
+                  )}
+                </td>
+                <td className="px-2 py-2">{`${audioItem.type} v${audioItem.typeVersion}`}</td>
                 <td className="px-2 py-2">{audioItem.description ?? "-"}</td>
                 <td className="px-2 py-2">{audioItem.dateDescriptor}</td>
                 <td className="px-2 py-2">{audioItem.dateUploaded ?? "-"}</td>

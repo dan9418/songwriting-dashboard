@@ -1,4 +1,5 @@
 import { queryD1 } from "@/lib/cloudflare/d1";
+import { listTrackAudioFilesFromR2 } from "@/lib/cloudflare/track-audio-files";
 import { resolveUserId } from "@/lib/cloudflare/users";
 
 interface TrackRow {
@@ -38,6 +39,8 @@ interface AudioRow {
 
 export interface CloudflareTrackAudioItem {
   slug: string;
+  fileName: string;
+  fileHref: string | null;
   type: string;
   typeVersion: number;
   description: string | null;
@@ -150,6 +153,8 @@ export async function getTrackMetadataFromCloudflare(
     `,
     [userId, trackSlug]
   );
+  const audioFiles = await listTrackAudioFilesFromR2(userSlug, trackSlug);
+  const audioFileBySlug = new Map(audioFiles.map((item) => [item.slug, item]));
 
   return {
     slug: track.slug,
@@ -164,6 +169,10 @@ export async function getTrackMetadataFromCloudflare(
     liveCount: toInt(track.liveCount),
     audio: audioRows.map((item) => ({
       slug: item.slug,
+      fileName: audioFileBySlug.get(item.slug)?.fileName ?? item.slug,
+      fileHref: audioFileBySlug.get(item.slug)
+        ? `/api/tracks/${encodeURIComponent(userSlug)}/${encodeURIComponent(trackSlug)}/audio/${encodeURIComponent(item.slug)}`
+        : null,
       type: item.type,
       typeVersion: toInt(item.typeVersion),
       description: item.description,
