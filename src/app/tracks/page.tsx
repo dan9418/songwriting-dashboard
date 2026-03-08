@@ -12,7 +12,7 @@ export default async function TracksPage() {
     const items: TracksTableItem[] = sourceItems.map((item) => ({
       slug: item.slug,
       name: slugToTitle(item.slug),
-      projectSlug: item.projectSlug,
+      projectSlugs: item.projectSlugs,
       artistSlugs: item.artistSlugs,
       audioCount: item.audioCount,
       noteCount: item.noteCount,

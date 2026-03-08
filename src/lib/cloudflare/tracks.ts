@@ -4,8 +4,6 @@ import { resolveUserId } from "@/lib/cloudflare/users";
 
 interface TrackRow {
   slug: string;
-  projectSlug: string | null;
-  projectPosition: number | null;
   lyricsPath: string | null;
   notesPath: string | null;
   chordsPath: string | null;
@@ -20,11 +18,15 @@ interface TrackArtistRow {
   artistSlug: string;
 }
 
+interface TrackProjectRow {
+  trackSlug: string;
+  projectSlug: string;
+}
+
 export interface CloudflareTrackListItem {
   slug: string;
-  projectSlug: string | null;
+  projectSlugs: string[];
   artistSlugs: string[];
-  projectPosition: number | null;
   lyricsPath: string | null;
   notesPath: string | null;
   chordsPath: string | null;
@@ -71,27 +73,38 @@ export async function listTracksFromCloudflare(userSlug: string): Promise<Cloudf
     `
     SELECT
       t.slug AS slug,
-      MIN(pt.project_slug) AS projectSlug,
-      MIN(pt.position) AS projectPosition,
       t.lyrics_path AS lyricsPath,
       t.notes_path AS notesPath,
       t.chords_path AS chordsPath,
-      COUNT(a.slug) AS audioCount,
-      SUM(CASE WHEN a.type = 'note' THEN 1 ELSE 0 END) AS noteCount,
-      SUM(CASE WHEN a.type = 'demo' THEN 1 ELSE 0 END) AS demoCount,
-      SUM(CASE WHEN a.type = 'live' THEN 1 ELSE 0 END) AS liveCount
+      COALESCE(a.audioCount, 0) AS audioCount,
+      COALESCE(a.noteCount, 0) AS noteCount,
+      COALESCE(a.demoCount, 0) AS demoCount,
+      COALESCE(a.liveCount, 0) AS liveCount
     FROM tracks t
-    LEFT JOIN project_tracks pt
-      ON pt.user_id = t.user_id AND pt.track_slug = t.slug
-    LEFT JOIN audio a
-      ON a.user_id = t.user_id AND a.track_slug = t.slug
+    LEFT JOIN (
+      SELECT
+        user_id,
+        track_slug,
+        COUNT(*) AS audioCount,
+        SUM(CASE WHEN type = 'note' THEN 1 ELSE 0 END) AS noteCount,
+        SUM(CASE WHEN type = 'demo' THEN 1 ELSE 0 END) AS demoCount,
+        SUM(CASE WHEN type = 'live' THEN 1 ELSE 0 END) AS liveCount
+      FROM audio
+      GROUP BY user_id, track_slug
+    ) a ON a.user_id = t.user_id AND a.track_slug = t.slug
     WHERE t.user_id = ?
-    GROUP BY t.slug, t.lyrics_path, t.notes_path, t.chords_path
-    ORDER BY
-      CASE WHEN MIN(pt.project_slug) IS NULL THEN 1 ELSE 0 END,
-      MIN(pt.project_slug),
-      MIN(pt.position),
-      t.slug;
+    ORDER BY t.slug ASC;
+    `,
+    [userId]
+  );
+  const trackProjectRows = await queryD1<TrackProjectRow>(
+    `
+    SELECT
+      track_slug AS trackSlug,
+      project_slug AS projectSlug
+    FROM project_tracks
+    WHERE user_id = ?
+    ORDER BY project_slug ASC, position ASC, track_slug ASC;
     `,
     [userId]
   );
@@ -105,6 +118,12 @@ export async function listTracksFromCloudflare(userSlug: string): Promise<Cloudf
     `,
     [userId]
   );
+  const projectSlugsByTrack = new Map<string, string[]>();
+  for (const row of trackProjectRows) {
+    const existing = projectSlugsByTrack.get(row.trackSlug) ?? [];
+    existing.push(row.projectSlug);
+    projectSlugsByTrack.set(row.trackSlug, existing);
+  }
   const artistSlugsByTrack = new Map<string, string[]>();
   for (const row of trackArtistRows) {
     const existing = artistSlugsByTrack.get(row.trackSlug) ?? [];
@@ -114,9 +133,8 @@ export async function listTracksFromCloudflare(userSlug: string): Promise<Cloudf
 
   return rows.map((row) => ({
     slug: row.slug,
-    projectSlug: row.projectSlug,
+    projectSlugs: projectSlugsByTrack.get(row.slug) ?? [],
     artistSlugs: artistSlugsByTrack.get(row.slug) ?? [],
-    projectPosition: row.projectPosition,
     lyricsPath: row.lyricsPath,
     notesPath: row.notesPath,
     chordsPath: row.chordsPath,
@@ -136,22 +154,26 @@ export async function getTrackMetadataFromCloudflare(
     `
     SELECT
       t.slug AS slug,
-      MIN(pt.project_slug) AS projectSlug,
-      MIN(pt.position) AS projectPosition,
       t.lyrics_path AS lyricsPath,
       t.notes_path AS notesPath,
       t.chords_path AS chordsPath,
-      COUNT(a.slug) AS audioCount,
-      SUM(CASE WHEN a.type = 'note' THEN 1 ELSE 0 END) AS noteCount,
-      SUM(CASE WHEN a.type = 'demo' THEN 1 ELSE 0 END) AS demoCount,
-      SUM(CASE WHEN a.type = 'live' THEN 1 ELSE 0 END) AS liveCount
+      COALESCE(a.audioCount, 0) AS audioCount,
+      COALESCE(a.noteCount, 0) AS noteCount,
+      COALESCE(a.demoCount, 0) AS demoCount,
+      COALESCE(a.liveCount, 0) AS liveCount
     FROM tracks t
-    LEFT JOIN project_tracks pt
-      ON pt.user_id = t.user_id AND pt.track_slug = t.slug
-    LEFT JOIN audio a
-      ON a.user_id = t.user_id AND a.track_slug = t.slug
+    LEFT JOIN (
+      SELECT
+        user_id,
+        track_slug,
+        COUNT(*) AS audioCount,
+        SUM(CASE WHEN type = 'note' THEN 1 ELSE 0 END) AS noteCount,
+        SUM(CASE WHEN type = 'demo' THEN 1 ELSE 0 END) AS demoCount,
+        SUM(CASE WHEN type = 'live' THEN 1 ELSE 0 END) AS liveCount
+      FROM audio
+      GROUP BY user_id, track_slug
+    ) a ON a.user_id = t.user_id AND a.track_slug = t.slug
     WHERE t.user_id = ? AND t.slug = ?
-    GROUP BY t.slug, t.lyrics_path, t.notes_path, t.chords_path
     LIMIT 1;
     `,
     [userId, trackSlug]
@@ -184,14 +206,22 @@ export async function getTrackMetadataFromCloudflare(
     `,
     [userId, trackSlug]
   );
+  const projectRows = await queryD1<{ projectSlug: string }>(
+    `
+    SELECT project_slug AS projectSlug
+    FROM project_tracks
+    WHERE user_id = ? AND track_slug = ?
+    ORDER BY project_slug ASC, position ASC;
+    `,
+    [userId, trackSlug]
+  );
   const audioFiles = await listTrackAudioFilesFromR2(userSlug, trackSlug);
   const audioFileBySlug = new Map(audioFiles.map((item) => [item.slug, item]));
 
   return {
     slug: track.slug,
-    projectSlug: track.projectSlug,
+    projectSlugs: projectRows.map((item) => item.projectSlug),
     artistSlugs: artistRows.map((item) => item.artistSlug),
-    projectPosition: track.projectPosition,
     lyricsPath: track.lyricsPath,
     notesPath: track.notesPath,
     chordsPath: track.chordsPath,

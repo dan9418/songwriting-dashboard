@@ -6,7 +6,7 @@ import { slugToTitle } from "@/lib/utils/slug-display";
 export interface TracksTableItem {
   slug: string;
   name: string;
-  projectSlug: string | null;
+  projectSlugs: string[];
   artistSlugs: string[];
   audioCount: number;
   noteCount: number;
@@ -24,9 +24,12 @@ export function TracksTable({ items }: { items: TracksTableItem[] }) {
         name: item.name,
         nameHref: `/tracks/${item.slug}`,
         cells: [
-          item.projectSlug
+          item.projectSlugs.length > 0
             ? {
-                links: [{ label: slugToTitle(item.projectSlug), href: `/projects#${item.projectSlug}` }]
+                links: item.projectSlugs.map((projectSlug) => ({
+                  label: slugToTitle(projectSlug),
+                  href: `/projects#${projectSlug}`
+                }))
               }
             : { text: "-" },
           item.artistSlugs.length > 0

@@ -4,9 +4,14 @@ const { spawnSync } = require("child_process");
 
 const USER_ID = 1;
 const USER_NAME = "Dan";
-const PROJECT_SLUG = "test-project";
-const PROJECT_NAME = "Test Project";
-const PROJECT_TYPE = "album";
+const ARTIST_SLUG = "dan-bednarczyk";
+const ARTIST_NAME = "Dan Bednarczyk";
+const PROJECT_SPECS = [
+  { slug: "test-album", name: "Test Album", type: "album", trackCount: 10 },
+  { slug: "test-ep", name: "Test EP", type: "ep", trackCount: 5 },
+  { slug: "test-setlist", name: "Test Setlist", type: "setlist", trackCount: 8 },
+  { slug: "test-single", name: "Test Single", type: "single", trackCount: 2 }
+];
 const TRACKS_ROOT = path.resolve(
   "songwriting-data",
   "users",
@@ -42,6 +47,20 @@ function sqlNullableString(value) {
   return sqlString(value);
 }
 
+function runWrangler(args, options = {}) {
+  if (process.platform === "win32") {
+    const quoted = args
+      .map((arg) => `'${String(arg).replace(/'/g, "''")}'`)
+      .join(" ");
+    return spawnSync(
+      "powershell",
+      ["-NoProfile", "-Command", `& wrangler ${quoted}`],
+      options
+    );
+  }
+  return spawnSync("wrangler", args, options);
+}
+
 function readWranglerConfig() {
   const configPath = path.resolve("wrangler.jsonc");
   if (!fs.existsSync(configPath)) {
@@ -66,20 +85,53 @@ function readWranglerConfig() {
 }
 
 function getTrackSlugs() {
-  if (!fs.existsSync(TRACKS_ROOT)) {
-    throw new Error(`Tracks path not found: ${TRACKS_ROOT}`);
+  if (fs.existsSync(TRACKS_ROOT)) {
+    return fs
+      .readdirSync(TRACKS_ROOT, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort((a, b) => a.localeCompare(b));
   }
 
-  return fs
-    .readdirSync(TRACKS_ROOT, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b));
+  const databaseName = readWranglerConfig();
+  const args = [
+    "d1",
+    "execute",
+    databaseName,
+    ...(LOCAL ? [] : ["--remote"]),
+    "--command",
+    "SELECT slug FROM tracks ORDER BY slug ASC;",
+    "--json"
+  ];
+
+  const result = runWrangler(args, { encoding: "utf8" });
+  if (result.status !== 0) {
+    throw new Error(
+      `Unable to read track slugs from D1. status=${result.status} error=${result.error?.message ?? "none"} stderr=${result.stderr ?? ""} stdout=${result.stdout ?? ""}`
+    );
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(result.stdout);
+  } catch (error) {
+    throw new Error(`Unable to parse D1 track slug output. ${error.message}`);
+  }
+
+  const rows = parsed?.[0]?.results;
+  if (!Array.isArray(rows)) {
+    throw new Error("D1 query for track slugs returned an unexpected payload.");
+  }
+
+  return rows.map((row) => row.slug).filter(Boolean);
 }
 
 function getAudioFilesForTrack(trackSlug) {
   const trackPath = path.join(TRACKS_ROOT, trackSlug);
   const audioDir = path.join(trackPath, "audio");
+  if (!fs.existsSync(trackPath)) {
+    return [];
+  }
 
   const listAudio = (dirPath) =>
     fs
@@ -154,7 +206,29 @@ function parseAudioFilename(trackSlug, fileName) {
 
 function buildSeedData() {
   const trackSlugs = getTrackSlugs();
-  const projectTrackSlugs = trackSlugs.slice(0, 10);
+  if (trackSlugs.length < 15) {
+    throw new Error(
+      `At least 15 tracks are required to build test project assignments (found ${trackSlugs.length}).`
+    );
+  }
+
+  const albumTrackSlugs = trackSlugs.slice(0, 10);
+  const epTrackSlugs = trackSlugs.slice(10, 15);
+  const albumOrEpTrackPool = [...albumTrackSlugs, ...epTrackSlugs];
+  const setlistTrackSlugs = albumOrEpTrackPool.slice(0, 8);
+  const singleTrackSlugs = epTrackSlugs.slice(0, 2);
+
+  const projectAssignments = [
+    { slug: "test-album", trackSlugs: albumTrackSlugs },
+    { slug: "test-ep", trackSlugs: epTrackSlugs },
+    { slug: "test-setlist", trackSlugs: setlistTrackSlugs },
+    { slug: "test-single", trackSlugs: singleTrackSlugs }
+  ];
+
+  const trackArtistSlugs = Array.from(
+    new Set(projectAssignments.flatMap((assignment) => assignment.trackSlugs))
+  ).map((trackSlug) => ({ trackSlug, artistSlug: ARTIST_SLUG }));
+
   const parsedAudioRows = [];
   const audioRows = [];
   const adjustments = [];
@@ -224,7 +298,8 @@ function buildSeedData() {
 
   return {
     trackSlugs,
-    projectTrackSlugs,
+    projectAssignments,
+    trackArtistSlugs,
     audioRows,
     adjustments
   };
@@ -242,31 +317,74 @@ function buildSql(seedData) {
   );
 
   lines.push(
-    `INSERT INTO projects (user_id, slug, name, description, type, release_date, remaster_date) VALUES (${USER_ID}, ${sqlString(
-      PROJECT_SLUG
-    )}, ${sqlString(PROJECT_NAME)}, '', ${sqlString(
-      PROJECT_TYPE
-    )}, NULL, NULL) ON CONFLICT(user_id, slug) DO UPDATE SET name = excluded.name, description = excluded.description, type = excluded.type, release_date = excluded.release_date, remaster_date = excluded.remaster_date;`
+    `INSERT INTO artists (user_id, slug, name, description) VALUES (${USER_ID}, ${sqlString(
+      ARTIST_SLUG
+    )}, ${sqlString(ARTIST_NAME)}, '') ON CONFLICT(user_id, slug) DO UPDATE SET name = excluded.name, description = excluded.description;`
   );
+  lines.push("");
+
+  lines.push(
+    `DELETE FROM project_tracks WHERE user_id = ${USER_ID} AND project_slug IN ('test-project', ${PROJECT_SPECS.map(
+      (project) => sqlString(project.slug)
+    ).join(", ")});`
+  );
+  lines.push(
+    `DELETE FROM project_artists WHERE user_id = ${USER_ID} AND project_slug IN ('test-project', ${PROJECT_SPECS.map(
+      (project) => sqlString(project.slug)
+    ).join(", ")});`
+  );
+  lines.push(
+    `DELETE FROM projects WHERE user_id = ${USER_ID} AND slug IN ('test-project', ${PROJECT_SPECS.map((project) =>
+      sqlString(project.slug)
+    ).join(", ")});`
+  );
+  lines.push("");
+
+  for (const project of PROJECT_SPECS) {
+    lines.push(
+      `INSERT INTO projects (user_id, slug, name, description, type, release_date, remaster_date) VALUES (${USER_ID}, ${sqlString(
+        project.slug
+      )}, ${sqlString(project.name)}, '', ${sqlString(
+        project.type
+      )}, NULL, NULL) ON CONFLICT(user_id, slug) DO UPDATE SET name = excluded.name, description = excluded.description, type = excluded.type, release_date = excluded.release_date, remaster_date = excluded.remaster_date;`
+    );
+    lines.push(
+      `INSERT INTO project_artists (user_id, project_slug, artist_slug) VALUES (${USER_ID}, ${sqlString(
+        project.slug
+      )}, ${sqlString(ARTIST_SLUG)}) ON CONFLICT(user_id, project_slug, artist_slug) DO NOTHING;`
+    );
+  }
   lines.push("");
 
   for (const slug of seedData.trackSlugs) {
     lines.push(
       `INSERT INTO tracks (user_id, slug, lyrics_path, notes_path, chords_path) VALUES (${USER_ID}, ${sqlString(
         slug
-      )}, NULL, NULL, NULL) ON CONFLICT(user_id, slug) DO UPDATE SET lyrics_path = excluded.lyrics_path, notes_path = excluded.notes_path, chords_path = excluded.chords_path;`
+      )}, NULL, NULL, NULL) ON CONFLICT(user_id, slug) DO UPDATE SET lyrics_path = COALESCE(excluded.lyrics_path, tracks.lyrics_path), notes_path = COALESCE(excluded.notes_path, tracks.notes_path), chords_path = COALESCE(excluded.chords_path, tracks.chords_path);`
     );
   }
   lines.push("");
 
-  let position = 1;
-  for (const trackSlug of seedData.projectTrackSlugs) {
+  lines.push(`DELETE FROM track_artists WHERE user_id = ${USER_ID} AND artist_slug = ${sqlString(ARTIST_SLUG)};`);
+  for (const row of seedData.trackArtistSlugs) {
     lines.push(
-      `INSERT INTO project_tracks (user_id, project_slug, track_slug, position) VALUES (${USER_ID}, ${sqlString(
-        PROJECT_SLUG
-      )}, ${sqlString(trackSlug)}, ${position}) ON CONFLICT(user_id, project_slug, track_slug) DO UPDATE SET position = excluded.position;`
+      `INSERT INTO track_artists (user_id, track_slug, artist_slug) VALUES (${USER_ID}, ${sqlString(
+        row.trackSlug
+      )}, ${sqlString(row.artistSlug)}) ON CONFLICT(user_id, track_slug, artist_slug) DO NOTHING;`
     );
-    position += 1;
+  }
+  lines.push("");
+
+  for (const assignment of seedData.projectAssignments) {
+    let position = 1;
+    for (const trackSlug of assignment.trackSlugs) {
+      lines.push(
+        `INSERT INTO project_tracks (user_id, project_slug, track_slug, position) VALUES (${USER_ID}, ${sqlString(
+          assignment.slug
+        )}, ${sqlString(trackSlug)}, ${position}) ON CONFLICT(user_id, project_slug, track_slug) DO UPDATE SET position = excluded.position;`
+      );
+      position += 1;
+    }
   }
   lines.push("");
 
@@ -302,7 +420,7 @@ function executeSeedSql() {
     OUTPUT_SQL_PATH
   ];
 
-  const result = spawnSync("wrangler", args, { stdio: "inherit" });
+  const result = runWrangler(args, { stdio: "inherit" });
   if (result.status !== 0) {
     throw new Error("wrangler d1 execute failed.");
   }
@@ -316,12 +434,10 @@ function main() {
   console.log(`Seed SQL written: ${OUTPUT_SQL_PATH}`);
   console.log(`Tracks inserted: ${seedData.trackSlugs.length}`);
   console.log(`Audio rows inserted: ${seedData.audioRows.length}`);
-  console.log(
-    `Tracks linked to ${PROJECT_SLUG}: ${seedData.projectTrackSlugs.length}`
-  );
-  console.log(
-    `Project tracks chosen: ${seedData.projectTrackSlugs.join(", ")}`
-  );
+  for (const assignment of seedData.projectAssignments) {
+    console.log(`Tracks linked to ${assignment.slug}: ${assignment.trackSlugs.length}`);
+    console.log(`- ${assignment.slug}: ${assignment.trackSlugs.join(", ")}`);
+  }
 
   if (seedData.adjustments.length > 0) {
     console.log("Adjusted duplicate type_version values:");
