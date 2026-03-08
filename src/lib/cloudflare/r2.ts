@@ -93,27 +93,64 @@ export async function getObjectData(path: string): Promise<{
   }
 }
 
-export async function listObjectKeys(prefix: string): Promise<string[]> {
-  const keys: string[] = [];
+export interface R2ObjectSummary {
+  key: string;
+  size: number;
+  etag: string | null;
+  lastModified: string | null;
+  storageClass: string | null;
+}
+
+export async function listObjectSummaries({
+  bucketName,
+  prefix = "",
+  limit = 200
+}: {
+  bucketName?: string;
+  prefix?: string;
+  limit?: number;
+}): Promise<R2ObjectSummary[]> {
+  const summaries: R2ObjectSummary[] = [];
   let continuationToken: string | undefined;
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 200;
 
   do {
+    const remaining = safeLimit - summaries.length;
+    if (remaining <= 0) {
+      break;
+    }
+
     const response = await getClient().send(
       new ListObjectsV2Command({
-        Bucket: getBucketName(),
+        Bucket: bucketName ?? getBucketName(),
         Prefix: prefix,
-        ContinuationToken: continuationToken
+        ContinuationToken: continuationToken,
+        MaxKeys: Math.min(remaining, 1000)
       })
     );
+
     for (const item of response.Contents ?? []) {
-      if (item.Key) {
-        keys.push(item.Key);
+      if (!item.Key) {
+        continue;
       }
+      summaries.push({
+        key: item.Key,
+        size: item.Size ?? 0,
+        etag: normalizeEtag(item.ETag),
+        lastModified: item.LastModified ? item.LastModified.toISOString() : null,
+        storageClass: item.StorageClass ?? null
+      });
     }
+
     continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
   } while (continuationToken);
 
-  return keys;
+  return summaries;
+}
+
+export async function listObjectKeys(prefix: string): Promise<string[]> {
+  const summaries = await listObjectSummaries({ prefix, limit: 1000 });
+  return summaries.map((item) => item.key);
 }
 
 export async function putMarkdownObject(path: string, content: string): Promise<{ etag: string | null }> {

@@ -8,7 +8,8 @@ const PRIMARY_NAV_ITEMS = [
   { href: "/", label: "Home" },
   { href: "/artists", label: "Artists" },
   { href: "/projects", label: "Projects" },
-  { href: "/tracks", label: "Tracks" }
+  { href: "/tracks", label: "Tracks" },
+  { href: "/admin", label: "Admin" }
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
