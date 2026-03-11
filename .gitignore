@@ -2,7 +2,7 @@
 songwriting-data/**/*.mp4
 songwriting-data/**/*.m4a
 
-tsconfig.buildinfo
+#tsconfig.tsbuildinfo
 
 node_modules
 

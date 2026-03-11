@@ -1,5 +1,6 @@
 import type {
   ArtistData,
+  CreatedEntityResponse,
   FragmentData,
   MarkdownEntity,
   ProjectData,
@@ -40,6 +41,11 @@ export const api = {
       method: "PUT",
       body: JSON.stringify({ data, content })
     }),
+  postArtist: (name: string) =>
+    apiRequest<CreatedEntityResponse>(`/api/artists`, {
+      method: "POST",
+      body: JSON.stringify({ name })
+    }),
 
   listProjects: (artistSlug: string) =>
     apiRequest<{ items: Array<MarkdownEntity<ProjectData> & { projectSlug: string }> }>(
@@ -51,6 +57,11 @@ export const api = {
     apiRequest<MarkdownEntity<ProjectData>>(`/api/projects/${artistSlug}/${projectSlug}`, {
       method: "PUT",
       body: JSON.stringify({ data, content })
+    }),
+  postProject: (name: string) =>
+    apiRequest<CreatedEntityResponse>(`/api/projects`, {
+      method: "POST",
+      body: JSON.stringify({ name })
     }),
 
   listTracks: () => apiRequest<{ items: TrackListItem[] }>(`/api/tracks`),
@@ -67,6 +78,11 @@ export const api = {
     apiRequest<MarkdownEntity<TrackData>>(`/api/tracks`, {
       method: "POST",
       body: JSON.stringify({ data, content })
+    }),
+  createTrack: (name: string) =>
+    apiRequest<CreatedEntityResponse>(`/api/tracks`, {
+      method: "POST",
+      body: JSON.stringify({ name })
     }),
 
   listFragments: () =>

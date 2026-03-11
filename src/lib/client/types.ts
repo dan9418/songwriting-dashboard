@@ -112,3 +112,8 @@ export interface FragmentImportSummary {
   total: number;
   failed: number;
 }
+
+export interface CreatedEntityResponse {
+  slug: string;
+  name: string;
+}

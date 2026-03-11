@@ -23,3 +23,14 @@ export function assertSlugMatch(payloadSlug: unknown, expectedSlug: string): voi
     throw badRequest(`Payload slug (${payloadSlug}) does not match URL slug (${expectedSlug}).`);
   }
 }
+
+export function requireTrimmedString(value: unknown, fieldName: string): string {
+  if (typeof value !== "string") {
+    throw badRequest(`${fieldName} must be a string.`);
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw badRequest(`${fieldName} is required.`);
+  }
+  return trimmed;
+}
