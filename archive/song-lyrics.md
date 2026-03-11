@@ -648,7 +648,7 @@ Swallowed by our thoughts and drowned into the deep
 How long must we wait before it’s safe to say
 To say we’re never coming home
 
-# Smashing Atoms (Just For Fun)
+# Smashing Atoms
 
 How long will this last?
 The plague is back and threatens all the peace
@@ -740,6 +740,18 @@ When we grow weary of the light
 The moon will chase the sun out of the sky
 And when a new day's ready to begin
 The hunted becomes the hunter again
+
+## Alternates
+
+The autumn wind takes its first commanding breath
+And the summer haze dies a quick, unsuspecting death
+When we grow weary of the light
+The moon will chase the sun out of the sky
+And when a new day's ready to begin
+The hunted becomes the hunter again
+Life in motion lost in space, spinning around in tilted grace
+Stop for nothing, chase its tail, with purpose but without aim
+This can't be real, my eyes reveal
 
 # Teeth
 
@@ -1140,7 +1152,7 @@ I think I’d rather send you off and say goodnight
 I keep waiting for a, I am searching for a
 Way to find my way back to myself
 
-# Helicopters (One Day I Will)
+# Helicopters
 
 They arrived in helicopters
 And then they pounced on the scene
@@ -1302,15 +1314,3 @@ From the sky, like when it rains
 
 Cycle ends, currency of life
 Flow nowhere, river runs dry
-
-# Summer Sunset
-
-The autumn wind takes its first commanding breath
-And the summer haze dies a quick, unsuspecting death
-When we grow weary of the light
-The moon will chase the sun out of the sky
-And when a new day's ready to begin
-The hunted becomes the hunter again
-Life in motion lost in space, spinning around in tilted grace
-Stop for nothing, chase its tail, with purpose but without aim
-This can't be real, my eyes reveal
