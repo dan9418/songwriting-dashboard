@@ -4,17 +4,15 @@ import { slugToTitle } from "@/lib/utils/slug-display";
 
 export const dynamic = "force-dynamic";
 
-const USER_SLUG = "dan";
-
 export default async function ArtistsPage() {
   try {
-    const sourceItems = await listArtistsFromCloudflare(USER_SLUG);
+    const sourceItems = await listArtistsFromCloudflare();
 
     return (
       <section className="grid gap-4">
         <div className="panel p-4">
           <h1 className="text-2xl font-semibold">Artists</h1>
-          <p className="text-sm text-[color:var(--muted)]">Showing {sourceItems.length} artists for Dan.</p>
+          <p className="text-sm text-[color:var(--muted)]">Showing {sourceItems.length} artists.</p>
         </div>
 
         <SortableNameCardList

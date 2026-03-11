@@ -4,8 +4,6 @@ import { slugToTitle } from "@/lib/utils/slug-display";
 
 export const dynamic = "force-dynamic";
 
-const USER_SLUG = "dan";
-
 function toTypeLabel(value: "album" | "ep" | "single" | "setlist"): string {
   if (value === "ep") {
     return "EP";
@@ -15,13 +13,13 @@ function toTypeLabel(value: "album" | "ep" | "single" | "setlist"): string {
 
 export default async function ProjectsPage() {
   try {
-    const sourceItems = await listProjectsFromCloudflare(USER_SLUG);
+    const sourceItems = await listProjectsFromCloudflare();
 
     return (
       <section className="grid gap-4">
         <div className="panel p-4">
           <h1 className="text-2xl font-semibold">Projects</h1>
-          <p className="text-sm text-[color:var(--muted)]">Showing {sourceItems.length} projects for Dan.</p>
+          <p className="text-sm text-[color:var(--muted)]">Showing {sourceItems.length} projects.</p>
         </div>
 
         <SortableNameCardList

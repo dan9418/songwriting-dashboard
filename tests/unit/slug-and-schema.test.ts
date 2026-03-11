@@ -14,7 +14,6 @@ describe("slug and schema validation", () => {
       tags: [],
       createdAt: "2026-03-01T10:00:00-05:00",
       updatedAt: "2026-03-01T10:00:00-05:00",
-      userSlug: "dan",
       artistSlugs: [],
       status: "in-progress",
       audioVersions: []
@@ -23,4 +22,3 @@ describe("slug and schema validation", () => {
     expect(result.success).toBe(false);
   });
 });
-

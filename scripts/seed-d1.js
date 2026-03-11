@@ -2,8 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
-const USER_ID = 1;
-const USER_NAME = "Dan";
 const ARTIST_SLUG = "dan-bednarczyk";
 const ARTIST_NAME = "Dan Bednarczyk";
 const PROJECT_SPECS = [
@@ -12,12 +10,7 @@ const PROJECT_SPECS = [
   { slug: "test-setlist", name: "Test Setlist", type: "setlist", trackCount: 8 },
   { slug: "test-single", name: "Test Single", type: "single", trackCount: 2 }
 ];
-const TRACKS_ROOT = path.resolve(
-  "songwriting-data",
-  "users",
-  "dan",
-  "tracks"
-);
+const TRACKS_ROOT = path.resolve("songwriting-data", "tracks");
 const OUTPUT_SQL_PATH = path.resolve("scripts", "sql", "seed.sql");
 
 const EXECUTE = process.argv.includes("--execute");
@@ -371,30 +364,24 @@ function buildSql(seedData) {
   lines.push("");
 
   lines.push(
-    `INSERT INTO users (id, name) VALUES (${USER_ID}, ${sqlString(
-      USER_NAME
-    )}) ON CONFLICT(id) DO UPDATE SET name = excluded.name;`
-  );
-
-  lines.push(
-    `INSERT INTO artists (user_id, slug, name, description) VALUES (${USER_ID}, ${sqlString(
+    `INSERT INTO artists (slug, name, description) VALUES (${sqlString(
       ARTIST_SLUG
-    )}, ${sqlString(ARTIST_NAME)}, '') ON CONFLICT(user_id, slug) DO UPDATE SET name = excluded.name, description = excluded.description;`
+    )}, ${sqlString(ARTIST_NAME)}, '') ON CONFLICT(slug) DO UPDATE SET name = excluded.name, description = excluded.description;`
   );
   lines.push("");
 
   lines.push(
-    `DELETE FROM project_tracks WHERE user_id = ${USER_ID} AND project_slug IN ('test-project', ${PROJECT_SPECS.map(
+    `DELETE FROM project_tracks WHERE project_slug IN ('test-project', ${PROJECT_SPECS.map(
       (project) => sqlString(project.slug)
     ).join(", ")});`
   );
   lines.push(
-    `DELETE FROM project_artists WHERE user_id = ${USER_ID} AND project_slug IN ('test-project', ${PROJECT_SPECS.map(
+    `DELETE FROM project_artists WHERE project_slug IN ('test-project', ${PROJECT_SPECS.map(
       (project) => sqlString(project.slug)
     ).join(", ")});`
   );
   lines.push(
-    `DELETE FROM projects WHERE user_id = ${USER_ID} AND slug IN ('test-project', ${PROJECT_SPECS.map((project) =>
+    `DELETE FROM projects WHERE slug IN ('test-project', ${PROJECT_SPECS.map((project) =>
       sqlString(project.slug)
     ).join(", ")});`
   );
@@ -402,35 +389,35 @@ function buildSql(seedData) {
 
   for (const project of PROJECT_SPECS) {
     lines.push(
-      `INSERT INTO projects (user_id, slug, name, description, type, release_date, remaster_date) VALUES (${USER_ID}, ${sqlString(
+      `INSERT INTO projects (slug, name, description, type, release_date, remaster_date) VALUES (${sqlString(
         project.slug
       )}, ${sqlString(project.name)}, '', ${sqlString(
         project.type
-      )}, NULL, NULL) ON CONFLICT(user_id, slug) DO UPDATE SET name = excluded.name, description = excluded.description, type = excluded.type, release_date = excluded.release_date, remaster_date = excluded.remaster_date;`
+      )}, NULL, NULL) ON CONFLICT(slug) DO UPDATE SET name = excluded.name, description = excluded.description, type = excluded.type, release_date = excluded.release_date, remaster_date = excluded.remaster_date;`
     );
     lines.push(
-      `INSERT INTO project_artists (user_id, project_slug, artist_slug) VALUES (${USER_ID}, ${sqlString(
+      `INSERT INTO project_artists (project_slug, artist_slug) VALUES (${sqlString(
         project.slug
-      )}, ${sqlString(ARTIST_SLUG)}) ON CONFLICT(user_id, project_slug, artist_slug) DO NOTHING;`
+      )}, ${sqlString(ARTIST_SLUG)}) ON CONFLICT(project_slug, artist_slug) DO NOTHING;`
     );
   }
   lines.push("");
 
   for (const slug of seedData.trackSlugs) {
     lines.push(
-      `INSERT INTO tracks (user_id, slug, lyrics_path, notes_path, chords_path) VALUES (${USER_ID}, ${sqlString(
+      `INSERT INTO tracks (slug, lyrics_path, notes_path, chords_path) VALUES (${sqlString(
         slug
-      )}, NULL, NULL, NULL) ON CONFLICT(user_id, slug) DO UPDATE SET lyrics_path = COALESCE(excluded.lyrics_path, tracks.lyrics_path), notes_path = COALESCE(excluded.notes_path, tracks.notes_path), chords_path = COALESCE(excluded.chords_path, tracks.chords_path);`
+      )}, NULL, NULL, NULL) ON CONFLICT(slug) DO UPDATE SET lyrics_path = COALESCE(excluded.lyrics_path, tracks.lyrics_path), notes_path = COALESCE(excluded.notes_path, tracks.notes_path), chords_path = COALESCE(excluded.chords_path, tracks.chords_path);`
     );
   }
   lines.push("");
 
-  lines.push(`DELETE FROM track_artists WHERE user_id = ${USER_ID} AND artist_slug = ${sqlString(ARTIST_SLUG)};`);
+  lines.push(`DELETE FROM track_artists WHERE artist_slug = ${sqlString(ARTIST_SLUG)};`);
   for (const row of seedData.trackArtistSlugs) {
     lines.push(
-      `INSERT INTO track_artists (user_id, track_slug, artist_slug) VALUES (${USER_ID}, ${sqlString(
+      `INSERT INTO track_artists (track_slug, artist_slug) VALUES (${sqlString(
         row.trackSlug
-      )}, ${sqlString(row.artistSlug)}) ON CONFLICT(user_id, track_slug, artist_slug) DO NOTHING;`
+      )}, ${sqlString(row.artistSlug)}) ON CONFLICT(track_slug, artist_slug) DO NOTHING;`
     );
   }
   lines.push("");
@@ -439,9 +426,9 @@ function buildSql(seedData) {
     let position = 1;
     for (const trackSlug of assignment.trackSlugs) {
       lines.push(
-        `INSERT INTO project_tracks (user_id, project_slug, track_slug, position) VALUES (${USER_ID}, ${sqlString(
+        `INSERT INTO project_tracks (project_slug, track_slug, position) VALUES (${sqlString(
           assignment.slug
-        )}, ${sqlString(trackSlug)}, ${position}) ON CONFLICT(user_id, project_slug, track_slug) DO UPDATE SET position = excluded.position;`
+        )}, ${sqlString(trackSlug)}, ${position}) ON CONFLICT(project_slug, track_slug) DO UPDATE SET position = excluded.position;`
       );
       position += 1;
     }
@@ -450,13 +437,13 @@ function buildSql(seedData) {
 
   for (const row of seedData.audioRows) {
     lines.push(
-      `INSERT INTO audio (user_id, slug, track_slug, type, type_version, description, date, date_override) VALUES (${USER_ID}, ${sqlString(
+      `INSERT INTO audio (slug, track_slug, type, type_version, description, date, date_override) VALUES (${sqlString(
         row.slug
       )}, ${sqlString(row.trackSlug)}, ${sqlString(row.type)}, ${
         row.typeVersion
       }, ${sqlNullableString(row.description)}, ${sqlString(
         row.date
-      )}, ${sqlNullableString(row.dateOverride)}) ON CONFLICT(user_id, slug) DO UPDATE SET track_slug = excluded.track_slug, type = excluded.type, type_version = excluded.type_version, description = excluded.description, date = excluded.date, date_override = excluded.date_override;`
+      )}, ${sqlNullableString(row.dateOverride)}) ON CONFLICT(slug) DO UPDATE SET track_slug = excluded.track_slug, type = excluded.type, type_version = excluded.type_version, description = excluded.description, date = excluded.date, date_override = excluded.date_override;`
     );
   }
 

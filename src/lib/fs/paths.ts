@@ -13,54 +13,54 @@ function assertSafeSegment(segment: string): string {
   return normalized;
 }
 
-export function userRoot(userSlug: string): string {
-  return path.join(DATA_ROOT, "users", assertSafeSegment(userSlug));
+export function userRoot(): string {
+  return DATA_ROOT;
 }
 
-export function userMarkdownPath(userSlug: string): string {
-  return path.join(userRoot(userSlug), "user.md");
+export function userMarkdownPath(): string {
+  return path.join(userRoot(), "user.md");
 }
 
-export function artistRoot(userSlug: string, artistSlug: string): string {
-  return path.join(userRoot(userSlug), "artists", assertSafeSegment(artistSlug));
+export function artistRoot(artistSlug: string): string {
+  return path.join(userRoot(), "artists", assertSafeSegment(artistSlug));
 }
 
-export function artistsRoot(userSlug: string): string {
-  return path.join(userRoot(userSlug), "artists");
+export function artistsRoot(): string {
+  return path.join(userRoot(), "artists");
 }
 
-export function artistMarkdownPath(userSlug: string, artistSlug: string): string {
-  return path.join(artistRoot(userSlug, artistSlug), "artist.md");
+export function artistMarkdownPath(artistSlug: string): string {
+  return path.join(artistRoot(artistSlug), "artist.md");
 }
 
-export function projectsRoot(userSlug: string): string {
-  return path.join(userRoot(userSlug), "projects");
+export function projectsRoot(): string {
+  return path.join(userRoot(), "projects");
 }
 
-export function projectRoot(userSlug: string, projectSlug: string): string {
-  return path.join(projectsRoot(userSlug), assertSafeSegment(projectSlug));
+export function projectRoot(projectSlug: string): string {
+  return path.join(projectsRoot(), assertSafeSegment(projectSlug));
 }
 
-export function projectMarkdownPath(userSlug: string, projectSlug: string): string {
-  return path.join(projectRoot(userSlug, projectSlug), "project.md");
+export function projectMarkdownPath(projectSlug: string): string {
+  return path.join(projectRoot(projectSlug), "project.md");
 }
 
-export function tracksRoot(userSlug: string): string {
-  return path.join(userRoot(userSlug), "tracks");
+export function tracksRoot(): string {
+  return path.join(userRoot(), "tracks");
 }
 
-export function trackRoot(userSlug: string, trackSlug: string): string {
-  return path.join(tracksRoot(userSlug), assertSafeSegment(trackSlug));
+export function trackRoot(trackSlug: string): string {
+  return path.join(tracksRoot(), assertSafeSegment(trackSlug));
 }
 
-export function trackMarkdownPath(userSlug: string, trackSlug: string): string {
-  return path.join(trackRoot(userSlug, trackSlug), "track.md");
+export function trackMarkdownPath(trackSlug: string): string {
+  return path.join(trackRoot(trackSlug), "track.md");
 }
 
-export function fragmentsRoot(userSlug: string): string {
-  return path.join(userRoot(userSlug), "fragments");
+export function fragmentsRoot(): string {
+  return path.join(userRoot(), "fragments");
 }
 
-export function fragmentMarkdownPath(userSlug: string, fragmentSlug: string): string {
-  return path.join(fragmentsRoot(userSlug), assertSafeSegment(fragmentSlug), "fragment.md");
+export function fragmentMarkdownPath(fragmentSlug: string): string {
+  return path.join(fragmentsRoot(), assertSafeSegment(fragmentSlug), "fragment.md");
 }

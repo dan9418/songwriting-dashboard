@@ -3,7 +3,8 @@
     {
       "binding": "songwriting_dashboard",
       "database_name": "songwriting-dashboard",
-      "database_id": "37342617-4e98-4680-b4d1-7b4bcd1fc67b"
+      "database_id": "37342617-4e98-4680-b4d1-7b4bcd1fc67b",
+      "migrations_dir": "scripts/sql/migrations"
     }
   ],
   "r2_buckets": [

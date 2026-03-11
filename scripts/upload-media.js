@@ -1,7 +1,7 @@
 import { execSync } from "child_process"
 import fs from "fs"
 
-const TRACKS_DIRECTORY = './songwriting-data/users/dan/tracks'
+const TRACKS_DIRECTORY = './songwriting-data/tracks'
 
 const tracks = fs.readdirSync(TRACKS_DIRECTORY)
 

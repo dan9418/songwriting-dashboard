@@ -39,51 +39,51 @@ export interface FragmentImportSummary {
   failed: number;
 }
 
-export async function getUser(userSlug: string) {
-  return readMarkdownFile(userMarkdownPath(userSlug), userSchema);
+export async function getUser() {
+  return readMarkdownFile(userMarkdownPath(), userSchema);
 }
 
-export async function saveUser(userSlug: string, data: unknown, content = "") {
+export async function saveUser(data: unknown, content = "") {
   const validated = userSchema.parse(data);
-  await writeMarkdownFile(userMarkdownPath(userSlug), validated, content);
+  await writeMarkdownFile(userMarkdownPath(), validated, content);
 }
 
-export async function deleteUser(userSlug: string) {
-  return removeFileIfExists(userMarkdownPath(userSlug));
+export async function deleteUser() {
+  return removeFileIfExists(userMarkdownPath());
 }
 
-export async function getArtist(userSlug: string, artistSlug: string) {
-  return readMarkdownFile(artistMarkdownPath(userSlug, artistSlug), artistSchema);
+export async function getArtist(artistSlug: string) {
+  return readMarkdownFile(artistMarkdownPath(artistSlug), artistSchema);
 }
 
-export async function listArtists(userSlug: string) {
-  const artistSlugs = await listDirectories(artistsRoot(userSlug));
+export async function listArtists() {
+  const artistSlugs = await listDirectories(artistsRoot());
   return Promise.all(
     artistSlugs.map(async (artistSlug) => {
-      const artist = await getArtist(userSlug, artistSlug);
+      const artist = await getArtist(artistSlug);
       return { ...artist, artistSlug };
     })
   );
 }
 
-export async function saveArtist(userSlug: string, artistSlug: string, data: unknown, content = "") {
+export async function saveArtist(artistSlug: string, data: unknown, content = "") {
   const validated = artistSchema.parse(data);
-  await writeMarkdownFile(artistMarkdownPath(userSlug, artistSlug), validated, content);
+  await writeMarkdownFile(artistMarkdownPath(artistSlug), validated, content);
 }
 
-export async function deleteArtist(userSlug: string, artistSlug: string) {
-  return removeFileIfExists(artistMarkdownPath(userSlug, artistSlug));
+export async function deleteArtist(artistSlug: string) {
+  return removeFileIfExists(artistMarkdownPath(artistSlug));
 }
 
-export async function getProject(userSlug: string, projectSlug: string) {
-  return readMarkdownFile(projectMarkdownPath(userSlug, projectSlug), projectSchema);
+export async function getProject(projectSlug: string) {
+  return readMarkdownFile(projectMarkdownPath(projectSlug), projectSchema);
 }
 
-export async function listProjects(userSlug: string, artistSlug?: string) {
-  const projectSlugs = await listDirectories(projectsRoot(userSlug));
+export async function listProjects(artistSlug?: string) {
+  const projectSlugs = await listDirectories(projectsRoot());
   const projects = await Promise.all(
     projectSlugs.map(async (projectSlug) => {
-      const project = await getProject(userSlug, projectSlug);
+      const project = await getProject(projectSlug);
       return { ...project, projectSlug };
     })
   );
@@ -94,40 +94,34 @@ export async function listProjects(userSlug: string, artistSlug?: string) {
   return projects.filter((project) => project.data.artistSlug === artistSlug);
 }
 
-export async function saveProject(
-  userSlug: string,
-  projectSlug: string,
-  data: unknown,
-  content = ""
-) {
+export async function saveProject(projectSlug: string, data: unknown, content = "") {
   const validated = projectSchema.parse(data);
-  const existing = await getProjectIfExists(userSlug, projectSlug);
+  const existing = await getProjectIfExists(projectSlug);
   const previousTrackSlugs =
     existing && existing.data.trackSlugs.length > 0
       ? existing.data.trackSlugs
       : existing
-        ? (await listTracks(userSlug, { projectSlug })).map((item) => item.trackSlug)
+        ? (await listTracks({ projectSlug })).map((item) => item.trackSlug)
         : [];
 
-  await writeProjectFile(userSlug, projectSlug, validated, content);
-  await syncTracksFromProject(userSlug, projectSlug, validated, previousTrackSlugs);
+  await writeProjectFile(projectSlug, validated, content);
+  await syncTracksFromProject(projectSlug, validated, previousTrackSlugs);
 }
 
-export async function deleteProject(userSlug: string, projectSlug: string) {
-  const existing = await getProjectIfExists(userSlug, projectSlug);
+export async function deleteProject(projectSlug: string) {
+  const existing = await getProjectIfExists(projectSlug);
   if (existing) {
     const trackedSlugs =
       existing.data.trackSlugs.length > 0
         ? existing.data.trackSlugs
-        : (await listTracks(userSlug, { projectSlug })).map((item) => item.trackSlug);
+        : (await listTracks({ projectSlug })).map((item) => item.trackSlug);
 
     for (const trackSlug of trackedSlugs) {
-      const track = await getTrackIfExists(userSlug, trackSlug);
+      const track = await getTrackIfExists(trackSlug);
       if (!track || track.data.projectSlug !== projectSlug) {
         continue;
       }
       await writeTrackFile(
-        userSlug,
         trackSlug,
         {
           ...track.data,
@@ -138,28 +132,28 @@ export async function deleteProject(userSlug: string, projectSlug: string) {
       );
     }
   }
-  return removeFileIfExists(projectMarkdownPath(userSlug, projectSlug));
+  return removeFileIfExists(projectMarkdownPath(projectSlug));
 }
 
-export async function getTrack(userSlug: string, trackSlug: string) {
-  return readMarkdownFile(trackMarkdownPath(userSlug, trackSlug), trackSchema);
+export async function getTrack(trackSlug: string) {
+  return readMarkdownFile(trackMarkdownPath(trackSlug), trackSchema);
 }
 
-export async function listTracks(userSlug: string, filters: TrackListFilters = {}) {
-  const result = await listTracksWithSummary(userSlug, filters);
+export async function listTracks(filters: TrackListFilters = {}) {
+  const result = await listTracksWithSummary(filters);
   return result.items;
 }
 
-export async function listTracksWithSummary(userSlug: string, filters: TrackListFilters = {}) {
-  const trackSlugs = await listDirectories(tracksRoot(userSlug));
+export async function listTracksWithSummary(filters: TrackListFilters = {}) {
+  const trackSlugs = await listDirectories(tracksRoot());
   const items = await Promise.all(
     trackSlugs.map(async (slug) => {
-      const markdownPath = trackMarkdownPath(userSlug, slug);
+      const markdownPath = trackMarkdownPath(slug);
       if (!(await pathExists(markdownPath))) {
         return null;
       }
       try {
-        const track = await getTrack(userSlug, slug);
+        const track = await getTrack(slug);
         return { ...track, trackSlug: slug };
       } catch {
         return null;
@@ -195,31 +189,28 @@ export async function listTracksWithSummary(userSlug: string, filters: TrackList
 }
 
 export async function saveTrack(
-  userSlug: string,
   trackSlug: string,
   data: unknown,
   content = ""
 ) {
-  const existing = await getTrackIfExists(userSlug, trackSlug);
+  const existing = await getTrackIfExists(trackSlug);
   const validated = trackSchema.parse(data);
-  const normalized = await normalizeTrackAgainstProject(userSlug, validated);
+  const normalized = await normalizeTrackAgainstProject(validated);
 
-  await writeTrackFile(userSlug, trackSlug, normalized, content);
+  await writeTrackFile(trackSlug, normalized, content);
   await syncProjectMembershipForTrack(
-    userSlug,
     trackSlug,
     existing?.data.projectSlug,
     normalized.projectSlug
   );
 }
 
-export async function deleteTrack(userSlug: string, trackSlug: string) {
-  const existing = await getTrackIfExists(userSlug, trackSlug);
+export async function deleteTrack(trackSlug: string) {
+  const existing = await getTrackIfExists(trackSlug);
   if (existing?.data.projectSlug) {
-    const project = await getProjectIfExists(userSlug, existing.data.projectSlug);
+    const project = await getProjectIfExists(existing.data.projectSlug);
     if (project && project.data.trackSlugs.includes(trackSlug)) {
       await writeProjectFile(
-        userSlug,
         existing.data.projectSlug,
         {
           ...project.data,
@@ -230,28 +221,28 @@ export async function deleteTrack(userSlug: string, trackSlug: string) {
       );
     }
   }
-  return removeFileIfExists(trackMarkdownPath(userSlug, trackSlug));
+  return removeFileIfExists(trackMarkdownPath(trackSlug));
 }
 
-export async function getFragment(userSlug: string, fragmentSlug: string) {
-  return readMarkdownFile(fragmentMarkdownPath(userSlug, fragmentSlug), fragmentSchema);
+export async function getFragment(fragmentSlug: string) {
+  return readMarkdownFile(fragmentMarkdownPath(fragmentSlug), fragmentSchema);
 }
 
-export async function listFragments(userSlug: string) {
-  const result = await listFragmentsWithSummary(userSlug);
+export async function listFragments() {
+  const result = await listFragmentsWithSummary();
   return result.items;
 }
 
-export async function listFragmentsWithSummary(userSlug: string) {
-  const fragmentSlugs = await listDirectories(fragmentsRoot(userSlug));
+export async function listFragmentsWithSummary() {
+  const fragmentSlugs = await listDirectories(fragmentsRoot());
   const items = await Promise.all(
     fragmentSlugs.map(async (slug) => {
-      const markdownPath = fragmentMarkdownPath(userSlug, slug);
+      const markdownPath = fragmentMarkdownPath(slug);
       if (!(await pathExists(markdownPath))) {
         return null;
       }
       try {
-        const fragment = await getFragment(userSlug, slug);
+        const fragment = await getFragment(slug);
         return { ...fragment, fragmentSlug: slug };
       } catch {
         return null;
@@ -270,30 +261,29 @@ export async function listFragmentsWithSummary(userSlug: string) {
 }
 
 export async function saveFragment(
-  userSlug: string,
   fragmentSlug: string,
   data: unknown,
   content = ""
 ) {
   const validated = fragmentSchema.parse(data);
-  await writeMarkdownFile(fragmentMarkdownPath(userSlug, fragmentSlug), validated, content);
+  await writeMarkdownFile(fragmentMarkdownPath(fragmentSlug), validated, content);
 }
 
-export async function deleteFragment(userSlug: string, fragmentSlug: string) {
-  return removeFileIfExists(fragmentMarkdownPath(userSlug, fragmentSlug));
+export async function deleteFragment(fragmentSlug: string) {
+  return removeFileIfExists(fragmentMarkdownPath(fragmentSlug));
 }
 
-export function getTrackMarkdownPath(userSlug: string, trackSlug: string) {
-  return trackMarkdownPath(userSlug, trackSlug);
+export function getTrackMarkdownPath(trackSlug: string) {
+  return trackMarkdownPath(trackSlug);
 }
 
-export function getFragmentPath(userSlug: string, fragmentSlug: string) {
-  return fragmentMarkdownPath(userSlug, fragmentSlug);
+export function getFragmentPath(fragmentSlug: string) {
+  return fragmentMarkdownPath(fragmentSlug);
 }
 
-async function getProjectIfExists(userSlug: string, projectSlug: string) {
+async function getProjectIfExists(projectSlug: string) {
   try {
-    return await getProject(userSlug, projectSlug);
+    return await getProject(projectSlug);
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return null;
@@ -302,9 +292,9 @@ async function getProjectIfExists(userSlug: string, projectSlug: string) {
   }
 }
 
-async function getTrackIfExists(userSlug: string, trackSlug: string) {
+async function getTrackIfExists(trackSlug: string) {
   try {
-    return await getTrack(userSlug, trackSlug);
+    return await getTrack(trackSlug);
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return null;
@@ -313,32 +303,19 @@ async function getTrackIfExists(userSlug: string, trackSlug: string) {
   }
 }
 
-async function writeProjectFile(
-  userSlug: string,
-  projectSlug: string,
-  data: ProjectFrontmatter,
-  content: string
-) {
-  await writeMarkdownFile(projectMarkdownPath(userSlug, projectSlug), projectSchema.parse(data), content);
+async function writeProjectFile(projectSlug: string, data: ProjectFrontmatter, content: string) {
+  await writeMarkdownFile(projectMarkdownPath(projectSlug), projectSchema.parse(data), content);
 }
 
-async function writeTrackFile(
-  userSlug: string,
-  trackSlug: string,
-  data: TrackFrontmatter,
-  content: string
-) {
-  await writeMarkdownFile(trackMarkdownPath(userSlug, trackSlug), trackSchema.parse(data), content);
+async function writeTrackFile(trackSlug: string, data: TrackFrontmatter, content: string) {
+  await writeMarkdownFile(trackMarkdownPath(trackSlug), trackSchema.parse(data), content);
 }
 
-async function normalizeTrackAgainstProject(
-  userSlug: string,
-  track: TrackFrontmatter
-): Promise<TrackFrontmatter> {
+async function normalizeTrackAgainstProject(track: TrackFrontmatter): Promise<TrackFrontmatter> {
   if (!track.projectSlug) {
     return track;
   }
-  const project = await getProjectIfExists(userSlug, track.projectSlug);
+  const project = await getProjectIfExists(track.projectSlug);
   if (!project) {
     return track;
   }
@@ -352,16 +329,14 @@ async function normalizeTrackAgainstProject(
 }
 
 async function syncProjectMembershipForTrack(
-  userSlug: string,
   trackSlug: string,
   previousProjectSlug: string | undefined,
   nextProjectSlug: string | undefined
 ) {
   if (previousProjectSlug && previousProjectSlug !== nextProjectSlug) {
-    const previousProject = await getProjectIfExists(userSlug, previousProjectSlug);
+    const previousProject = await getProjectIfExists(previousProjectSlug);
     if (previousProject && previousProject.data.trackSlugs.includes(trackSlug)) {
       await writeProjectFile(
-        userSlug,
         previousProjectSlug,
         {
           ...previousProject.data,
@@ -374,13 +349,12 @@ async function syncProjectMembershipForTrack(
   }
 
   if (nextProjectSlug) {
-    const nextProject = await getProjectIfExists(userSlug, nextProjectSlug);
+    const nextProject = await getProjectIfExists(nextProjectSlug);
     if (!nextProject) {
       return;
     }
     if (!nextProject.data.trackSlugs.includes(trackSlug)) {
       await writeProjectFile(
-        userSlug,
         nextProjectSlug,
         {
           ...nextProject.data,
@@ -394,7 +368,6 @@ async function syncProjectMembershipForTrack(
 }
 
 async function syncTracksFromProject(
-  userSlug: string,
   projectSlug: string,
   nextProject: ProjectFrontmatter,
   previousTrackSlugs: string[]
@@ -406,12 +379,11 @@ async function syncTracksFromProject(
     if (nextSet.has(trackSlug)) {
       continue;
     }
-    const track = await getTrackIfExists(userSlug, trackSlug);
+    const track = await getTrackIfExists(trackSlug);
     if (!track || track.data.projectSlug !== projectSlug) {
       continue;
     }
     await writeTrackFile(
-      userSlug,
       trackSlug,
       {
         ...track.data,
@@ -423,7 +395,7 @@ async function syncTracksFromProject(
   }
 
   for (const trackSlug of nextProject.trackSlugs) {
-    const track = await getTrackIfExists(userSlug, trackSlug);
+    const track = await getTrackIfExists(trackSlug);
     if (!track) {
       continue;
     }
@@ -440,7 +412,6 @@ async function syncTracksFromProject(
     }
 
     await writeTrackFile(
-      userSlug,
       trackSlug,
       {
         ...track.data,

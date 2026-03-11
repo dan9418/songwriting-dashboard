@@ -31,24 +31,21 @@ function parseTrackAudioFile(key: string): TrackAudioFile | null {
 }
 
 export async function listTrackAudioFilesFromR2(
-  userSlug: string,
   trackSlug: string
 ): Promise<TrackAudioFile[]> {
-  const prefixes = [`tracks/${trackSlug}/audio/`, `users/${userSlug}/tracks/${trackSlug}/audio/`];
-  const allKeys = (await Promise.all(prefixes.map((prefix) => listObjectKeys(prefix)))).flat();
-  const deduped = Array.from(new Set(allKeys));
+  const prefix = `tracks/${trackSlug}/audio/`;
+  const allKeys = await listObjectKeys(prefix);
 
-  return deduped
+  return allKeys
     .map((key) => parseTrackAudioFile(key))
     .filter((item): item is TrackAudioFile => item !== null);
 }
 
 export async function getTrackAudioFileFromR2(
-  userSlug: string,
   trackSlug: string,
   audioSlug: string
 ): Promise<TrackAudioFile | null> {
-  const files = await listTrackAudioFilesFromR2(userSlug, trackSlug);
+  const files = await listTrackAudioFilesFromR2(trackSlug);
   const match = files.find((item) => item.slug === audioSlug);
   return match ?? null;
 }

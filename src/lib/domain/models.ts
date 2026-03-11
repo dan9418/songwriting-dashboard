@@ -22,13 +22,11 @@ export interface User extends BaseEntity {
 }
 
 export interface Artist extends BaseEntity {
-  userSlug: string;
   aliases: string[];
   bio?: string;
 }
 
 export interface Project extends BaseEntity {
-  userSlug: string;
   artistSlug: string;
   type: ProjectType;
   trackSlugs: string[];
@@ -46,7 +44,6 @@ export interface AudioVersionMetadata {
 }
 
 export interface Track extends BaseEntity {
-  userSlug: string;
   artistSlugs: string[];
   projectSlug?: string;
   status: TrackStatus;
@@ -58,7 +55,6 @@ export interface Track extends BaseEntity {
 }
 
 export interface Fragment extends BaseEntity {
-  userSlug: string;
   text: string;
   relatedTrackSlugs: string[];
 }

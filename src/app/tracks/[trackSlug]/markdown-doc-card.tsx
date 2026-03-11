@@ -30,7 +30,7 @@ export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: 
   const [mode, setMode] = useState<"published" | "edit">("published");
   const label = useMemo(() => toLabel(type), [type]);
   const endpoint = useMemo(
-    () => `/api/tracks/dan/${encodeURIComponent(trackSlug)}/docs/${type}`,
+    () => `/api/tracks/${encodeURIComponent(trackSlug)}/docs/${type}`,
     [trackSlug, type]
   );
 

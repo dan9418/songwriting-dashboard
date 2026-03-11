@@ -1,5 +1,4 @@
 import { queryD1 } from "@/lib/cloudflare/d1";
-import { resolveUserId } from "@/lib/cloudflare/users";
 import { slugToTitle } from "@/lib/utils/slug-display";
 
 interface ArtistRow {
@@ -50,16 +49,13 @@ export interface CloudflareProjectListItem {
   trackSlugs: string[];
 }
 
-export async function listArtistsFromCloudflare(userSlug: string): Promise<CloudflareArtistListItem[]> {
-  const userId = await resolveUserId(userSlug);
+export async function listArtistsFromCloudflare(): Promise<CloudflareArtistListItem[]> {
   const artistRows = await queryD1<ArtistRow>(
     `
     SELECT slug, name
     FROM artists
-    WHERE user_id = ?
     ORDER BY name ASC, slug ASC;
-    `,
-    [userId]
+    `
   );
   const artistProjectRows = await queryD1<ArtistProjectRow>(
     `
@@ -69,10 +65,8 @@ export async function listArtistsFromCloudflare(userSlug: string): Promise<Cloud
       p.name AS projectName
     FROM project_artists pa
     INNER JOIN projects p
-      ON p.user_id = pa.user_id AND p.slug = pa.project_slug
-    WHERE pa.user_id = ?;
-    `,
-    [userId]
+      ON p.slug = pa.project_slug;
+    `
   );
   const artistTrackRows = await queryD1<ArtistTrackRow>(
     `
@@ -80,9 +74,7 @@ export async function listArtistsFromCloudflare(userSlug: string): Promise<Cloud
       artist_slug AS artistSlug,
       track_slug AS trackSlug
     FROM track_artists
-    WHERE user_id = ?;
-    `,
-    [userId]
+    `
   );
 
   const projectsByArtist = new Map<string, Array<{ slug: string; name: string }>>();
@@ -107,16 +99,13 @@ export async function listArtistsFromCloudflare(userSlug: string): Promise<Cloud
   }));
 }
 
-export async function listProjectsFromCloudflare(userSlug: string): Promise<CloudflareProjectListItem[]> {
-  const userId = await resolveUserId(userSlug);
+export async function listProjectsFromCloudflare(): Promise<CloudflareProjectListItem[]> {
   const projectRows = await queryD1<ProjectRow>(
     `
     SELECT slug, name, type
     FROM projects
-    WHERE user_id = ?
     ORDER BY name ASC, slug ASC;
-    `,
-    [userId]
+    `
   );
   const projectArtistRows = await queryD1<ProjectArtistRow>(
     `
@@ -126,10 +115,8 @@ export async function listProjectsFromCloudflare(userSlug: string): Promise<Clou
       a.name AS artistName
     FROM project_artists pa
     INNER JOIN artists a
-      ON a.user_id = pa.user_id AND a.slug = pa.artist_slug
-    WHERE pa.user_id = ?;
-    `,
-    [userId]
+      ON a.slug = pa.artist_slug;
+    `
   );
   const projectTrackRows = await queryD1<ProjectTrackRow>(
     `
@@ -137,9 +124,7 @@ export async function listProjectsFromCloudflare(userSlug: string): Promise<Clou
       project_slug AS projectSlug,
       track_slug AS trackSlug
     FROM project_tracks
-    WHERE user_id = ?;
-    `,
-    [userId]
+    `
   );
 
   const artistsByProject = new Map<string, Array<{ slug: string; name: string }>>();

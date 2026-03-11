@@ -6,11 +6,11 @@ export const runtime = "nodejs";
 
 export async function GET(
   _: Request,
-  context: { params: Promise<{ userSlug: string; trackSlug: string; audioSlug: string }> }
+  context: { params: Promise<{ trackSlug: string; audioSlug: string }> }
 ) {
   try {
-    const { userSlug, trackSlug, audioSlug } = await context.params;
-    const audioFile = await getTrackAudioFileFromR2(userSlug, trackSlug, audioSlug);
+    const { trackSlug, audioSlug } = await context.params;
+    const audioFile = await getTrackAudioFileFromR2(trackSlug, audioSlug);
     if (!audioFile) {
       throw notFound(`Audio file not found for slug: ${audioSlug}`);
     }

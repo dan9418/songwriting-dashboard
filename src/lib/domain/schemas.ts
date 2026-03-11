@@ -31,7 +31,6 @@ export const userSchema = baseEntitySchema.extend({
 });
 
 export const artistSchema = baseEntitySchema.extend({
-  userSlug: slugSchema,
   aliases: z.array(z.string().min(1)).default([]),
   bio: z.string().optional()
 });
@@ -39,7 +38,6 @@ export const artistSchema = baseEntitySchema.extend({
 export const projectTypeSchema = z.enum(PROJECT_TYPES);
 
 export const projectSchema = baseEntitySchema.extend({
-  userSlug: slugSchema,
   artistSlug: slugSchema,
   type: projectTypeSchema,
   trackSlugs: z
@@ -70,7 +68,6 @@ export const audioVersionSchema = z.object({
 });
 
 export const trackSchema = baseEntitySchema.extend({
-  userSlug: slugSchema,
   artistSlugs: z.array(slugSchema).default([]),
   projectSlug: slugSchema.optional(),
   status: trackStatusSchema,
@@ -82,7 +79,6 @@ export const trackSchema = baseEntitySchema.extend({
 });
 
 export const fragmentSchema = baseEntitySchema.extend({
-  userSlug: slugSchema,
   mood: z.string().optional(),
   text: z.string().min(1),
   relatedTrackSlugs: z.array(slugSchema).default([])

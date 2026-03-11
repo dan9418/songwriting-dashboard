@@ -5,8 +5,6 @@ import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
 
 export const dynamic = "force-dynamic";
 
-const USER_SLUG = "dan";
-
 function formatTrackNameFromSlug(slug: string): string {
   return slug
     .split("-")
@@ -35,7 +33,7 @@ export default async function TrackByIdPage({
   params: Promise<{ trackSlug: string }>;
 }) {
   const { trackSlug } = await params;
-  const track = await getTrackMetadataFromCloudflare(USER_SLUG, trackSlug);
+  const track = await getTrackMetadataFromCloudflare(trackSlug);
 
   if (!track) {
     notFound();

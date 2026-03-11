@@ -9,7 +9,6 @@ export interface ArtistData {
   tags: string[];
   createdAt: string;
   updatedAt: string;
-  userSlug: string;
   aliases: string[];
   bio?: string;
 }
@@ -21,7 +20,6 @@ export interface ProjectData {
   createdAt: string;
   updatedAt: string;
   type: "album" | "ep" | "single" | "setlist";
-  userSlug: string;
   artistSlug: string;
   trackSlugs: string[];
   year?: number;
@@ -63,7 +61,6 @@ export interface TrackData {
   tags: string[];
   createdAt: string;
   updatedAt: string;
-  userSlug: string;
   artistSlugs: string[];
   projectSlug?: string;
   status: "idea" | "in-progress" | "recorded" | "released";
@@ -80,7 +77,6 @@ export interface FragmentData {
   tags: string[];
   createdAt: string;
   updatedAt: string;
-  userSlug: string;
   mood?: string;
   text: string;
   relatedTrackSlugs: string[];

@@ -1,5 +1,14 @@
 PRAGMA foreign_keys = OFF;
 
+ALTER TABLE audio ADD COLUMN date_uploaded TEXT;
+ALTER TABLE audio ADD COLUMN date_descriptor TEXT;
+
+UPDATE audio
+SET date_uploaded = COALESCE(date_uploaded, date);
+
+UPDATE audio
+SET date_descriptor = COALESCE(date_descriptor, date_override);
+
 CREATE TABLE IF NOT EXISTS audio_new (
   user_id INTEGER NOT NULL,
   slug TEXT NOT NULL CHECK (length(trim(slug)) > 0),

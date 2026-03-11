@@ -18,7 +18,7 @@ The app manages:
 
 ## Entity Model
 
-Top-level entities under each user:
+Top-level entities (single-user layout):
 - `artists`
 - `projects`
 - `tracks`

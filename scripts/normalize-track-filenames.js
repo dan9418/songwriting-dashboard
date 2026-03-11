@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const DRY_RUN = process.argv.includes("--dryRun");
-const ROOT = './songwriting-data/users/dan/tracks'
+const ROOT = './songwriting-data/tracks'
 
 function slugify(str) {
   return str

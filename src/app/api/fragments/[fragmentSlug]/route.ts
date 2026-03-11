@@ -5,11 +5,11 @@ import { deleteFragment, getFragment, saveFragment } from "@/lib/fs/repositories
 
 export async function GET(
   _: Request,
-  context: { params: Promise<{ userSlug: string; fragmentSlug: string }> }
+  context: { params: Promise<{ fragmentSlug: string }> }
 ) {
   try {
-    const { userSlug, fragmentSlug } = await context.params;
-    const entity = await getFragment(userSlug, fragmentSlug);
+    const { fragmentSlug } = await context.params;
+    const entity = await getFragment(fragmentSlug);
     return ok(entity);
   } catch (error) {
     return apiErrorResponse(error);
@@ -18,14 +18,14 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  context: { params: Promise<{ userSlug: string; fragmentSlug: string }> }
+  context: { params: Promise<{ fragmentSlug: string }> }
 ) {
   try {
-    const { userSlug, fragmentSlug } = await context.params;
+    const { fragmentSlug } = await context.params;
     const body = await parseJsonBody<WriteMarkdownBody<{ slug?: string } & Record<string, unknown>>>(request);
     assertSlugMatch(body.data.slug, fragmentSlug);
-    await saveFragment(userSlug, fragmentSlug, body.data, body.content ?? "");
-    const entity = await getFragment(userSlug, fragmentSlug);
+    await saveFragment(fragmentSlug, body.data, body.content ?? "");
+    const entity = await getFragment(fragmentSlug);
     return ok(entity);
   } catch (error) {
     return apiErrorResponse(error);
@@ -34,29 +34,26 @@ export async function PUT(
 
 export async function PATCH(
   request: Request,
-  context: { params: Promise<{ userSlug: string; fragmentSlug: string }> }
+  context: { params: Promise<{ fragmentSlug: string }> }
 ) {
   try {
-    const { userSlug, fragmentSlug } = await context.params;
+    const { fragmentSlug } = await context.params;
     const body = await parseJsonBody<WriteMarkdownBody<Partial<Record<string, unknown>>>>(request);
-    const current = await getFragment(userSlug, fragmentSlug);
+    const current = await getFragment(fragmentSlug);
     const nextData = { ...current.data, ...body.data };
     assertSlugMatch(nextData.slug, fragmentSlug);
-    await saveFragment(userSlug, fragmentSlug, nextData, body.content ?? current.content);
-    const entity = await getFragment(userSlug, fragmentSlug);
+    await saveFragment(fragmentSlug, nextData, body.content ?? current.content);
+    const entity = await getFragment(fragmentSlug);
     return ok(entity);
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function DELETE(
-  _: Request,
-  context: { params: Promise<{ userSlug: string; fragmentSlug: string }> }
-) {
+export async function DELETE(_: Request, context: { params: Promise<{ fragmentSlug: string }> }) {
   try {
-    const { userSlug, fragmentSlug } = await context.params;
-    const existed = await deleteFragment(userSlug, fragmentSlug);
+    const { fragmentSlug } = await context.params;
+    const existed = await deleteFragment(fragmentSlug);
     return deleted(existed);
   } catch (error) {
     return apiErrorResponse(error);

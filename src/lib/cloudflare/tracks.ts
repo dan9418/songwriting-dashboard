@@ -1,6 +1,5 @@
 import { queryD1 } from "@/lib/cloudflare/d1";
 import { listTrackAudioFilesFromR2 } from "@/lib/cloudflare/track-audio-files";
-import { resolveUserId } from "@/lib/cloudflare/users";
 
 interface TrackRow {
   slug: string;
@@ -67,8 +66,7 @@ function toInt(value: number | string | null): number {
   return typeof value === "number" ? value : Number(value);
 }
 
-export async function listTracksFromCloudflare(userSlug: string): Promise<CloudflareTrackListItem[]> {
-  const userId = await resolveUserId(userSlug);
+export async function listTracksFromCloudflare(): Promise<CloudflareTrackListItem[]> {
   const rows = await queryD1<TrackRow>(
     `
     SELECT
@@ -83,19 +81,16 @@ export async function listTracksFromCloudflare(userSlug: string): Promise<Cloudf
     FROM tracks t
     LEFT JOIN (
       SELECT
-        user_id,
         track_slug,
         COUNT(*) AS audioCount,
         SUM(CASE WHEN type = 'note' THEN 1 ELSE 0 END) AS noteCount,
         SUM(CASE WHEN type = 'demo' THEN 1 ELSE 0 END) AS demoCount,
         SUM(CASE WHEN type = 'live' THEN 1 ELSE 0 END) AS liveCount
       FROM audio
-      GROUP BY user_id, track_slug
-    ) a ON a.user_id = t.user_id AND a.track_slug = t.slug
-    WHERE t.user_id = ?
+      GROUP BY track_slug
+    ) a ON a.track_slug = t.slug
     ORDER BY t.slug ASC;
-    `,
-    [userId]
+    `
   );
   const trackProjectRows = await queryD1<TrackProjectRow>(
     `
@@ -103,10 +98,8 @@ export async function listTracksFromCloudflare(userSlug: string): Promise<Cloudf
       track_slug AS trackSlug,
       project_slug AS projectSlug
     FROM project_tracks
-    WHERE user_id = ?
     ORDER BY project_slug ASC, position ASC, track_slug ASC;
-    `,
-    [userId]
+    `
   );
   const trackArtistRows = await queryD1<TrackArtistRow>(
     `
@@ -114,9 +107,7 @@ export async function listTracksFromCloudflare(userSlug: string): Promise<Cloudf
       track_slug AS trackSlug,
       artist_slug AS artistSlug
     FROM track_artists
-    WHERE user_id = ?;
-    `,
-    [userId]
+    `
   );
   const projectSlugsByTrack = new Map<string, string[]>();
   for (const row of trackProjectRows) {
@@ -146,10 +137,8 @@ export async function listTracksFromCloudflare(userSlug: string): Promise<Cloudf
 }
 
 export async function getTrackMetadataFromCloudflare(
-  userSlug: string,
   trackSlug: string
 ): Promise<CloudflareTrackMetadata | null> {
-  const userId = await resolveUserId(userSlug);
   const [track] = await queryD1<TrackRow>(
     `
     SELECT
@@ -164,19 +153,18 @@ export async function getTrackMetadataFromCloudflare(
     FROM tracks t
     LEFT JOIN (
       SELECT
-        user_id,
         track_slug,
         COUNT(*) AS audioCount,
         SUM(CASE WHEN type = 'note' THEN 1 ELSE 0 END) AS noteCount,
         SUM(CASE WHEN type = 'demo' THEN 1 ELSE 0 END) AS demoCount,
         SUM(CASE WHEN type = 'live' THEN 1 ELSE 0 END) AS liveCount
       FROM audio
-      GROUP BY user_id, track_slug
-    ) a ON a.user_id = t.user_id AND a.track_slug = t.slug
-    WHERE t.user_id = ? AND t.slug = ?
+      GROUP BY track_slug
+    ) a ON a.track_slug = t.slug
+    WHERE t.slug = ?
     LIMIT 1;
     `,
-    [userId, trackSlug]
+    [trackSlug]
   );
 
   if (!track) {
@@ -193,29 +181,29 @@ export async function getTrackMetadataFromCloudflare(
       date,
       date_override AS dateOverride
     FROM audio
-    WHERE user_id = ? AND track_slug = ?
+    WHERE track_slug = ?
     ORDER BY type ASC, type_version ASC, slug ASC;
     `,
-    [userId, trackSlug]
+    [trackSlug]
   );
   const artistRows = await queryD1<{ artistSlug: string }>(
     `
     SELECT artist_slug AS artistSlug
     FROM track_artists
-    WHERE user_id = ? AND track_slug = ?;
+    WHERE track_slug = ?;
     `,
-    [userId, trackSlug]
+    [trackSlug]
   );
   const projectRows = await queryD1<{ projectSlug: string }>(
     `
     SELECT project_slug AS projectSlug
     FROM project_tracks
-    WHERE user_id = ? AND track_slug = ?
+    WHERE track_slug = ?
     ORDER BY project_slug ASC, position ASC;
     `,
-    [userId, trackSlug]
+    [trackSlug]
   );
-  const audioFiles = await listTrackAudioFilesFromR2(userSlug, trackSlug);
+  const audioFiles = await listTrackAudioFilesFromR2(trackSlug);
   const audioFileBySlug = new Map(audioFiles.map((item) => [item.slug, item]));
 
   return {
@@ -233,7 +221,7 @@ export async function getTrackMetadataFromCloudflare(
       slug: item.slug,
       fileName: audioFileBySlug.get(item.slug)?.fileName ?? item.slug,
       fileHref: audioFileBySlug.get(item.slug)
-        ? `/api/tracks/${encodeURIComponent(userSlug)}/${encodeURIComponent(trackSlug)}/audio/${encodeURIComponent(item.slug)}`
+        ? `/api/tracks/${encodeURIComponent(trackSlug)}/audio/${encodeURIComponent(item.slug)}`
         : null,
       type: item.type,
       typeVersion: toInt(item.typeVersion),

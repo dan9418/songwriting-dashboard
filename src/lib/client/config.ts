@@ -1,1 +1,0 @@
-export const DEFAULT_USER_SLUG = process.env.NEXT_PUBLIC_DEFAULT_USER_SLUG ?? "dan";

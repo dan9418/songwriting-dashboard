@@ -24,11 +24,11 @@ function getContentOrThrow(body: DocWriteBody): string {
 
 export async function GET(
   _: Request,
-  context: { params: Promise<{ userSlug: string; trackSlug: string; type: string }> }
+  context: { params: Promise<{ trackSlug: string; type: string }> }
 ) {
   try {
-    const { userSlug, trackSlug, type } = await context.params;
-    const record = await getTrackDoc(userSlug, trackSlug, parseTrackDocType(type));
+    const { trackSlug, type } = await context.params;
+    const record = await getTrackDoc(trackSlug, parseTrackDocType(type));
     return ok(record);
   } catch (error) {
     return apiErrorResponse(error);
@@ -37,13 +37,13 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  context: { params: Promise<{ userSlug: string; trackSlug: string; type: string }> }
+  context: { params: Promise<{ trackSlug: string; type: string }> }
 ) {
   try {
-    const { userSlug, trackSlug, type } = await context.params;
+    const { trackSlug, type } = await context.params;
     const body = await parseJsonBody<DocWriteBody>(request);
     const content = typeof body.content === "string" ? body.content : "";
-    const record = await createTrackDoc(userSlug, trackSlug, parseTrackDocType(type), content);
+    const record = await createTrackDoc(trackSlug, parseTrackDocType(type), content);
     return ok(record, 201);
   } catch (error) {
     return apiErrorResponse(error);
@@ -52,13 +52,12 @@ export async function POST(
 
 export async function PUT(
   request: Request,
-  context: { params: Promise<{ userSlug: string; trackSlug: string; type: string }> }
+  context: { params: Promise<{ trackSlug: string; type: string }> }
 ) {
   try {
-    const { userSlug, trackSlug, type } = await context.params;
+    const { trackSlug, type } = await context.params;
     const body = await parseJsonBody<DocWriteBody>(request);
     const record = await updateTrackDoc(
-      userSlug,
       trackSlug,
       parseTrackDocType(type),
       getContentOrThrow(body)
@@ -71,11 +70,11 @@ export async function PUT(
 
 export async function DELETE(
   _: Request,
-  context: { params: Promise<{ userSlug: string; trackSlug: string; type: string }> }
+  context: { params: Promise<{ trackSlug: string; type: string }> }
 ) {
   try {
-    const { userSlug, trackSlug, type } = await context.params;
-    const result = await deleteTrackDoc(userSlug, trackSlug, parseTrackDocType(type));
+    const { trackSlug, type } = await context.params;
+    const result = await deleteTrackDoc(trackSlug, parseTrackDocType(type));
     return ok(result);
   } catch (error) {
     return apiErrorResponse(error);

@@ -29,77 +29,63 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  listArtists: (userSlug: string) =>
+  listArtists: () =>
     apiRequest<{ items: Array<MarkdownEntity<ArtistData> & { artistSlug: string }> }>(
-      `/api/artists/${userSlug}`
+      `/api/artists`
     ),
-  getArtist: (userSlug: string, artistSlug: string) =>
-    apiRequest<MarkdownEntity<ArtistData>>(`/api/artists/${userSlug}/${artistSlug}`),
-  putArtist: (userSlug: string, artistSlug: string, data: ArtistData, content: string) =>
-    apiRequest<MarkdownEntity<ArtistData>>(`/api/artists/${userSlug}/${artistSlug}`, {
+  getArtist: (artistSlug: string) =>
+    apiRequest<MarkdownEntity<ArtistData>>(`/api/artists/${artistSlug}`),
+  putArtist: (artistSlug: string, data: ArtistData, content: string) =>
+    apiRequest<MarkdownEntity<ArtistData>>(`/api/artists/${artistSlug}`, {
       method: "PUT",
       body: JSON.stringify({ data, content })
     }),
 
-  listProjects: (userSlug: string, artistSlug: string) =>
+  listProjects: (artistSlug: string) =>
     apiRequest<{ items: Array<MarkdownEntity<ProjectData> & { projectSlug: string }> }>(
-      `/api/projects/${userSlug}/${artistSlug}`
+      `/api/projects/${artistSlug}`
     ),
-  getProject: (userSlug: string, artistSlug: string, projectSlug: string) =>
-    apiRequest<MarkdownEntity<ProjectData>>(`/api/projects/${userSlug}/${artistSlug}/${projectSlug}`),
-  putProject: (
-    userSlug: string,
-    artistSlug: string,
-    projectSlug: string,
-    data: ProjectData,
-    content: string
-  ) =>
-    apiRequest<MarkdownEntity<ProjectData>>(`/api/projects/${userSlug}/${artistSlug}/${projectSlug}`, {
+  getProject: (artistSlug: string, projectSlug: string) =>
+    apiRequest<MarkdownEntity<ProjectData>>(`/api/projects/${artistSlug}/${projectSlug}`),
+  putProject: (artistSlug: string, projectSlug: string, data: ProjectData, content: string) =>
+    apiRequest<MarkdownEntity<ProjectData>>(`/api/projects/${artistSlug}/${projectSlug}`, {
       method: "PUT",
       body: JSON.stringify({ data, content })
     }),
 
-  listTracks: (userSlug: string) => apiRequest<{ items: TrackListItem[] }>(`/api/tracks/${userSlug}`),
+  listTracks: () => apiRequest<{ items: TrackListItem[] }>(`/api/tracks`),
 
-  getTrack: (userSlug: string, trackSlug: string) =>
-    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}/${trackSlug}`),
+  getTrack: (trackSlug: string) => apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${trackSlug}`),
 
-  putTrack: (
-    userSlug: string,
-    trackSlug: string,
-    data: TrackData,
-    content: string
-  ) =>
-    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}/${trackSlug}`, {
+  putTrack: (trackSlug: string, data: TrackData, content: string) =>
+    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${trackSlug}`, {
       method: "PUT",
       body: JSON.stringify({ data, content })
     }),
 
-  postTrack: (userSlug: string, data: TrackData, content: string) =>
-    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks/${userSlug}`, {
+  postTrack: (data: TrackData, content: string) =>
+    apiRequest<MarkdownEntity<TrackData>>(`/api/tracks`, {
       method: "POST",
       body: JSON.stringify({ data, content })
     }),
 
-  listFragments: (userSlug: string) =>
+  listFragments: () =>
     apiRequest<{
       items: Array<MarkdownEntity<FragmentData> & { fragmentSlug: string }>;
       summary: FragmentImportSummary;
-    }>(
-      `/api/fragments/${userSlug}`
-    ),
+    }>(`/api/fragments`),
 
-  getFragment: (userSlug: string, fragmentSlug: string) =>
-    apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments/${userSlug}/${fragmentSlug}`),
+  getFragment: (fragmentSlug: string) =>
+    apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments/${fragmentSlug}`),
 
-  postFragment: (userSlug: string, data: FragmentData, content: string) =>
-    apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments/${userSlug}`, {
+  postFragment: (data: FragmentData, content: string) =>
+    apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments`, {
       method: "POST",
       body: JSON.stringify({ data, content })
     }),
 
-  putFragment: (userSlug: string, fragmentSlug: string, data: FragmentData, content: string) =>
-    apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments/${userSlug}/${fragmentSlug}`, {
+  putFragment: (fragmentSlug: string, data: FragmentData, content: string) =>
+    apiRequest<MarkdownEntity<FragmentData>>(`/api/fragments/${fragmentSlug}`, {
       method: "PUT",
       body: JSON.stringify({ data, content })
     })
