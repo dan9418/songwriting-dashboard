@@ -1,14 +1,13 @@
-import { ensureNonEmptySlug } from "@/lib/utils/slug";
-
-const AUDIO_EXTENSIONS = [".mp3", ".m4a"] as const;
+const AUDIO_EXTENSIONS = [".mp3", ".m4a", ".mp4"] as const;
 type AudioExtension = (typeof AUDIO_EXTENSIONS)[number];
 const STRICT_DATE_TOKEN_REGEX = /^\d{1,2}-\d{1,2}-\d{2}$/;
 const DATE_DESCRIPTOR_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9 '&.,/-]*$/;
+const TRACK_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const AUDIO_FILENAME_REGEX =
-  /^(?<trackName>.+?) - (?<category>[a-zA-Z][a-zA-Z0-9-]*) (?<versionNumber>\d+) \((?<recordedDate>[^)]+)\)(?: \[(?<description>[^\]]+)\])?(?<extension>\.mp3|\.m4a)$/;
+  /^(?<trackSlug>[a-z0-9]+(?:-[a-z0-9]+)*)_(?<category>[a-zA-Z][a-zA-Z0-9-]*)_v(?<versionNumber>\d+)_(?<recordedDate>[^_]+?)(?:_(?<description>.+))?$/i;
 
 export interface ParsedAudioFilename {
-  trackName: string;
+  trackSlug: string;
   category: string;
   versionNumber: number;
   recordedDate: string;
@@ -45,35 +44,42 @@ function isValidRecordedDateToken(dateToken: string): boolean {
   if (!normalizedToken) {
     return false;
   }
+  if (normalizedToken.includes("_")) {
+    return false;
+  }
   if (STRICT_DATE_TOKEN_REGEX.test(normalizedToken)) {
     return isValidDateToken(normalizedToken);
   }
   return DATE_DESCRIPTOR_REGEX.test(normalizedToken);
 }
 
-function buildAudioSlug(input: Omit<ParsedAudioFilename, "slug" | "originalFileName">): string {
-  return ensureNonEmptySlug(
-    `${input.trackName}-${input.category}-${input.versionNumber}-${input.recordedDate}`
-  );
-}
-
 export function parseAudioFilename(fileName: string): ParsedAudioFilename {
-  const match = AUDIO_FILENAME_REGEX.exec(fileName);
+  const extensionMatch = /\.(mp3|m4a|mp4)$/i.exec(fileName);
+  if (!extensionMatch) {
+    throw new Error("Invalid filename extension. Expected .mp3, .m4a, or .mp4");
+  }
+  const extension = extensionMatch[0].toLowerCase() as AudioExtension;
+  const baseName = fileName.slice(0, -extension.length);
+
+  const match = AUDIO_FILENAME_REGEX.exec(baseName);
   if (!match?.groups) {
     throw new Error(
-      "Invalid filename. Expected: {Track Name} - {category} {versionNumber} ({M-D-YY|descriptor}) [optionalDescription].{mp3|m4a}"
+      "Invalid filename. Expected: {track-slug}_{category}_v{versionNumber}_{M-D-YY|descriptor|YYYY-MM-DD|YYYY}_{optionalDescription}.{mp3|m4a|mp4}"
     );
   }
 
   const parsed: Omit<ParsedAudioFilename, "slug" | "originalFileName"> = {
-    trackName: match.groups.trackName.trim(),
+    trackSlug: match.groups.trackSlug.trim(),
     category: match.groups.category.toLowerCase(),
     versionNumber: Number(match.groups.versionNumber),
     recordedDate: match.groups.recordedDate.trim(),
     description: match.groups.description?.trim(),
-    extension: match.groups.extension.toLowerCase() as AudioExtension
+    extension
   };
 
+  if (!TRACK_SLUG_REGEX.test(parsed.trackSlug)) {
+    throw new Error("trackSlug must be kebab-case.");
+  }
   if (!isValidRecordedDateToken(parsed.recordedDate)) {
     throw new Error("Invalid date token in filename. Use M-D-YY or a descriptor string.");
   }
@@ -83,7 +89,7 @@ export function parseAudioFilename(fileName: string): ParsedAudioFilename {
 
   return {
     ...parsed,
-    slug: buildAudioSlug(parsed),
+    slug: baseName,
     originalFileName: fileName
   };
 }
@@ -98,15 +104,16 @@ export function isValidAudioFilename(fileName: string): boolean {
 }
 
 export function formatAudioFilename(input: {
-  trackName: string;
+  trackSlug: string;
   category: string;
   versionNumber: number;
   recordedDate: string;
   description?: string;
   extension?: string;
 }): string {
-  if (!input.trackName.trim()) {
-    throw new Error("trackName is required.");
+  const trackSlug = input.trackSlug.trim().toLowerCase();
+  if (!TRACK_SLUG_REGEX.test(trackSlug)) {
+    throw new Error("trackSlug must be kebab-case.");
   }
   if (!/^[a-zA-Z][a-zA-Z0-9-]*$/.test(input.category)) {
     throw new Error("category must be alphanumeric and may include hyphens.");
@@ -119,19 +126,17 @@ export function formatAudioFilename(input: {
   }
   const extension = (input.extension ?? ".mp3").toLowerCase();
   if (!AUDIO_EXTENSIONS.includes(extension as AudioExtension)) {
-    throw new Error("extension must be .mp3 or .m4a");
+    throw new Error("extension must be .mp3, .m4a, or .mp4");
   }
 
-  const descriptionToken = input.description?.trim()
-    ? ` [${input.description.trim().replace(/[\[\]]/g, "")}]`
-    : "";
-  return `${input.trackName.trim()} - ${input.category.toLowerCase()} ${input.versionNumber} (${input.recordedDate})${descriptionToken}${extension}`;
+  const descriptionToken = input.description?.trim() ? `_${input.description.trim()}` : "";
+  return `${trackSlug}_${input.category.toLowerCase()}_v${input.versionNumber}_${input.recordedDate.trim()}${descriptionToken}${extension}`;
 }
 
 export function renameAudioFilename(
   previousFileName: string,
   nextMetadata: {
-    trackName: string;
+    trackSlug: string;
     category: string;
     versionNumber: number;
     recordedDate: string;

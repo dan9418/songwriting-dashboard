@@ -1,4 +1,5 @@
 import { queryD1 } from "@/lib/cloudflare/d1";
+import { syncTrackAudioMetadataFromR2 } from "@/lib/cloudflare/audio-sync";
 import { listTrackAudioFilesFromR2 } from "@/lib/cloudflare/track-audio-files";
 
 interface TrackRow {
@@ -171,6 +172,8 @@ export async function getTrackMetadataFromCloudflare(
     return null;
   }
 
+  await syncTrackAudioMetadataFromR2(trackSlug);
+
   const audioRows = await queryD1<AudioRow>(
     `
     SELECT
@@ -205,6 +208,9 @@ export async function getTrackMetadataFromCloudflare(
   );
   const audioFiles = await listTrackAudioFilesFromR2(trackSlug);
   const audioFileBySlug = new Map(audioFiles.map((item) => [item.slug, item]));
+  const noteCount = audioRows.filter((item) => item.type === "note").length;
+  const demoCount = audioRows.filter((item) => item.type === "demo").length;
+  const liveCount = audioRows.filter((item) => item.type === "live").length;
 
   return {
     slug: track.slug,
@@ -213,10 +219,10 @@ export async function getTrackMetadataFromCloudflare(
     lyricsPath: track.lyricsPath,
     notesPath: track.notesPath,
     chordsPath: track.chordsPath,
-    audioCount: toInt(track.audioCount),
-    noteCount: toInt(track.noteCount),
-    demoCount: toInt(track.demoCount),
-    liveCount: toInt(track.liveCount),
+    audioCount: audioRows.length,
+    noteCount,
+    demoCount,
+    liveCount,
     audio: audioRows.map((item) => ({
       slug: item.slug,
       fileName: audioFileBySlug.get(item.slug)?.fileName ?? item.slug,

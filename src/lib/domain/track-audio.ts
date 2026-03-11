@@ -5,12 +5,16 @@ import {
 } from "@/lib/audio/filename";
 import { badRequest } from "@/lib/api/errors";
 import { trackSchema, type TrackFrontmatter } from "@/lib/domain/schemas";
-import { ensureNonEmptySlug } from "@/lib/utils/slug";
 
 export function enforceTrackAudioNaming(input: unknown): TrackFrontmatter {
   const track = trackSchema.parse(input);
   const normalizedVersions = track.audioVersions.map((version) => {
     const parsed = parseAudioFilename(version.fileName);
+    if (parsed.trackSlug !== track.slug) {
+      throw badRequest(
+        `Audio filename track slug mismatch for ${version.fileName}. Expected track slug "${track.slug}".`
+      );
+    }
     if (
       parsed.category !== version.category.toLowerCase() ||
       parsed.versionNumber !== version.versionNumber ||
@@ -22,7 +26,7 @@ export function enforceTrackAudioNaming(input: unknown): TrackFrontmatter {
     }
 
     const expectedFileName = formatAudioFilename({
-      trackName: track.title,
+      trackSlug: track.slug,
       category: version.category,
       versionNumber: version.versionNumber,
       recordedDate: version.recordedDate,
@@ -30,20 +34,20 @@ export function enforceTrackAudioNaming(input: unknown): TrackFrontmatter {
       extension: parsed.extension
     });
     const renamed = renameAudioFilename(version.fileName, {
-      trackName: track.title,
+      trackSlug: track.slug,
       category: version.category,
       versionNumber: version.versionNumber,
       recordedDate: version.recordedDate,
       description: version.description,
       extension: parsed.extension
     });
+    const normalizedFileName = renamed.shouldRename ? expectedFileName : version.fileName;
+    const normalizedParsed = parseAudioFilename(normalizedFileName);
 
     return {
       ...version,
-      fileName: renamed.shouldRename ? expectedFileName : version.fileName,
-      slug: ensureNonEmptySlug(
-        `${track.title}-${version.category}-${version.versionNumber}-${version.recordedDate}`
-      )
+      fileName: normalizedFileName,
+      slug: normalizedParsed.slug
     };
   });
 
