@@ -2,6 +2,8 @@
 
 ## Working Rule
 
+NEVER take action without explicit consent. When presented with a statement, question, or ambiguous content, ALWAYS ask for clarification first.
+
 If you have any uncertainty about the user's expectations, intended outcome, constraints, or the feasibility of a requested change, ask for clarification before taking action.
 
 Do not guess when a material assumption could affect:

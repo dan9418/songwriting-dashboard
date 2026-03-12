@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
 import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
-import { TrackEditorCard } from "@/app/tracks/[trackSlug]/track-editor-card";
+import { TrackDetailControls } from "@/app/tracks/[trackSlug]/track-detail-controls";
 import { listArtistsFromCloudflare, listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
-import { slugToTitle } from "@/lib/utils/slug-display";
 
 export const dynamic = "force-dynamic";
 
@@ -40,31 +38,18 @@ export default async function TrackByIdPage({
 
   return (
     <section className="grid gap-4">
-      <div className="panel flex items-center justify-between gap-3 p-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{track.name}</h1>
-          <p className="text-sm text-[color:var(--muted)]">{track.slug}</p>
-        </div>
-        <Link
-          href="/tracks"
-          className="rounded-lg bg-[#f4eadb] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
-        >
-          Back To Tracks
-        </Link>
-      </div>
-
-      <TrackEditorCard
+      <TrackDetailControls
         trackSlug={track.slug}
         initialName={track.name}
         initialArtistSlugs={track.artistSlugs}
         initialProjectSlugs={track.projectSlugs}
         artistOptions={artists.map((artist) => ({
           slug: artist.slug,
-          name: artist.name || slugToTitle(artist.slug)
+          name: artist.name
         }))}
         projectOptions={projects.map((project) => ({
           slug: project.slug,
-          name: project.name || slugToTitle(project.slug)
+          name: project.name
         }))}
       />
 
@@ -72,42 +57,6 @@ export default async function TrackByIdPage({
         <MarkdownDocCard trackSlug={track.slug} type="lyrics" />
         <MarkdownDocCard trackSlug={track.slug} type="chords" />
         <MarkdownDocCard trackSlug={track.slug} type="notes" />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="panel p-4">
-          <h2 className="text-lg font-semibold">Artists</h2>
-          {track.artistSlugs.length === 0 ? (
-            <p className="mt-2 text-sm text-[color:var(--muted)]">No artists linked.</p>
-          ) : (
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-              {track.artistSlugs.map((artistSlug) => (
-                <li key={artistSlug}>
-                  <Link href={`/artists/${artistSlug}`} className="underline-offset-4 hover:underline">
-                    {slugToTitle(artistSlug)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="panel p-4">
-          <h2 className="text-lg font-semibold">Projects</h2>
-          {track.projectSlugs.length === 0 ? (
-            <p className="mt-2 text-sm text-[color:var(--muted)]">No projects linked.</p>
-          ) : (
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-              {track.projectSlugs.map((projectSlug) => (
-                <li key={projectSlug}>
-                  <Link href={`/projects/${projectSlug}`} className="underline-offset-4 hover:underline">
-                    {slugToTitle(projectSlug)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
       </div>
 
       <div className="panel overflow-x-auto p-4">
