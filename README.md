@@ -4,10 +4,10 @@
 
 This is a songwriter data management system backed by Cloudflare D1 (metadata) and R2 (media/files), designed to replace ad hoc filesystem organization with a structured, enforceable metadata-driven architecture.
 
-The app manages:
-- Archived music projects (albums, EPs, singles, setlists)
-- Active and unfinished tracks
-- Structured metadata for future AI-assisted workflows
+The active app model centers on three core entities:
+- `artists`
+- `projects`
+- `tracks`
 
 ## Core Principles
 
@@ -17,31 +17,32 @@ The app manages:
 
 ## Entity Model
 
-Top-level entities (single-user layout):
-- `artists`
-- `projects`
-- `tracks`
-
 Relationship model:
-- Project -> Artist (N:1 via `artistSlug`)
-- Track -> Project (N:1 via optional `projectSlug`)
+- Artist <-> Project (M:N via `project_artists`)
+- Project <-> Track (M:N via `project_tracks`, ordered by `position`)
+- Artist <-> Track (M:N via `track_artists`)
+- Track -> Audio (1:N via `audio.track_slug`)
 
-Sandbox behavior:
-- Sandbox tracks are tracks with no `projectSlug`.
+Supplemental schema tables exist for images/social link metadata:
+- `images`, `social_links`
+- `artist_images`, `artist_social_links`
+- `project_images`, `project_social_links`
+- `track_images`
 
 ## Data Architecture
 
 - D1 schema and seed scripts: `scripts/sql/` and `scripts/seed-d1.js`
 - R2 backfill helper: `scripts/backfill-audio-from-r2.js`
+- Track markdown docs (lyrics/chords/notes): `tracks/{trackSlug}/{docType}.md` in R2
 
 ## Audio Filename Convention
 
 Required format:
 
-`{Track Name} - {category} {versionNumber} ({MM-DD-YY}) [{optionalDescription}].mp3`
+`{track-slug}_{category}_v{versionNumber}_{M-D-YY|descriptor|YYYY-MM-DD|YYYY}_{optionalDescription}.{mp3|m4a|mp4}`
 
 Example:
 
-`Midnight Drive - demo 2 (02-14-25) [acoustic].mp3`
+`midnight-drive_demo_v2_02-14-25_acoustic.m4a`
 
 The app parses filename metadata, validates consistency with track metadata, and auto-renames metadata filenames when required fields change.

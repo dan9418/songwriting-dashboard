@@ -1,4 +1,5 @@
 erDiagram
+  %% Core entities surfaced in UI/API.
   ARTISTS {
     TEXT slug PK
     TEXT name
@@ -19,6 +20,24 @@ erDiagram
     TEXT name
   }
 
+  %% Core relationship tables.
+  PROJECT_ARTISTS {
+    TEXT project_slug PK, FK
+    TEXT artist_slug PK, FK
+  }
+
+  PROJECT_TRACKS {
+    TEXT project_slug PK, FK
+    TEXT track_slug PK, FK
+    INTEGER position
+  }
+
+  TRACK_ARTISTS {
+    TEXT track_slug PK, FK
+    TEXT artist_slug PK, FK
+  }
+
+  %% Track media metadata.
   AUDIO {
     TEXT slug PK
     TEXT track_slug FK
@@ -29,6 +48,7 @@ erDiagram
     TEXT date_override
   }
 
+  %% Supplemental metadata tables present in schema.
   IMAGES {
     TEXT slug PK
     TEXT path UNIQUE
@@ -50,17 +70,6 @@ erDiagram
     INTEGER social_link_id PK, FK
   }
 
-  PROJECT_ARTISTS {
-    TEXT project_slug PK, FK
-    TEXT artist_slug PK, FK
-  }
-
-  PROJECT_TRACKS {
-    TEXT project_slug PK, FK
-    TEXT track_slug PK, FK
-    INTEGER position
-  }
-
   PROJECT_IMAGES {
     TEXT project_slug PK, FK
     TEXT image_slug PK, FK
@@ -71,30 +80,25 @@ erDiagram
     INTEGER social_link_id PK, FK
   }
 
-  TRACK_ARTISTS {
-    TEXT track_slug PK, FK
-    TEXT artist_slug PK, FK
-  }
-
   TRACK_IMAGES {
     TEXT track_slug PK, FK
     TEXT image_slug PK, FK
   }
 
+  PROJECTS ||--o{ PROJECT_ARTISTS : links
+  ARTISTS ||--o{ PROJECT_ARTISTS : links
+  PROJECTS ||--o{ PROJECT_TRACKS : links
+  TRACKS ||--o{ PROJECT_TRACKS : links
+  TRACKS ||--o{ TRACK_ARTISTS : links
+  ARTISTS ||--o{ TRACK_ARTISTS : links
   TRACKS ||--o{ AUDIO : has
   ARTISTS ||--o{ ARTIST_IMAGES : links
   IMAGES ||--o{ ARTIST_IMAGES : linked_to
   ARTISTS ||--o{ ARTIST_SOCIAL_LINKS : links
   SOCIAL_LINKS ||--o{ ARTIST_SOCIAL_LINKS : linked_to
-  PROJECTS ||--o{ PROJECT_ARTISTS : links
-  ARTISTS ||--o{ PROJECT_ARTISTS : linked_to
-  PROJECTS ||--o{ PROJECT_TRACKS : includes
-  TRACKS ||--o{ PROJECT_TRACKS : included_in
   PROJECTS ||--o{ PROJECT_IMAGES : links
   IMAGES ||--o{ PROJECT_IMAGES : linked_to
   PROJECTS ||--o{ PROJECT_SOCIAL_LINKS : links
   SOCIAL_LINKS ||--o{ PROJECT_SOCIAL_LINKS : linked_to
-  TRACKS ||--o{ TRACK_ARTISTS : links
-  ARTISTS ||--o{ TRACK_ARTISTS : linked_to
   TRACKS ||--o{ TRACK_IMAGES : links
   IMAGES ||--o{ TRACK_IMAGES : linked_to

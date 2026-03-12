@@ -32,23 +32,6 @@ function optionalSlugList(value: unknown, fieldName: string): string[] | undefin
   return deduped;
 }
 
-function optionalProjectSlug(value: unknown): string[] | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return [];
-  }
-  if (typeof value !== "string") {
-    throw badRequest(`projectSlug must be a string or null.`);
-  }
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return [];
-  }
-  return [trimmed];
-}
-
 async function getTrackRowOrThrow(trackSlug: string): Promise<TrackRow> {
   const rows = await queryD1<TrackRow>(
     `
@@ -96,8 +79,7 @@ export async function PUT(
     const nextName =
       payload.name === undefined ? current.name : requireTrimmedString(payload.name, "name");
     const nextArtistSlugs = optionalSlugList(payload.artistSlugs, "artistSlugs");
-    const nextProjectSlugs =
-      optionalSlugList(payload.projectSlugs, "projectSlugs") ?? optionalProjectSlug(payload.projectSlug);
+    const nextProjectSlugs = optionalSlugList(payload.projectSlugs, "projectSlugs");
 
     await queryD1(
       `

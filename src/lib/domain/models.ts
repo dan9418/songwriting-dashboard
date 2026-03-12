@@ -1,55 +1,41 @@
 export const PROJECT_TYPES = ["album", "ep", "single", "setlist"] as const;
 export type ProjectType = (typeof PROJECT_TYPES)[number];
 
-export const TRACK_STATUSES = ["idea", "in-progress", "recorded", "released"] as const;
-export type TrackStatus = (typeof TRACK_STATUSES)[number];
+export const AUDIO_TYPES = ["note", "demo", "live"] as const;
+export type AudioType = (typeof AUDIO_TYPES)[number];
 
-export interface BaseEntity {
+export interface ArtistEntity {
   slug: string;
-  title: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface User extends BaseEntity {
-  displayName: string;
-  timezone: string;
-  defaultArtistSlugs: string[];
-  settings: {
-    archiveReadOnly: boolean;
-  };
-}
-
-export interface Artist extends BaseEntity {
-  aliases: string[];
-  bio?: string;
-}
-
-export interface Project extends BaseEntity {
-  artistSlug: string;
-  type: ProjectType;
+  name: string;
+  description: string;
+  projectSlugs: string[];
   trackSlugs: string[];
-  year?: number;
-  description?: string;
 }
 
-export interface AudioVersionMetadata {
-  fileName: string;
+export interface ProjectEntity {
   slug: string;
-  category: string;
-  versionNumber: number;
-  recordedDate: string;
-  description?: string;
+  name: string;
+  description: string;
+  type: ProjectType;
+  releaseDate: string | null;
+  remasterDate: string | null;
+  artistSlugs: string[];
+  trackSlugs: string[];
 }
 
-export interface Track extends BaseEntity {
+export interface TrackAudioEntity {
+  slug: string;
+  type: AudioType;
+  typeVersion: number;
+  description: string | null;
+  date: string;
+  dateOverride: string | null;
+}
+
+export interface TrackEntity {
+  slug: string;
+  name: string;
   artistSlugs: string[];
-  projectSlug?: string;
-  status: TrackStatus;
-  bpm?: number;
-  key?: string;
-  lyrics?: string;
-  notes?: string;
-  audioVersions: AudioVersionMetadata[];
+  projectSlugs: string[];
+  audio: TrackAudioEntity[];
 }

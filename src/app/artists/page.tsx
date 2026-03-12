@@ -17,7 +17,7 @@ export default async function ArtistsPage() {
             <p className="text-sm text-[color:var(--muted)]">Showing {sourceItems.length} artists.</p>
           </div>
           <Link
-            href="/artist/add"
+            href="/artists/add"
             className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
           >
             Add Artist
@@ -64,7 +64,7 @@ export default async function ArtistsPage() {
             </p>
           </div>
           <Link
-            href="/artist/add"
+            href="/artists/add"
             className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
           >
             Add Artist

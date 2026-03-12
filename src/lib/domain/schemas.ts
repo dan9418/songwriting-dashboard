@@ -1,84 +1,93 @@
 import { z } from "zod";
-import { PROJECT_TYPES, TRACK_STATUSES } from "@/lib/domain/models";
+import { AUDIO_TYPES, PROJECT_TYPES } from "@/lib/domain/models";
 
-const isoDateTimeString = z.iso.datetime({ offset: true });
-const slugSchema = z
+export const slugSchema = z
   .string()
   .min(1)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be kebab-case");
 
-const tagSchema = z
+export const isoDateSchema = z
   .string()
-  .min(1)
-  .max(50)
-  .regex(/^[a-z0-9-_/]+$/i, "Tags may include letters, numbers, -, _, /");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD");
 
-const baseEntitySchema = z.object({
-  slug: slugSchema,
-  title: z.string().min(1),
-  tags: z.array(tagSchema).default([]),
-  createdAt: isoDateTimeString,
-  updatedAt: isoDateTimeString
-});
+export const nameSchema = z.string().trim().min(1);
+export const descriptionSchema = z.string();
 
-export const userSchema = baseEntitySchema.extend({
-  displayName: z.string().min(1),
-  timezone: z.string().min(1),
-  defaultArtistSlugs: z.array(slugSchema).default([]),
-  settings: z.object({
-    archiveReadOnly: z.boolean().default(false)
-  })
-});
+function uniqueSlugListSchema(fieldName: string) {
+  return z
+    .array(slugSchema)
+    .default([])
+    .refine((value) => new Set(value).size === value.length, `${fieldName} must not contain duplicates`);
+}
 
-export const artistSchema = baseEntitySchema.extend({
-  aliases: z.array(z.string().min(1)).default([]),
-  bio: z.string().optional()
+export const createEntityBodySchema = z.object({
+  name: nameSchema
 });
 
 export const projectTypeSchema = z.enum(PROJECT_TYPES);
+export const audioTypeSchema = z.enum(AUDIO_TYPES);
 
-export const projectSchema = baseEntitySchema.extend({
-  artistSlug: slugSchema,
-  type: projectTypeSchema,
-  trackSlugs: z
-    .array(slugSchema)
-    .default([])
-    .refine((value) => new Set(value).size === value.length, "trackSlugs must not contain duplicates"),
-  year: z.number().int().min(1900).max(3000).optional(),
-  description: z.string().optional()
-});
-
-export const trackStatusSchema = z.enum(TRACK_STATUSES);
-
-export const audioVersionSchema = z.object({
-  fileName: z.string().min(1).regex(/\.(mp3|m4a|mp4)$/i, "Audio file must end with .mp3, .m4a, or .mp4"),
+export const artistEntitySchema = z.object({
   slug: slugSchema,
-  category: z
-    .string()
-    .min(1)
-    .regex(/^[a-z0-9-]+$/i, "Category must be alphanumeric or hyphen"),
-  versionNumber: z.number().int().positive(),
-  recordedDate: z
-    .string()
-    .regex(
-      /^(?:\d{1,2}-\d{1,2}-\d{2}|[a-zA-Z0-9][a-zA-Z0-9 '&.,/-]*)$/,
-      "Use M-D-YY format or a descriptor"
-    ),
+  name: nameSchema,
+  description: descriptionSchema.default(""),
+  projectSlugs: uniqueSlugListSchema("projectSlugs"),
+  trackSlugs: uniqueSlugListSchema("trackSlugs")
+});
+
+export const projectEntitySchema = z.object({
+  slug: slugSchema,
+  name: nameSchema,
+  description: descriptionSchema.default(""),
+  type: projectTypeSchema,
+  releaseDate: isoDateSchema.nullable(),
+  remasterDate: isoDateSchema.nullable(),
+  artistSlugs: uniqueSlugListSchema("artistSlugs"),
+  trackSlugs: uniqueSlugListSchema("trackSlugs")
+});
+
+export const trackAudioSchema = z.object({
+  slug: slugSchema,
+  type: audioTypeSchema,
+  typeVersion: z.number().int().positive(),
+  description: z.string().nullable(),
+  date: isoDateSchema,
+  dateOverride: z.string().nullable()
+});
+
+export const trackEntitySchema = z.object({
+  slug: slugSchema,
+  name: nameSchema,
+  artistSlugs: uniqueSlugListSchema("artistSlugs"),
+  projectSlugs: uniqueSlugListSchema("projectSlugs"),
+  audio: z.array(trackAudioSchema).default([])
+});
+
+export const updateArtistBodySchema = z.object({
+  slug: slugSchema.optional(),
+  name: nameSchema.optional(),
   description: z.string().optional()
 });
 
-export const trackSchema = baseEntitySchema.extend({
-  artistSlugs: z.array(slugSchema).default([]),
-  projectSlug: slugSchema.optional(),
-  status: trackStatusSchema,
-  bpm: z.number().int().positive().max(400).optional(),
-  key: z.string().max(12).optional(),
-  lyrics: z.string().optional(),
-  notes: z.string().optional(),
-  audioVersions: z.array(audioVersionSchema).default([])
+export const updateProjectBodySchema = z.object({
+  slug: slugSchema.optional(),
+  name: nameSchema.optional(),
+  description: z.string().optional(),
+  type: projectTypeSchema.optional(),
+  releaseDate: z.union([isoDateSchema, z.null()]).optional(),
+  remasterDate: z.union([isoDateSchema, z.null()]).optional(),
+  artistSlugs: uniqueSlugListSchema("artistSlugs").optional(),
+  trackSlugs: uniqueSlugListSchema("trackSlugs").optional()
 });
 
-export type UserFrontmatter = z.infer<typeof userSchema>;
-export type ArtistFrontmatter = z.infer<typeof artistSchema>;
-export type ProjectFrontmatter = z.infer<typeof projectSchema>;
-export type TrackFrontmatter = z.infer<typeof trackSchema>;
+export const updateTrackBodySchema = z.object({
+  slug: slugSchema.optional(),
+  name: nameSchema.optional(),
+  artistSlugs: uniqueSlugListSchema("artistSlugs").optional(),
+  projectSlugs: uniqueSlugListSchema("projectSlugs").optional()
+});
+
+export type ArtistEntityRecord = z.infer<typeof artistEntitySchema>;
+export type ProjectEntityRecord = z.infer<typeof projectEntitySchema>;
+export type TrackAudioRecord = z.infer<typeof trackAudioSchema>;
+export type TrackEntityRecord = z.infer<typeof trackEntitySchema>;

@@ -10,7 +10,9 @@ export default function AddArtistPage() {
       <div className="panel flex items-center justify-between gap-3 p-4">
         <div>
           <h1 className="text-2xl font-semibold">Add Artist</h1>
-          <p className="text-sm text-[color:var(--muted)]">Create an artist from its name. The slug is generated automatically.</p>
+          <p className="text-sm text-[color:var(--muted)]">
+            Create an artist from its name. The slug is generated automatically.
+          </p>
         </div>
         <Link
           href="/artists"
