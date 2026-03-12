@@ -1,4 +1,5 @@
 import { queryD1 } from "@/lib/cloudflare/d1";
+import { listObjectSummaries } from "@/lib/cloudflare/r2";
 import { syncTrackAudioMetadataFromR2 } from "@/lib/cloudflare/audio-sync";
 import { listTrackAudioFilesFromR2 } from "@/lib/cloudflare/track-audio-files";
 
@@ -26,6 +27,9 @@ export interface CloudflareTrackListItem {
   name: string;
   projectSlugs: string[];
   artistSlugs: string[];
+  hasLyrics: boolean;
+  hasChords: boolean;
+  hasNotes: boolean;
   audioCount: number;
   noteCount: number;
   demoCount: number;
@@ -63,7 +67,75 @@ function toInt(value: number | string | null): number {
   return typeof value === "number" ? value : Number(value);
 }
 
+interface TrackDocFlags {
+  hasLyrics: boolean;
+  hasChords: boolean;
+  hasNotes: boolean;
+}
+
+function createEmptyTrackDocFlags(): TrackDocFlags {
+  return {
+    hasLyrics: false,
+    hasChords: false,
+    hasNotes: false
+  };
+}
+
+function applyDocFlag(flags: TrackDocFlags, docType: string): TrackDocFlags {
+  if (docType === "lyrics") {
+    return { ...flags, hasLyrics: true };
+  }
+  if (docType === "chords") {
+    return { ...flags, hasChords: true };
+  }
+  if (docType === "notes") {
+    return { ...flags, hasNotes: true };
+  }
+  return flags;
+}
+
+async function listTrackDocFlagsByTrackSlug(): Promise<Map<string, TrackDocFlags>> {
+  const summaries = await listObjectSummaries({
+    prefix: "tracks/",
+    limit: 10000
+  });
+  const map = new Map<string, TrackDocFlags>();
+
+  for (const item of summaries) {
+    const match = /^tracks\/([^/]+)\/(lyrics|chords|notes)\.md$/i.exec(item.key);
+    if (!match) {
+      continue;
+    }
+    const trackSlug = match[1];
+    const docType = match[2].toLowerCase();
+    const current = map.get(trackSlug) ?? createEmptyTrackDocFlags();
+    map.set(trackSlug, applyDocFlag(current, docType));
+  }
+
+  return map;
+}
+
+async function getTrackDocFlags(trackSlug: string): Promise<TrackDocFlags> {
+  const summaries = await listObjectSummaries({
+    prefix: `tracks/${trackSlug}/`,
+    limit: 200
+  });
+  let flags = createEmptyTrackDocFlags();
+
+  for (const item of summaries) {
+    const match = new RegExp(`^tracks/${trackSlug}/(lyrics|chords|notes)\\.md$`, "i").exec(item.key);
+    if (!match) {
+      continue;
+    }
+    flags = applyDocFlag(flags, match[1].toLowerCase());
+  }
+
+  return flags;
+}
+
 export async function listTracksFromCloudflare(): Promise<CloudflareTrackListItem[]> {
+  const docFlagsByTrack =
+    (await listTrackDocFlagsByTrackSlug().catch(() => null)) ?? new Map<string, TrackDocFlags>();
   const rows = await queryD1<TrackRow>(
     `
     SELECT
@@ -118,6 +190,7 @@ export async function listTracksFromCloudflare(): Promise<CloudflareTrackListIte
   }
 
   return rows.map((row) => ({
+    ...(docFlagsByTrack.get(row.slug) ?? createEmptyTrackDocFlags()),
     slug: row.slug,
     name: row.name,
     projectSlugs: projectSlugsByTrack.get(row.slug) ?? [],
@@ -201,8 +274,10 @@ export async function getTrackMetadataFromCloudflare(
   const noteCount = audioRows.filter((item) => item.type === "note").length;
   const demoCount = audioRows.filter((item) => item.type === "demo").length;
   const liveCount = audioRows.filter((item) => item.type === "live").length;
+  const docFlags = await getTrackDocFlags(trackSlug).catch(() => createEmptyTrackDocFlags());
 
   return {
+    ...docFlags,
     slug: track.slug,
     name: track.name,
     projectSlugs: projectRows.map((item) => item.projectSlug),

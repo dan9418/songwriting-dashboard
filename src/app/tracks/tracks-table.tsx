@@ -8,16 +8,16 @@ export interface TracksTableItem {
   name: string;
   projectSlugs: string[];
   artistSlugs: string[];
+  hasLyrics: boolean;
+  hasChords: boolean;
+  hasNotes: boolean;
   audioCount: number;
-  noteCount: number;
-  demoCount: number;
-  liveCount: number;
 }
 
 export function TracksTable({ items }: { items: TracksTableItem[] }) {
   return (
     <SortableNameTable
-      columnHeaders={["Project", "Artists", "Audio"]}
+      columnHeaders={["Projects", "Artists", "Lyrics", "Chords", "Notes", "Audio"]}
       emptyMessage="No tracks found."
       items={items.map((item) => ({
         id: item.slug,
@@ -40,8 +40,11 @@ export function TracksTable({ items }: { items: TracksTableItem[] }) {
                 }))
               }
             : { text: "-" },
+          { text: item.hasLyrics ? "✓" : "-" },
+          { text: item.hasChords ? "✓" : "-" },
+          { text: item.hasNotes ? "✓" : "-" },
           {
-            text: `${item.audioCount} total (${item.noteCount} note, ${item.demoCount} demo, ${item.liveCount} live)`
+            text: `${item.audioCount}`
           }
         ]
       }))}

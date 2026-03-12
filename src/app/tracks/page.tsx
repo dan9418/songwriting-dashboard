@@ -12,10 +12,10 @@ export default async function TracksPage() {
       name: item.name,
       projectSlugs: item.projectSlugs,
       artistSlugs: item.artistSlugs,
+      hasLyrics: item.hasLyrics,
+      hasChords: item.hasChords,
+      hasNotes: item.hasNotes,
       audioCount: item.audioCount,
-      noteCount: item.noteCount,
-      demoCount: item.demoCount,
-      liveCount: item.liveCount
     }));
 
     return (
