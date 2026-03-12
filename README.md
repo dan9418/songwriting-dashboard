@@ -7,7 +7,6 @@ This is a songwriter data management system backed by Cloudflare D1 (metadata) a
 The app manages:
 - Archived music projects (albums, EPs, singles, setlists)
 - Active and unfinished tracks
-- Lyric fragments for creative experimentation
 - Structured metadata for future AI-assisted workflows
 
 ## Core Principles
@@ -22,12 +21,10 @@ Top-level entities (single-user layout):
 - `artists`
 - `projects`
 - `tracks`
-- `fragments`
 
 Relationship model:
 - Project -> Artist (N:1 via `artistSlug`)
 - Track -> Project (N:1 via optional `projectSlug`)
-- Fragments are independent and can reference tracks by slug.
 
 Sandbox behavior:
 - Sandbox tracks are tracks with no `projectSlug`.

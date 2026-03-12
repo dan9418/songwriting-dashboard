@@ -53,8 +53,3 @@ export interface Track extends BaseEntity {
   notes?: string;
   audioVersions: AudioVersionMetadata[];
 }
-
-export interface Fragment extends BaseEntity {
-  text: string;
-  relatedTrackSlugs: string[];
-}

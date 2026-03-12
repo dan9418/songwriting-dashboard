@@ -78,14 +78,7 @@ export const trackSchema = baseEntitySchema.extend({
   audioVersions: z.array(audioVersionSchema).default([])
 });
 
-export const fragmentSchema = baseEntitySchema.extend({
-  mood: z.string().optional(),
-  text: z.string().min(1),
-  relatedTrackSlugs: z.array(slugSchema).default([])
-});
-
 export type UserFrontmatter = z.infer<typeof userSchema>;
 export type ArtistFrontmatter = z.infer<typeof artistSchema>;
 export type ProjectFrontmatter = z.infer<typeof projectSchema>;
 export type TrackFrontmatter = z.infer<typeof trackSchema>;
-export type FragmentFrontmatter = z.infer<typeof fragmentSchema>;
