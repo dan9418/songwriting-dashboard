@@ -19,9 +19,7 @@ CREATE TABLE IF NOT EXISTS projects (
 
 CREATE TABLE IF NOT EXISTS tracks (
   slug TEXT NOT NULL CHECK (length(trim(slug)) > 0),
-  lyrics_path TEXT,
-  notes_path TEXT,
-  chords_path TEXT,
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
   PRIMARY KEY (slug)
 );
 

@@ -44,11 +44,9 @@ export interface TrackImportSummary {
 
 export interface TrackListItem {
   slug: string;
+  name: string;
   projectSlug: string | null;
   projectPosition: number | null;
-  lyricsPath: string | null;
-  notesPath: string | null;
-  chordsPath: string | null;
   audioCount: number;
   noteCount: number;
   demoCount: number;

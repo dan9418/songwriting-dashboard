@@ -1,8 +1,14 @@
-import { apiErrorResponse } from "@/lib/api/errors";
-import { assertSlugMatch, parseJsonBody, type WriteMarkdownBody } from "@/lib/api/request";
-import { deleted, ok } from "@/lib/api/response";
-import { enforceTrackAudioNaming } from "@/lib/domain/track-audio";
-import { deleteTrack, getTrack, saveTrack } from "@/lib/fs/repositories";
+import { ApiError, apiErrorResponse, notFound } from "@/lib/api/errors";
+import { ok } from "@/lib/api/response";
+import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
+
+function remoteOnlyWriteError(): never {
+  throw new ApiError(
+    501,
+    "INTERNAL_ERROR",
+    "Remote-only mode: track write endpoints are not implemented for D1/R2 yet."
+  );
+}
 
 export async function GET(
   _: Request,
@@ -10,53 +16,35 @@ export async function GET(
 ) {
   try {
     const { trackSlug } = await context.params;
-    const entity = await getTrack(trackSlug);
+    const entity = await getTrackMetadataFromCloudflare(trackSlug);
+    if (!entity) {
+      throw notFound(`Track not found: ${trackSlug}`);
+    }
     return ok(entity);
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function PUT(
-  request: Request,
-  context: { params: Promise<{ trackSlug: string }> }
-) {
+export async function PUT() {
   try {
-    const { trackSlug } = await context.params;
-    const body = await parseJsonBody<WriteMarkdownBody<{ slug?: string } & Record<string, unknown>>>(request);
-    assertSlugMatch(body.data.slug, trackSlug);
-    const validatedTrack = enforceTrackAudioNaming(body.data);
-    await saveTrack(trackSlug, validatedTrack, body.content ?? "");
-    const entity = await getTrack(trackSlug);
-    return ok(entity);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function PATCH(
-  request: Request,
-  context: { params: Promise<{ trackSlug: string }> }
-) {
+export async function PATCH() {
   try {
-    const { trackSlug } = await context.params;
-    const body = await parseJsonBody<WriteMarkdownBody<Partial<Record<string, unknown>>>>(request);
-    const current = await getTrack(trackSlug);
-    const nextData = enforceTrackAudioNaming({ ...current.data, ...body.data });
-    assertSlugMatch(nextData.slug, trackSlug);
-    await saveTrack(trackSlug, nextData, body.content ?? current.content);
-    const entity = await getTrack(trackSlug);
-    return ok(entity);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function DELETE(_: Request, context: { params: Promise<{ trackSlug: string }> }) {
+export async function DELETE() {
   try {
-    const { trackSlug } = await context.params;
-    const existed = await deleteTrack(trackSlug);
-    return deleted(existed);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }

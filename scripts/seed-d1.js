@@ -10,24 +10,9 @@ const PROJECT_SPECS = [
   { slug: "test-setlist", name: "Test Setlist", type: "setlist", trackCount: 8 },
   { slug: "test-single", name: "Test Single", type: "single", trackCount: 2 }
 ];
-const TRACKS_ROOT = path.resolve("songwriting-data", "tracks");
 const OUTPUT_SQL_PATH = path.resolve("scripts", "sql", "seed.sql");
 
 const EXECUTE = process.argv.includes("--execute");
-const LOCAL = process.argv.includes("--local");
-
-const AUDIO_TYPES = new Set(["note", "demo", "live"]);
-const AUDIO_EXTENSIONS = new Set([
-  ".aac",
-  ".aif",
-  ".aiff",
-  ".flac",
-  ".m4a",
-  ".mp3",
-  ".mp4",
-  ".ogg",
-  ".wav"
-]);
 
 function sqlString(value) {
   return `'${String(value).replace(/'/g, "''")}'`;
@@ -42,6 +27,14 @@ function sqlNullableString(value) {
 
 function pad2(value) {
   return String(value).padStart(2, "0");
+}
+
+function slugToTrackName(slug) {
+  return String(slug)
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function toIsoDateOrNull(year, month, day) {
@@ -133,20 +126,12 @@ function readWranglerConfig() {
 }
 
 function getTrackSlugs() {
-  if (fs.existsSync(TRACKS_ROOT)) {
-    return fs
-      .readdirSync(TRACKS_ROOT, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .sort((a, b) => a.localeCompare(b));
-  }
-
   const databaseName = readWranglerConfig();
   const args = [
     "d1",
     "execute",
     databaseName,
-    ...(LOCAL ? [] : ["--remote"]),
+    "--remote",
     "--command",
     "SELECT slug FROM tracks ORDER BY slug ASC;",
     "--json"
@@ -174,87 +159,6 @@ function getTrackSlugs() {
   return rows.map((row) => row.slug).filter(Boolean);
 }
 
-function getAudioFilesForTrack(trackSlug) {
-  const trackPath = path.join(TRACKS_ROOT, trackSlug);
-  const audioDir = path.join(trackPath, "audio");
-  if (!fs.existsSync(trackPath)) {
-    return [];
-  }
-
-  const listAudio = (dirPath) =>
-    fs
-      .readdirSync(dirPath, { withFileTypes: true })
-      .filter((entry) => entry.isFile())
-      .map((entry) => entry.name)
-      .filter((name) => AUDIO_EXTENSIONS.has(path.extname(name).toLowerCase()))
-      .sort((a, b) => a.localeCompare(b));
-
-  if (fs.existsSync(audioDir)) {
-    const fromAudioDir = listAudio(audioDir);
-    if (fromAudioDir.length > 0) {
-      return fromAudioDir;
-    }
-  }
-
-  return listAudio(trackPath);
-}
-
-function parseAudioFilename(trackSlug, fileName) {
-  const ext = path.extname(fileName).toLowerCase();
-  const base = path.basename(fileName, ext);
-  const parts = base.split("_");
-
-  if (parts.length < 4) {
-    throw new Error(
-      `Cannot parse audio filename "${fileName}" for track "${trackSlug}". Expected at least 4 underscore-separated parts.`
-    );
-  }
-
-  const parsedSlug = parts[0];
-  const type = parts[1];
-  const versionToken = parts[2];
-  const dateToken = parts[3];
-  const description = parts.length > 4 ? parts.slice(4).join("_") : null;
-
-  if (parsedSlug !== trackSlug) {
-    throw new Error(
-      `Audio filename slug "${parsedSlug}" does not match folder slug "${trackSlug}" in "${fileName}".`
-    );
-  }
-
-  if (!AUDIO_TYPES.has(type)) {
-    throw new Error(
-      `Invalid audio type "${type}" in "${fileName}". Expected one of: note, demo, live.`
-    );
-  }
-
-  const versionMatch = /^v(\d+)$/.exec(versionToken);
-  if (!versionMatch) {
-    throw new Error(
-      `Invalid version token "${versionToken}" in "${fileName}". Expected format v<number>.`
-    );
-  }
-
-  const typeVersion = Number(versionMatch[1]);
-  if (!Number.isInteger(typeVersion) || typeVersion < 1) {
-    throw new Error(
-      `Invalid type version "${typeVersion}" in "${fileName}". Expected integer >= 1.`
-    );
-  }
-
-  const { date, dateOverride } = parseDateToken(dateToken);
-
-  return {
-    slug: base,
-    trackSlug,
-    type,
-    typeVersion,
-    date,
-    dateOverride,
-    description
-  };
-}
-
 function buildSeedData() {
   const trackSlugs = getTrackSlugs();
   if (trackSlugs.length < 15) {
@@ -280,74 +184,8 @@ function buildSeedData() {
     new Set(projectAssignments.flatMap((assignment) => assignment.trackSlugs))
   ).map((trackSlug) => ({ trackSlug, artistSlug: ARTIST_SLUG }));
 
-  const parsedAudioRows = [];
   const audioRows = [];
   const adjustments = [];
-  const rowsByTrackType = new Map();
-
-  for (const trackSlug of trackSlugs) {
-    const fileNames = getAudioFilesForTrack(trackSlug);
-    for (const fileName of fileNames) {
-      const parsed = parseAudioFilename(trackSlug, fileName);
-      parsedAudioRows.push({
-        slug: parsed.slug,
-        trackSlug: parsed.trackSlug,
-        type: parsed.type,
-        typeVersion: parsed.typeVersion,
-        date: parsed.date,
-        dateOverride: parsed.dateOverride,
-        description: parsed.description,
-        fileName
-      });
-    }
-  }
-
-  for (const row of parsedAudioRows) {
-    const key = `${row.trackSlug}|${row.type}`;
-    const bucket = rowsByTrackType.get(key) || [];
-    bucket.push(row);
-    rowsByTrackType.set(key, bucket);
-  }
-
-  for (const rows of rowsByTrackType.values()) {
-    rows.sort((a, b) => {
-      if (a.typeVersion !== b.typeVersion) {
-        return a.typeVersion - b.typeVersion;
-      }
-      return a.fileName.localeCompare(b.fileName);
-    });
-
-    let nextVersion = rows.reduce(
-      (maxVersion, row) => Math.max(maxVersion, row.typeVersion),
-      0
-    ) + 1;
-    const seenVersions = new Set();
-
-    for (const row of rows) {
-      let resolvedVersion = row.typeVersion;
-      if (seenVersions.has(row.typeVersion)) {
-        resolvedVersion = nextVersion;
-        nextVersion += 1;
-        adjustments.push({
-          trackSlug: row.trackSlug,
-          fileName: row.fileName,
-          originalVersion: row.typeVersion,
-          resolvedVersion
-        });
-      }
-      seenVersions.add(resolvedVersion);
-
-      audioRows.push({
-        slug: row.slug,
-        trackSlug: row.trackSlug,
-        type: row.type,
-        typeVersion: resolvedVersion,
-        date: row.date,
-        dateOverride: row.dateOverride,
-        description: row.description
-      });
-    }
-  }
 
   return {
     trackSlugs,
@@ -405,9 +243,9 @@ function buildSql(seedData) {
 
   for (const slug of seedData.trackSlugs) {
     lines.push(
-      `INSERT INTO tracks (slug, lyrics_path, notes_path, chords_path) VALUES (${sqlString(
+      `INSERT INTO tracks (slug, name) VALUES (${sqlString(
         slug
-      )}, NULL, NULL, NULL) ON CONFLICT(slug) DO UPDATE SET lyrics_path = COALESCE(excluded.lyrics_path, tracks.lyrics_path), notes_path = COALESCE(excluded.notes_path, tracks.notes_path), chords_path = COALESCE(excluded.chords_path, tracks.chords_path);`
+      )}, ${sqlString(slugToTrackName(slug))}) ON CONFLICT(slug) DO UPDATE SET name = tracks.name;`
     );
   }
   lines.push("");
@@ -462,7 +300,7 @@ function executeSeedSql() {
     "d1",
     "execute",
     databaseName,
-    ...(LOCAL ? [] : ["--remote"]),
+    "--remote",
     "--file",
     OUTPUT_SQL_PATH
   ];
@@ -501,7 +339,7 @@ function main() {
     executeSeedSql();
   } else {
     console.log(
-      "Dry run only. Re-run with --execute to apply seed SQL (uses --remote by default; pass --local for local D1)."
+      "Dry run only. Re-run with --execute to apply seed SQL to remote D1."
     );
   }
 }

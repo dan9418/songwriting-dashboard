@@ -1,29 +1,29 @@
-import { apiErrorResponse, badRequest } from "@/lib/api/errors";
-import { parseJsonBody, type WriteMarkdownBody } from "@/lib/api/request";
+import { ApiError, apiErrorResponse } from "@/lib/api/errors";
 import { ok } from "@/lib/api/response";
-import { getProject, listProjects, saveProject } from "@/lib/fs/repositories";
+import { listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
+
+function remoteOnlyWriteError(): never {
+  throw new ApiError(
+    501,
+    "INTERNAL_ERROR",
+    "Remote-only mode: project write endpoints are not implemented for D1/R2 yet."
+  );
+}
 
 export async function GET(_: Request, context: { params: Promise<{ artistSlug: string }> }) {
   try {
     const { artistSlug } = await context.params;
-    const items = await listProjects(artistSlug);
-    return ok({ items });
+    const items = await listProjectsFromCloudflare();
+    const filtered = items.filter((item) => item.artistSlugs.some((artist) => artist.slug === artistSlug));
+    return ok({ items: filtered });
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function POST(request: Request, context: { params: Promise<{ artistSlug: string }> }) {
+export async function POST() {
   try {
-    const { artistSlug } = await context.params;
-    const body = await parseJsonBody<WriteMarkdownBody<{ slug?: string } & Record<string, unknown>>>(request);
-    const projectSlug = body.data.slug;
-    if (!projectSlug) {
-      throw badRequest("Project slug is required in payload data.slug");
-    }
-    await saveProject(projectSlug, { ...body.data, artistSlug }, body.content ?? "");
-    const entity = await getProject(projectSlug);
-    return ok(entity, 201);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }

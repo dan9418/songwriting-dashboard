@@ -5,14 +5,6 @@ import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
 
 export const dynamic = "force-dynamic";
 
-function formatTrackNameFromSlug(slug: string): string {
-  return slug
-    .split("-")
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
-}
-
 function formatDateForTable(value: string): string {
   const [year, month, day] = value.split("-");
   if (!year || !month || !day) {
@@ -43,7 +35,7 @@ export default async function TrackByIdPage({
     <section className="grid gap-4">
       <div className="panel flex items-center justify-between gap-3 p-4">
         <div>
-          <h1 className="text-2xl font-semibold">{formatTrackNameFromSlug(track.slug)}</h1>
+          <h1 className="text-2xl font-semibold">{track.name}</h1>
           <p className="text-sm text-[color:var(--muted)]">{track.slug}</p>
         </div>
         <Link

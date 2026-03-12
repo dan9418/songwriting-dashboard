@@ -1,27 +1,24 @@
-import { apiErrorResponse, badRequest } from "@/lib/api/errors";
-import { parseJsonBody, type WriteMarkdownBody } from "@/lib/api/request";
-import { ok } from "@/lib/api/response";
-import { getFragment, listFragmentsWithSummary, saveFragment } from "@/lib/fs/repositories";
+import { ApiError, apiErrorResponse } from "@/lib/api/errors";
 
-export async function GET(_: Request) {
+function remoteOnlyFragmentsError(): never {
+  throw new ApiError(
+    501,
+    "INTERNAL_ERROR",
+    "Remote-only mode: fragments are not implemented in D1/R2 yet."
+  );
+}
+
+export async function GET() {
   try {
-    const result = await listFragmentsWithSummary();
-    return ok(result);
+    remoteOnlyFragmentsError();
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
-    const body = await parseJsonBody<WriteMarkdownBody<{ slug?: string } & Record<string, unknown>>>(request);
-    const fragmentSlug = body.data.slug;
-    if (!fragmentSlug) {
-      throw badRequest("Fragment slug is required in payload data.slug");
-    }
-    await saveFragment(fragmentSlug, body.data, body.content ?? "");
-    const entity = await getFragment(fragmentSlug);
-    return ok(entity, 201);
+    remoteOnlyFragmentsError();
   } catch (error) {
     return apiErrorResponse(error);
   }

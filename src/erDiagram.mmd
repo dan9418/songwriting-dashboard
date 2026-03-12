@@ -1,0 +1,100 @@
+erDiagram
+  ARTISTS {
+    TEXT slug PK
+    TEXT name
+    TEXT description
+  }
+
+  PROJECTS {
+    TEXT slug PK
+    TEXT name
+    TEXT description
+    TEXT type
+    TEXT release_date
+    TEXT remaster_date
+  }
+
+  TRACKS {
+    TEXT slug PK
+    TEXT name
+  }
+
+  AUDIO {
+    TEXT slug PK
+    TEXT track_slug FK
+    TEXT type
+    INTEGER type_version
+    TEXT description
+    TEXT date
+    TEXT date_override
+  }
+
+  IMAGES {
+    TEXT slug PK
+    TEXT path UNIQUE
+  }
+
+  SOCIAL_LINKS {
+    INTEGER id PK
+    TEXT platform
+    TEXT href
+  }
+
+  ARTIST_IMAGES {
+    TEXT artist_slug PK, FK
+    TEXT image_slug PK, FK
+  }
+
+  ARTIST_SOCIAL_LINKS {
+    TEXT artist_slug PK, FK
+    INTEGER social_link_id PK, FK
+  }
+
+  PROJECT_ARTISTS {
+    TEXT project_slug PK, FK
+    TEXT artist_slug PK, FK
+  }
+
+  PROJECT_TRACKS {
+    TEXT project_slug PK, FK
+    TEXT track_slug PK, FK
+    INTEGER position
+  }
+
+  PROJECT_IMAGES {
+    TEXT project_slug PK, FK
+    TEXT image_slug PK, FK
+  }
+
+  PROJECT_SOCIAL_LINKS {
+    TEXT project_slug PK, FK
+    INTEGER social_link_id PK, FK
+  }
+
+  TRACK_ARTISTS {
+    TEXT track_slug PK, FK
+    TEXT artist_slug PK, FK
+  }
+
+  TRACK_IMAGES {
+    TEXT track_slug PK, FK
+    TEXT image_slug PK, FK
+  }
+
+  TRACKS ||--o{ AUDIO : has
+  ARTISTS ||--o{ ARTIST_IMAGES : links
+  IMAGES ||--o{ ARTIST_IMAGES : linked_to
+  ARTISTS ||--o{ ARTIST_SOCIAL_LINKS : links
+  SOCIAL_LINKS ||--o{ ARTIST_SOCIAL_LINKS : linked_to
+  PROJECTS ||--o{ PROJECT_ARTISTS : links
+  ARTISTS ||--o{ PROJECT_ARTISTS : linked_to
+  PROJECTS ||--o{ PROJECT_TRACKS : includes
+  TRACKS ||--o{ PROJECT_TRACKS : included_in
+  PROJECTS ||--o{ PROJECT_IMAGES : links
+  IMAGES ||--o{ PROJECT_IMAGES : linked_to
+  PROJECTS ||--o{ PROJECT_SOCIAL_LINKS : links
+  SOCIAL_LINKS ||--o{ PROJECT_SOCIAL_LINKS : linked_to
+  TRACKS ||--o{ TRACK_ARTISTS : links
+  ARTISTS ||--o{ TRACK_ARTISTS : linked_to
+  TRACKS ||--o{ TRACK_IMAGES : links
+  IMAGES ||--o{ TRACK_IMAGES : linked_to

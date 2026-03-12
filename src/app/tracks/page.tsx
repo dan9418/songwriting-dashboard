@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { listTracksFromCloudflare } from "@/lib/cloudflare/tracks";
 import { TracksTable, type TracksTableItem } from "@/app/tracks/tracks-table";
-import { slugToTitle } from "@/lib/utils/slug-display";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +9,7 @@ export default async function TracksPage() {
     const sourceItems = await listTracksFromCloudflare();
     const items: TracksTableItem[] = sourceItems.map((item) => ({
       slug: item.slug,
-      name: slugToTitle(item.slug),
+      name: item.name,
       projectSlugs: item.projectSlugs,
       artistSlugs: item.artistSlugs,
       audioCount: item.audioCount,

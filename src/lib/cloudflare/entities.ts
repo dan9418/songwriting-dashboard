@@ -41,6 +41,6 @@ export async function createTrackInCloudflare(name: string): Promise<CreatedEnti
   const trimmedName = name.trim();
   const slug = ensureNonEmptySlug(trimmedName);
   await assertSlugAvailable("tracks", slug);
-  await queryD1(`INSERT INTO tracks (slug, lyrics_path, notes_path, chords_path) VALUES (?, NULL, NULL, NULL);`, [slug]);
+  await queryD1(`INSERT INTO tracks (slug, name) VALUES (?, ?);`, [slug, trimmedName]);
   return { slug, name: trimmedName };
 }

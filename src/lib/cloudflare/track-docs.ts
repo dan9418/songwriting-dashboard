@@ -5,19 +5,13 @@ import { deleteObject, getMarkdownObject, putMarkdownObject } from "@/lib/cloudf
 
 export type TrackDocType = "lyrics" | "chords" | "notes";
 
-const DOC_TYPE_TO_COLUMN: Record<TrackDocType, "lyrics_path" | "chords_path" | "notes_path"> = {
-  lyrics: "lyrics_path",
-  chords: "chords_path",
-  notes: "notes_path"
-};
-
-interface TrackDocPathRow {
-  path: string | null;
+interface TrackExistsRow {
+  slug: string;
 }
 
 export interface TrackDocRecord {
   type: TrackDocType;
-  path: string | null;
+  path: string;
   exists: boolean;
   content: string;
   etag: string | null;
@@ -34,44 +28,8 @@ export function parseTrackDocType(value: string): TrackDocType {
   throw badRequest(`Invalid doc type: ${value}`);
 }
 
-function normalizeDocPath(pathValue: string | null): string | null {
-  if (!pathValue) {
-    return null;
-  }
-  if (pathValue.startsWith("users/")) {
-    return null;
-  }
-  return pathValue;
-}
-
-function defaultDocPath(trackSlug: string, type: TrackDocType): string {
+function docPath(trackSlug: string, type: TrackDocType): string {
   return `tracks/${trackSlug}/${type}.md`;
-}
-
-async function getPathRow(trackSlug: string, type: TrackDocType): Promise<TrackDocPathRow> {
-  const column = DOC_TYPE_TO_COLUMN[type];
-  const rows = await queryD1<TrackDocPathRow>(
-    `SELECT ${column} AS path FROM tracks WHERE slug = ? LIMIT 1;`,
-    [trackSlug]
-  );
-  const row = rows[0];
-  if (!row) {
-    throw notFound(`Track not found: ${trackSlug}`);
-  }
-  const normalized = normalizeDocPath(row.path);
-  if (row.path && normalized === null) {
-    await queryD1(`UPDATE tracks SET ${column} = ? WHERE slug = ?;`, [null, trackSlug]);
-  }
-  return { path: normalized };
-}
-
-async function setPathValue(
-  trackSlug: string,
-  type: TrackDocType,
-  path: string | null
-): Promise<void> {
-  const column = DOC_TYPE_TO_COLUMN[type];
-  await queryD1(`UPDATE tracks SET ${column} = ? WHERE slug = ?;`, [path, trackSlug]);
 }
 
 function parseMarkdown(content: string) {
@@ -82,24 +40,29 @@ function parseMarkdown(content: string) {
   };
 }
 
-export async function getTrackDoc(trackSlug: string, type: TrackDocType): Promise<TrackDocRecord> {
-  const row = await getPathRow(trackSlug, type);
-  if (!row.path) {
-    return {
-      type,
-      path: null,
-      exists: false,
-      content: "",
-      etag: null,
-      parsed: null
-    };
+async function assertTrackExists(trackSlug: string): Promise<void> {
+  const rows = await queryD1<TrackExistsRow>(
+    `
+    SELECT slug
+    FROM tracks
+    WHERE slug = ?
+    LIMIT 1;
+    `,
+    [trackSlug]
+  );
+  if (rows.length === 0) {
+    throw notFound(`Track not found: ${trackSlug}`);
   }
+}
 
-  const object = await getMarkdownObject(row.path);
+export async function getTrackDoc(trackSlug: string, type: TrackDocType): Promise<TrackDocRecord> {
+  await assertTrackExists(trackSlug);
+  const path = docPath(trackSlug, type);
+  const object = await getMarkdownObject(path);
   if (!object) {
     return {
       type,
-      path: row.path,
+      path,
       exists: false,
       content: "",
       etag: null,
@@ -109,7 +72,7 @@ export async function getTrackDoc(trackSlug: string, type: TrackDocType): Promis
 
   return {
     type,
-    path: row.path,
+    path,
     exists: true,
     content: object.content,
     etag: object.etag,
@@ -122,19 +85,14 @@ export async function createTrackDoc(
   type: TrackDocType,
   content: string
 ): Promise<TrackDocRecord> {
-  const row = await getPathRow(trackSlug, type);
-  if (row.path) {
-    const existingObject = await getMarkdownObject(row.path);
-    if (existingObject) {
-      throw conflict(`${type} document already exists.`);
-    }
-    await putMarkdownObject(row.path, content);
-    return getTrackDoc(trackSlug, type);
+  await assertTrackExists(trackSlug);
+  const path = docPath(trackSlug, type);
+  const existingObject = await getMarkdownObject(path);
+  if (existingObject) {
+    throw conflict(`${type} document already exists.`);
   }
 
-  const path = defaultDocPath(trackSlug, type);
   await putMarkdownObject(path, content);
-  await setPathValue(trackSlug, type, path);
   return getTrackDoc(trackSlug, type);
 }
 
@@ -143,12 +101,14 @@ export async function updateTrackDoc(
   type: TrackDocType,
   content: string
 ): Promise<TrackDocRecord> {
-  const row = await getPathRow(trackSlug, type);
-  if (!row.path) {
+  await assertTrackExists(trackSlug);
+  const path = docPath(trackSlug, type);
+  const existingObject = await getMarkdownObject(path);
+  if (!existingObject) {
     throw notFound(`${type} document does not exist.`);
   }
 
-  await putMarkdownObject(row.path, content);
+  await putMarkdownObject(path, content);
   return getTrackDoc(trackSlug, type);
 }
 
@@ -156,12 +116,13 @@ export async function deleteTrackDoc(
   trackSlug: string,
   type: TrackDocType
 ): Promise<{ deleted: boolean }> {
-  const row = await getPathRow(trackSlug, type);
-  if (!row.path) {
+  await assertTrackExists(trackSlug);
+  const path = docPath(trackSlug, type);
+  const existingObject = await getMarkdownObject(path);
+  if (!existingObject) {
     return { deleted: false };
   }
 
-  await deleteObject(row.path);
-  await setPathValue(trackSlug, type, null);
+  await deleteObject(path);
   return { deleted: true };
 }

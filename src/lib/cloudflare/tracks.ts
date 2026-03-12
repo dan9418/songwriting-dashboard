@@ -4,9 +4,7 @@ import { listTrackAudioFilesFromR2 } from "@/lib/cloudflare/track-audio-files";
 
 interface TrackRow {
   slug: string;
-  lyricsPath: string | null;
-  notesPath: string | null;
-  chordsPath: string | null;
+  name: string;
   audioCount: number | string;
   noteCount: number | string;
   demoCount: number | string;
@@ -25,11 +23,9 @@ interface TrackProjectRow {
 
 export interface CloudflareTrackListItem {
   slug: string;
+  name: string;
   projectSlugs: string[];
   artistSlugs: string[];
-  lyricsPath: string | null;
-  notesPath: string | null;
-  chordsPath: string | null;
   audioCount: number;
   noteCount: number;
   demoCount: number;
@@ -72,9 +68,7 @@ export async function listTracksFromCloudflare(): Promise<CloudflareTrackListIte
     `
     SELECT
       t.slug AS slug,
-      t.lyrics_path AS lyricsPath,
-      t.notes_path AS notesPath,
-      t.chords_path AS chordsPath,
+      t.name AS name,
       COALESCE(a.audioCount, 0) AS audioCount,
       COALESCE(a.noteCount, 0) AS noteCount,
       COALESCE(a.demoCount, 0) AS demoCount,
@@ -125,11 +119,9 @@ export async function listTracksFromCloudflare(): Promise<CloudflareTrackListIte
 
   return rows.map((row) => ({
     slug: row.slug,
+    name: row.name,
     projectSlugs: projectSlugsByTrack.get(row.slug) ?? [],
     artistSlugs: artistSlugsByTrack.get(row.slug) ?? [],
-    lyricsPath: row.lyricsPath,
-    notesPath: row.notesPath,
-    chordsPath: row.chordsPath,
     audioCount: toInt(row.audioCount),
     noteCount: toInt(row.noteCount),
     demoCount: toInt(row.demoCount),
@@ -144,9 +136,7 @@ export async function getTrackMetadataFromCloudflare(
     `
     SELECT
       t.slug AS slug,
-      t.lyrics_path AS lyricsPath,
-      t.notes_path AS notesPath,
-      t.chords_path AS chordsPath,
+      t.name AS name,
       COALESCE(a.audioCount, 0) AS audioCount,
       COALESCE(a.noteCount, 0) AS noteCount,
       COALESCE(a.demoCount, 0) AS demoCount,
@@ -214,11 +204,9 @@ export async function getTrackMetadataFromCloudflare(
 
   return {
     slug: track.slug,
+    name: track.name,
     projectSlugs: projectRows.map((item) => item.projectSlug),
     artistSlugs: artistRows.map((item) => item.artistSlug),
-    lyricsPath: track.lyricsPath,
-    notesPath: track.notesPath,
-    chordsPath: track.chordsPath,
     audioCount: audioRows.length,
     noteCount,
     demoCount,

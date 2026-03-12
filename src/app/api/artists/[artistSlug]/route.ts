@@ -1,51 +1,48 @@
-import { apiErrorResponse } from "@/lib/api/errors";
-import { assertSlugMatch, parseJsonBody, type WriteMarkdownBody } from "@/lib/api/request";
-import { deleted, ok } from "@/lib/api/response";
-import { deleteArtist, getArtist, saveArtist } from "@/lib/fs/repositories";
+import { ApiError, apiErrorResponse, notFound } from "@/lib/api/errors";
+import { ok } from "@/lib/api/response";
+import { listArtistsFromCloudflare } from "@/lib/cloudflare/catalog";
+
+function remoteOnlyWriteError(): never {
+  throw new ApiError(
+    501,
+    "INTERNAL_ERROR",
+    "Remote-only mode: artist write endpoints are not implemented for D1/R2 yet."
+  );
+}
 
 export async function GET(_: Request, context: { params: Promise<{ artistSlug: string }> }) {
   try {
     const { artistSlug } = await context.params;
-    const entity = await getArtist(artistSlug);
+    const artists = await listArtistsFromCloudflare();
+    const entity = artists.find((item) => item.slug === artistSlug);
+    if (!entity) {
+      throw notFound(`Artist not found: ${artistSlug}`);
+    }
     return ok(entity);
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function PUT(request: Request, context: { params: Promise<{ artistSlug: string }> }) {
+export async function PUT() {
   try {
-    const { artistSlug } = await context.params;
-    const body = await parseJsonBody<WriteMarkdownBody<{ slug?: string } & Record<string, unknown>>>(request);
-    assertSlugMatch(body.data.slug, artistSlug);
-    await saveArtist(artistSlug, body.data, body.content ?? "");
-    const entity = await getArtist(artistSlug);
-    return ok(entity);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function PATCH(request: Request, context: { params: Promise<{ artistSlug: string }> }) {
+export async function PATCH() {
   try {
-    const { artistSlug } = await context.params;
-    const body = await parseJsonBody<WriteMarkdownBody<Partial<Record<string, unknown>>>>(request);
-    const current = await getArtist(artistSlug);
-    const nextData = { ...current.data, ...body.data };
-    assertSlugMatch(nextData.slug, artistSlug);
-    await saveArtist(artistSlug, nextData, body.content ?? current.content);
-    const entity = await getArtist(artistSlug);
-    return ok(entity);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function DELETE(_: Request, context: { params: Promise<{ artistSlug: string }> }) {
+export async function DELETE() {
   try {
-    const { artistSlug } = await context.params;
-    const existed = await deleteArtist(artistSlug);
-    return deleted(existed);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }

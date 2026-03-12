@@ -1,63 +1,53 @@
-import { apiErrorResponse } from "@/lib/api/errors";
-import { assertSlugMatch, parseJsonBody, type WriteMarkdownBody } from "@/lib/api/request";
-import { deleted, ok } from "@/lib/api/response";
-import { deleteProject, getProject, saveProject } from "@/lib/fs/repositories";
+import { ApiError, apiErrorResponse, notFound } from "@/lib/api/errors";
+import { ok } from "@/lib/api/response";
+import { listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
+
+function remoteOnlyWriteError(): never {
+  throw new ApiError(
+    501,
+    "INTERNAL_ERROR",
+    "Remote-only mode: project write endpoints are not implemented for D1/R2 yet."
+  );
+}
 
 export async function GET(
   _: Request,
   context: { params: Promise<{ artistSlug: string; projectSlug: string }> }
 ) {
   try {
-    const { projectSlug } = await context.params;
-    const entity = await getProject(projectSlug);
+    const { artistSlug, projectSlug } = await context.params;
+    const projects = await listProjectsFromCloudflare();
+    const entity = projects.find(
+      (item) => item.slug === projectSlug && item.artistSlugs.some((artist) => artist.slug === artistSlug)
+    );
+    if (!entity) {
+      throw notFound(`Project not found: ${projectSlug}`);
+    }
     return ok(entity);
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function PUT(
-  request: Request,
-  context: { params: Promise<{ artistSlug: string; projectSlug: string }> }
-) {
+export async function PUT() {
   try {
-    const { projectSlug } = await context.params;
-    const body = await parseJsonBody<WriteMarkdownBody<{ slug?: string } & Record<string, unknown>>>(request);
-    assertSlugMatch(body.data.slug, projectSlug);
-    await saveProject(projectSlug, body.data, body.content ?? "");
-    const entity = await getProject(projectSlug);
-    return ok(entity);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function PATCH(
-  request: Request,
-  context: { params: Promise<{ artistSlug: string; projectSlug: string }> }
-) {
+export async function PATCH() {
   try {
-    const { projectSlug } = await context.params;
-    const body = await parseJsonBody<WriteMarkdownBody<Partial<Record<string, unknown>>>>(request);
-    const current = await getProject(projectSlug);
-    const nextData = { ...current.data, ...body.data };
-    assertSlugMatch(nextData.slug, projectSlug);
-    await saveProject(projectSlug, nextData, body.content ?? current.content);
-    const entity = await getProject(projectSlug);
-    return ok(entity);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function DELETE(
-  _: Request,
-  context: { params: Promise<{ artistSlug: string; projectSlug: string }> }
-) {
+export async function DELETE() {
   try {
-    const { projectSlug } = await context.params;
-    const existed = await deleteProject(projectSlug);
-    return deleted(existed);
+    remoteOnlyWriteError();
   } catch (error) {
     return apiErrorResponse(error);
   }
