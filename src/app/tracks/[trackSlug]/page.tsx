@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
 import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
+import { TrackEditorCard } from "@/app/tracks/[trackSlug]/track-editor-card";
+import { listArtistsFromCloudflare, listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
 import { slugToTitle } from "@/lib/utils/slug-display";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +28,11 @@ export default async function TrackByIdPage({
   params: Promise<{ trackSlug: string }>;
 }) {
   const { trackSlug } = await params;
-  const track = await getTrackMetadataFromCloudflare(trackSlug);
+  const [track, artists, projects] = await Promise.all([
+    getTrackMetadataFromCloudflare(trackSlug),
+    listArtistsFromCloudflare(),
+    listProjectsFromCloudflare()
+  ]);
 
   if (!track) {
     notFound();
@@ -46,6 +52,21 @@ export default async function TrackByIdPage({
           Back To Tracks
         </Link>
       </div>
+
+      <TrackEditorCard
+        trackSlug={track.slug}
+        initialName={track.name}
+        initialArtistSlugs={track.artistSlugs}
+        initialProjectSlugs={track.projectSlugs}
+        artistOptions={artists.map((artist) => ({
+          slug: artist.slug,
+          name: artist.name || slugToTitle(artist.slug)
+        }))}
+        projectOptions={projects.map((project) => ({
+          slug: project.slug,
+          name: project.name || slugToTitle(project.slug)
+        }))}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <MarkdownDocCard trackSlug={track.slug} type="lyrics" />
