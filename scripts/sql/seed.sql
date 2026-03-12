@@ -193,4 +193,3 @@ INSERT INTO project_tracks (project_slug, track_slug, position) VALUES ('test-se
 INSERT INTO project_tracks (project_slug, track_slug, position) VALUES ('test-single', 'but-a-fable', 1) ON CONFLICT(project_slug, track_slug) DO UPDATE SET position = excluded.position;
 INSERT INTO project_tracks (project_slug, track_slug, position) VALUES ('test-single', 'cant-make-everybody-happy', 2) ON CONFLICT(project_slug, track_slug) DO UPDATE SET position = excluded.position;
 
-

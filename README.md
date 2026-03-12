@@ -35,7 +35,7 @@ Sandbox behavior:
 ## Data Architecture
 
 - D1 schema and seed scripts: `scripts/sql/` and `scripts/seed-d1.js`
-- R2 media upload helper: `scripts/upload-media.js`
+- R2 backfill helper: `scripts/backfill-audio-from-r2.js`
 
 ## Audio Filename Convention
 

@@ -18,74 +18,12 @@ function sqlString(value) {
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
-function sqlNullableString(value) {
-  if (value === null || value === undefined || value === "") {
-    return "NULL";
-  }
-  return sqlString(value);
-}
-
-function pad2(value) {
-  return String(value).padStart(2, "0");
-}
-
 function slugToTrackName(slug) {
   return String(slug)
     .split("-")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
-}
-
-function toIsoDateOrNull(year, month, day) {
-  const y = Number(year);
-  const m = Number(month);
-  const d = Number(day);
-  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) {
-    return null;
-  }
-  const date = new Date(Date.UTC(y, m - 1, d));
-  if (
-    date.getUTCFullYear() !== y ||
-    date.getUTCMonth() !== m - 1 ||
-    date.getUTCDate() !== d
-  ) {
-    return null;
-  }
-  return `${y}-${pad2(m)}-${pad2(d)}`;
-}
-
-function parseDateToken(token) {
-  const trimmed = String(token ?? "").trim();
-  if (!trimmed) {
-    return { date: "1970-01-01", dateOverride: null };
-  }
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    const [year, month, day] = trimmed.split("-");
-    const iso = toIsoDateOrNull(year, month, day);
-    if (iso) {
-      return { date: iso, dateOverride: null };
-    }
-  }
-
-  if (/^\d{1,2}-\d{1,2}-\d{2}$/.test(trimmed)) {
-    const [month, day, yearTwo] = trimmed.split("-");
-    const year = Number(yearTwo) >= 70 ? 1900 + Number(yearTwo) : 2000 + Number(yearTwo);
-    const iso = toIsoDateOrNull(year, month, day);
-    if (iso) {
-      return { date: iso, dateOverride: null };
-    }
-  }
-
-  if (/^\d{4}$/.test(trimmed)) {
-    const iso = toIsoDateOrNull(trimmed, 1, 1);
-    if (iso) {
-      return { date: iso, dateOverride: trimmed };
-    }
-  }
-
-  return { date: "1970-01-01", dateOverride: trimmed };
 }
 
 function runWrangler(args, options = {}) {
@@ -184,15 +122,10 @@ function buildSeedData() {
     new Set(projectAssignments.flatMap((assignment) => assignment.trackSlugs))
   ).map((trackSlug) => ({ trackSlug, artistSlug: ARTIST_SLUG }));
 
-  const audioRows = [];
-  const adjustments = [];
-
   return {
     trackSlugs,
     projectAssignments,
-    trackArtistSlugs,
-    audioRows,
-    adjustments
+    trackArtistSlugs
   };
 }
 
@@ -273,19 +206,6 @@ function buildSql(seedData) {
   }
   lines.push("");
 
-  for (const row of seedData.audioRows) {
-    lines.push(
-      `INSERT INTO audio (slug, track_slug, type, type_version, description, date, date_override) VALUES (${sqlString(
-        row.slug
-      )}, ${sqlString(row.trackSlug)}, ${sqlString(row.type)}, ${
-        row.typeVersion
-      }, ${sqlNullableString(row.description)}, ${sqlString(
-        row.date
-      )}, ${sqlNullableString(row.dateOverride)}) ON CONFLICT(slug) DO UPDATE SET track_slug = excluded.track_slug, type = excluded.type, type_version = excluded.type_version, description = excluded.description, date = excluded.date, date_override = excluded.date_override;`
-    );
-  }
-
-  lines.push("");
   return `${lines.join("\n")}\n`;
 }
 
@@ -318,21 +238,9 @@ function main() {
 
   console.log(`Seed SQL written: ${OUTPUT_SQL_PATH}`);
   console.log(`Tracks inserted: ${seedData.trackSlugs.length}`);
-  console.log(`Audio rows inserted: ${seedData.audioRows.length}`);
   for (const assignment of seedData.projectAssignments) {
     console.log(`Tracks linked to ${assignment.slug}: ${assignment.trackSlugs.length}`);
     console.log(`- ${assignment.slug}: ${assignment.trackSlugs.join(", ")}`);
-  }
-
-  if (seedData.adjustments.length > 0) {
-    console.log("Adjusted duplicate type_version values:");
-    for (const item of seedData.adjustments) {
-      console.log(
-        `- ${item.fileName}: v${item.originalVersion} -> v${item.resolvedVersion}`
-      );
-    }
-  } else {
-    console.log("No duplicate type_version adjustments needed.");
   }
 
   if (EXECUTE) {
