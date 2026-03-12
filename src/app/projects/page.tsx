@@ -36,14 +36,14 @@ export default async function ProjectsPage() {
           items={sourceItems.map((project) => ({
             id: project.slug,
             name: project.name || slugToTitle(project.slug),
-            nameHref: `/projects#${project.slug}`,
+            nameHref: `/projects/${project.slug}`,
             subtitle: toTypeLabel(project.type),
             fields: [
               {
                 label: "Artists",
                 links: project.artistSlugs.map((artist) => ({
                   label: artist.name || slugToTitle(artist.slug),
-                  href: `/artists#${artist.slug}`
+                  href: `/artists/${artist.slug}`
                 })),
                 linkStyle: "stacked"
               },

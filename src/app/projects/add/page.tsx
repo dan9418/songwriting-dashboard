@@ -26,7 +26,7 @@ export default function AddProjectPage() {
         successMessage="Project created."
         helperText='Projects created here default to type "single" until a fuller edit flow exists.'
         createEntity={(name) => api.postProject(name)}
-        getSuccessHref={(slug) => `/projects#${slug}`}
+        getSuccessHref={(slug) => `/projects/${slug}`}
       />
     </section>
   );

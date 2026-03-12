@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
 import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
+import { slugToTitle } from "@/lib/utils/slug-display";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,42 @@ export default async function TrackByIdPage({
         <MarkdownDocCard trackSlug={track.slug} type="lyrics" />
         <MarkdownDocCard trackSlug={track.slug} type="chords" />
         <MarkdownDocCard trackSlug={track.slug} type="notes" />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="panel p-4">
+          <h2 className="text-lg font-semibold">Artists</h2>
+          {track.artistSlugs.length === 0 ? (
+            <p className="mt-2 text-sm text-[color:var(--muted)]">No artists linked.</p>
+          ) : (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+              {track.artistSlugs.map((artistSlug) => (
+                <li key={artistSlug}>
+                  <Link href={`/artists/${artistSlug}`} className="underline-offset-4 hover:underline">
+                    {slugToTitle(artistSlug)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="panel p-4">
+          <h2 className="text-lg font-semibold">Projects</h2>
+          {track.projectSlugs.length === 0 ? (
+            <p className="mt-2 text-sm text-[color:var(--muted)]">No projects linked.</p>
+          ) : (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+              {track.projectSlugs.map((projectSlug) => (
+                <li key={projectSlug}>
+                  <Link href={`/projects/${projectSlug}`} className="underline-offset-4 hover:underline">
+                    {slugToTitle(projectSlug)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       <div className="panel overflow-x-auto p-4">

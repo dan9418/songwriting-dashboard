@@ -29,13 +29,13 @@ export default async function ArtistsPage() {
           items={sourceItems.map((artist) => ({
             id: artist.slug,
             name: artist.name || slugToTitle(artist.slug),
-            nameHref: `/artists#${artist.slug}`,
+            nameHref: `/artists/${artist.slug}`,
             fields: [
               {
                 label: "Projects",
                 links: artist.projectSlugs.map((project) => ({
                   label: project.name || slugToTitle(project.slug),
-                  href: `/projects#${project.slug}`
+                  href: `/projects/${project.slug}`
                 })),
                 linkStyle: "stacked"
               },

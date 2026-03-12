@@ -27,7 +27,7 @@ export default function AddArtistPage() {
         submitLabel="Create Artist"
         successMessage="Artist created."
         createEntity={(name) => api.postArtist(name)}
-        getSuccessHref={(slug) => `/artists#${slug}`}
+        getSuccessHref={(slug) => `/artists/${slug}`}
       />
     </section>
   );

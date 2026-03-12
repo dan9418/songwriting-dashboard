@@ -20,10 +20,10 @@ export default function HomePage() {
           </p>
           <div className="mt-4">
             <Link
-              href="/artists"
+              href="/artists/add"
               className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
             >
-              Open Artists
+              Add Artist
             </Link>
           </div>
         </div>
@@ -35,10 +35,10 @@ export default function HomePage() {
           </p>
           <div className="mt-4">
             <Link
-              href="/projects"
+              href="/projects/add"
               className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
             >
-              Open Projects
+              Add Project
             </Link>
           </div>
         </div>
@@ -50,10 +50,10 @@ export default function HomePage() {
           </p>
           <div className="mt-4">
             <Link
-              href="/tracks"
+              href="/tracks/add"
               className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
             >
-              Open Tracks
+              Add Track
             </Link>
           </div>
         </div>

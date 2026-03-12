@@ -28,7 +28,7 @@ export function TracksTable({ items }: { items: TracksTableItem[] }) {
             ? {
                 links: item.projectSlugs.map((projectSlug) => ({
                   label: slugToTitle(projectSlug),
-                  href: `/projects#${projectSlug}`
+                  href: `/projects/${projectSlug}`
                 }))
               }
             : { text: "-" },
@@ -36,7 +36,7 @@ export function TracksTable({ items }: { items: TracksTableItem[] }) {
             ? {
                 links: item.artistSlugs.map((artistSlug) => ({
                   label: slugToTitle(artistSlug),
-                  href: `/artists#${artistSlug}`
+                  href: `/artists/${artistSlug}`
                 }))
               }
             : { text: "-" },
