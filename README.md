@@ -46,3 +46,36 @@ Example:
 `midnight-drive_demo_v2_02-14-25_acoustic.m4a`
 
 The app parses filename metadata, validates consistency with track metadata, and auto-renames metadata filenames when required fields change.
+
+## Cloudflare Deploy
+
+This app is configured to deploy to Cloudflare Workers with OpenNext.
+
+Before the first deploy:
+- Set up Cloudflare Zero Trust for your account.
+- Ensure your account has a `workers.dev` subdomain.
+- Create a Cloudflare API token that can access D1 and R2 for this app.
+
+Local preparation:
+- Copy `.dev.vars.example` to `.dev.vars` for local Worker-style previews if needed.
+- Keep `.env.local` for local Next.js development.
+
+Required secrets and vars:
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_D1_DATABASE_ID`
+- `CLOUDFLARE_R2_ACCESS_KEY_ID`
+- `CLOUDFLARE_R2_SECRET_ACCESS_KEY`
+- `CLOUDFLARE_R2_BUCKET`
+- `CLOUDFLARE_R2_BUCKETS`
+
+Useful commands:
+- `npm run preview`
+- `npm run deploy`
+- `npm run cf-typegen`
+
+After the first deploy:
+- Open the Worker in Cloudflare dashboard.
+- Enable Cloudflare Access for the `workers.dev` domain.
+- Configure Access with One-time PIN.
+- Add an allow policy for only your email address.
