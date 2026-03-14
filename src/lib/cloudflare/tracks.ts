@@ -156,7 +156,7 @@ export async function listTracksFromCloudflare(): Promise<CloudflareTrackListIte
       FROM audio
       GROUP BY track_slug
     ) a ON a.track_slug = t.slug
-    ORDER BY t.slug ASC;
+    ORDER BY t.name COLLATE NOCASE ASC, t.slug ASC;
     `
   );
   const trackProjectRows = await queryD1<TrackProjectRow>(

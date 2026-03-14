@@ -71,9 +71,12 @@ export async function listArtistsFromCloudflare(): Promise<CloudflareArtistListI
   const artistTrackRows = await queryD1<ArtistTrackRow>(
     `
     SELECT
-      artist_slug AS artistSlug,
-      track_slug AS trackSlug
-    FROM track_artists
+      ta.artist_slug AS artistSlug,
+      ta.track_slug AS trackSlug
+    FROM track_artists ta
+    INNER JOIN tracks t
+      ON t.slug = ta.track_slug
+    ORDER BY ta.artist_slug ASC, t.name COLLATE NOCASE ASC, ta.track_slug ASC;
     `
   );
 
