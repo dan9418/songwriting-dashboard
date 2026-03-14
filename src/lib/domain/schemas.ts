@@ -77,7 +77,15 @@ export const updateProjectBodySchema = z.object({
   releaseDate: z.union([isoDateSchema, z.null()]).optional(),
   remasterDate: z.union([isoDateSchema, z.null()]).optional(),
   artistSlugs: uniqueSlugListSchema("artistSlugs").optional(),
-  trackSlugs: uniqueSlugListSchema("trackSlugs").optional()
+  trackSlugs: uniqueSlugListSchema("trackSlugs").optional(),
+  trackNameUpdates: z
+    .array(
+      z.object({
+        slug: slugSchema,
+        name: nameSchema
+      })
+    )
+    .optional()
 });
 
 export const updateTrackBodySchema = z.object({

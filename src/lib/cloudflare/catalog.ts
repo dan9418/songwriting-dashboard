@@ -127,6 +127,7 @@ export async function listProjectsFromCloudflare(): Promise<CloudflareProjectLis
       project_slug AS projectSlug,
       track_slug AS trackSlug
     FROM project_tracks
+    ORDER BY project_slug ASC, position ASC, track_slug ASC;
     `
   );
 

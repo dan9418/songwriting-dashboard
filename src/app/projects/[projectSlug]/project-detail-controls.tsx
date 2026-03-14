@@ -20,6 +20,52 @@ interface SlugOption {
   name: string;
 }
 
+function PencilIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 3.5a2.1 2.1 0 1 1 3 3L7 16l-4 1 1-4 9.5-9.5Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m12 5 3 3" />
+    </svg>
+  );
+}
+
+function UnlinkIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 6.5 6.5 8a3 3 0 0 0 4.2 4.2l1.6-1.6M12 13.5 13.5 12A3 3 0 1 0 9.3 7.8L7.7 9.4"
+      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m4 4 12 12" />
+    </svg>
+  );
+}
+
+function GripIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" className={className}>
+      <circle cx="6" cy="5" r="1.2" />
+      <circle cx="6" cy="10" r="1.2" />
+      <circle cx="6" cy="15" r="1.2" />
+      <circle cx="11" cy="5" r="1.2" />
+      <circle cx="11" cy="10" r="1.2" />
+      <circle cx="11" cy="15" r="1.2" />
+    </svg>
+  );
+}
+
+function createTrackNameMap(trackOptions: SlugOption[]) {
+  return Object.fromEntries(trackOptions.map((track) => [track.slug, track.name]));
+}
+
+function moveItem(values: string[], fromIndex: number, toIndex: number) {
+  const next = [...values];
+  const [item] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, item);
+  return next;
+}
+
 export function ProjectDetailControls({
   projectSlug,
   initialName,
@@ -53,8 +99,19 @@ export function ProjectDetailControls({
   const [remasterDate, setRemasterDate] = useState(initialRemasterDate ?? "");
   const [artistSlugs, setArtistSlugs] = useState(initialArtistSlugs);
   const [trackSlugs, setTrackSlugs] = useState(initialTrackSlugs);
+  const [trackNamesBySlug, setTrackNamesBySlug] = useState<Record<string, string>>(
+    createTrackNameMap(trackOptions)
+  );
+
+  const [draftTrackSlugs, setDraftTrackSlugs] = useState(initialTrackSlugs);
+  const [draftTrackNamesBySlug, setDraftTrackNamesBySlug] = useState<Record<string, string>>(
+    createTrackNameMap(trackOptions)
+  );
 
   const [editingName, setEditingName] = useState(false);
+  const [editingTracks, setEditingTracks] = useState(false);
+  const [editingTrackSlug, setEditingTrackSlug] = useState<string | null>(null);
+  const [draggedTrackSlug, setDraggedTrackSlug] = useState<string | null>(null);
   const [savingHeader, setSavingHeader] = useState(false);
   const [savingArtists, setSavingArtists] = useState(false);
   const [savingTracks, setSavingTracks] = useState(false);
@@ -67,10 +124,6 @@ export function ProjectDetailControls({
     () => Object.fromEntries(artistOptions.map((artist) => [artist.slug, artist.name])),
     [artistOptions]
   );
-  const trackNameBySlug = useMemo(
-    () => Object.fromEntries(trackOptions.map((track) => [track.slug, track.name])),
-    [trackOptions]
-  );
   const availableArtists = useMemo(
     () =>
       artistOptions
@@ -81,9 +134,17 @@ export function ProjectDetailControls({
   const availableTracks = useMemo(
     () =>
       trackOptions
-        .filter((track) => !trackSlugs.includes(track.slug))
+        .filter((track) => !draftTrackSlugs.includes(track.slug))
+        .map((track) => ({
+          slug: track.slug,
+          name: draftTrackNamesBySlug[track.slug] ?? track.name
+        }))
         .sort((left, right) => left.name.localeCompare(right.name)),
-    [trackOptions, trackSlugs]
+    [draftTrackNamesBySlug, draftTrackSlugs, trackOptions]
+  );
+  const hasBlankDraftTrackName = useMemo(
+    () => draftTrackSlugs.some((slug) => !(draftTrackNamesBySlug[slug] ?? "").trim()),
+    [draftTrackNamesBySlug, draftTrackSlugs]
   );
 
   async function saveHeader() {
@@ -130,20 +191,119 @@ export function ProjectDetailControls({
     }
   }
 
-  async function saveTrackLinks(nextTrackSlugs: string[]) {
+  function beginTrackEditing() {
+    setDraftTrackSlugs(trackSlugs);
+    setDraftTrackNamesBySlug({ ...trackNamesBySlug });
+    setEditingTrackSlug(null);
+    setDraggedTrackSlug(null);
+    setAddTrackSlug("");
+    setEditingTracks(true);
+    setErrorMessage(null);
+  }
+
+  function cancelTrackEditing() {
+    setDraftTrackSlugs(trackSlugs);
+    setDraftTrackNamesBySlug({ ...trackNamesBySlug });
+    setEditingTrackSlug(null);
+    setDraggedTrackSlug(null);
+    setAddTrackSlug("");
+    setEditingTracks(false);
+    setErrorMessage(null);
+  }
+
+  function updateDraftTrackName(trackSlug: string, value: string) {
+    setDraftTrackNamesBySlug((current) => ({
+      ...current,
+      [trackSlug]: value
+    }));
+  }
+
+  function unlinkDraftTrack(trackSlug: string) {
+    setDraftTrackSlugs((current) => current.filter((slug) => slug !== trackSlug));
+    if (editingTrackSlug === trackSlug) {
+      setEditingTrackSlug(null);
+    }
+    if (draggedTrackSlug === trackSlug) {
+      setDraggedTrackSlug(null);
+    }
+  }
+
+  function addDraftTrack(trackSlug: string) {
+    if (!trackSlug || draftTrackSlugs.includes(trackSlug)) {
+      return;
+    }
+    setDraftTrackSlugs((current) => [...current, trackSlug]);
+    setDraftTrackNamesBySlug((current) => ({
+      ...current,
+      [trackSlug]: current[trackSlug] ?? trackNamesBySlug[trackSlug] ?? trackSlug
+    }));
+  }
+
+  function reorderDraftTracks(targetTrackSlug: string) {
+    if (!draggedTrackSlug || draggedTrackSlug === targetTrackSlug) {
+      return;
+    }
+    setDraftTrackSlugs((current) => {
+      const fromIndex = current.indexOf(draggedTrackSlug);
+      const toIndex = current.indexOf(targetTrackSlug);
+      if (fromIndex === -1 || toIndex === -1) {
+        return current;
+      }
+      return moveItem(current, fromIndex, toIndex);
+    });
+  }
+
+  async function saveTrackChanges() {
     setSavingTracks(true);
     setErrorMessage(null);
     try {
+      const normalizedTrackNames = { ...draftTrackNamesBySlug };
+      for (const trackSlug of draftTrackSlugs) {
+        const nextName = (normalizedTrackNames[trackSlug] ?? trackNamesBySlug[trackSlug] ?? "").trim();
+        if (!nextName) {
+          throw new Error("Track names cannot be empty.");
+        }
+        normalizedTrackNames[trackSlug] = nextName;
+      }
+
+      const trackNameUpdates = draftTrackSlugs.flatMap((trackSlug) => {
+        const currentName = (trackNamesBySlug[trackSlug] ?? "").trim();
+        const nextName = normalizedTrackNames[trackSlug];
+        if (!nextName || nextName === currentName) {
+          return [];
+        }
+        return [
+          {
+            slug: trackSlug,
+            name: nextName
+          }
+        ];
+      });
+
       await api.updateProject(projectSlug, {
         slug: projectSlug,
-        trackSlugs: nextTrackSlugs
+        trackSlugs: draftTrackSlugs,
+        trackNameUpdates: trackNameUpdates.length > 0 ? trackNameUpdates : undefined
       });
-      setTrackSlugs(nextTrackSlugs);
-      showToast("Track links updated.");
+
+      setTrackSlugs(draftTrackSlugs);
+      setTrackNamesBySlug((current) => ({
+        ...current,
+        ...normalizedTrackNames
+      }));
+      setDraftTrackNamesBySlug((current) => ({
+        ...current,
+        ...normalizedTrackNames
+      }));
+      setEditingTracks(false);
+      setEditingTrackSlug(null);
+      setDraggedTrackSlug(null);
+      setAddTrackSlug("");
+      showToast("Tracks updated.");
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Failed to update track links.");
-      showToast("Failed to update track links.", "error");
+      showToast("Failed to update tracks.", "error");
     } finally {
       setSavingTracks(false);
     }
@@ -185,7 +345,7 @@ export function ProjectDetailControls({
                   aria-label="Edit project header"
                   onClick={() => setEditingName(true)}
                 >
-                  ✎
+                  <PencilIcon className="h-4 w-4" />
                 </button>
               </div>
               <p className="text-sm text-[color:var(--muted)]">
@@ -320,50 +480,169 @@ export function ProjectDetailControls({
         </div>
 
         <div className="panel grid gap-3 p-4">
-          <h2 className="text-lg font-semibold">Tracks</h2>
-          {trackSlugs.length === 0 ? (
-            <p className="text-sm text-[color:var(--muted)]">No tracks linked.</p>
-          ) : (
-            <ul className="grid gap-2 text-sm">
-              {trackSlugs.map((trackSlug) => (
-                <li key={trackSlug} className="flex items-center justify-between gap-2">
-                  <Link href={`/tracks/${trackSlug}`} className="underline-offset-4 hover:underline">
-                    {trackNameBySlug[trackSlug] ?? trackSlug}
-                  </Link>
-                  <ActionButton
-                    tone="ghost"
-                    disabled={savingTracks}
-                    onClick={() => saveTrackLinks(trackSlugs.filter((slug) => slug !== trackSlug))}
-                  >
-                    Remove
-                  </ActionButton>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="flex items-center gap-2">
-            <select
-              className="w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none transition focus:border-[color:var(--accent)]"
-              value={addTrackSlug}
-              disabled={savingTracks || availableTracks.length === 0}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setAddTrackSlug(value);
-                if (!value) {
-                  return;
-                }
-                setAddTrackSlug("");
-                void saveTrackLinks([...trackSlugs, value]);
-              }}
-            >
-              <option value="">Add track...</option>
-              {availableTracks.map((track) => (
-                <option key={track.slug} value={track.slug}>
-                  {track.name}
-                </option>
-              ))}
-            </select>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">Tracks</h2>
+              {editingTracks ? (
+                <p className="text-sm text-[color:var(--muted)]">
+                  Drag to reorder. Track name changes and unlinks stay local until you save.
+                </p>
+              ) : null}
+            </div>
+            {!editingTracks ? (
+              <ActionButton tone="ghost" aria-label="Edit tracks" onClick={beginTrackEditing}>
+                <PencilIcon className="h-4 w-4" />
+              </ActionButton>
+            ) : (
+              <div className="flex items-center gap-2">
+                <ActionButton
+                  disabled={savingTracks || hasBlankDraftTrackName}
+                  onClick={saveTrackChanges}
+                >
+                  {savingTracks ? "Saving..." : "Save"}
+                </ActionButton>
+                <ActionButton tone="ghost" disabled={savingTracks} onClick={cancelTrackEditing}>
+                  Cancel
+                </ActionButton>
+              </div>
+            )}
           </div>
+
+          {!editingTracks ? (
+            trackSlugs.length === 0 ? (
+              <p className="text-sm text-[color:var(--muted)]">No tracks linked.</p>
+            ) : (
+              <ol className="list-decimal pl-5 text-sm">
+                {trackSlugs.map((trackSlug, index) => (
+                  <li key={trackSlug}>
+                    <Link href={`/tracks/${trackSlug}`} className="underline-offset-4 hover:underline">
+                      {trackNamesBySlug[trackSlug] ?? trackSlug}
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            )
+          ) : (
+            <>
+              {draftTrackSlugs.length === 0 ? (
+                <p className="text-sm text-[color:var(--muted)]">
+                  No tracks linked. Add a track below to start building the project order.
+                </p>
+              ) : (
+                <ul className="grid gap-2 text-sm">
+                  {draftTrackSlugs.map((trackSlug, index) => {
+                    const isEditingTrack = editingTrackSlug === trackSlug;
+                    const draftName = draftTrackNamesBySlug[trackSlug] ?? trackNamesBySlug[trackSlug] ?? trackSlug;
+                    return (
+                      <li
+                        key={trackSlug}
+                        draggable={!savingTracks}
+                        onDragStart={() => setDraggedTrackSlug(trackSlug)}
+                        onDragEnd={() => setDraggedTrackSlug(null)}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={() => {
+                          reorderDraftTracks(trackSlug);
+                          setDraggedTrackSlug(null);
+                        }}
+                        className={`rounded-xl border px-3 py-3 transition ${
+                          draggedTrackSlug === trackSlug
+                            ? "border-[color:var(--accent)] bg-[#eef7f5]"
+                            : "border-[#ddcfbd] bg-[color:var(--surface)]"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <button
+                            type="button"
+                            className="mt-1 cursor-grab rounded-md p-1 text-[color:var(--muted)] transition hover:bg-[#efe3d3] active:cursor-grabbing"
+                            aria-label={`Drag to reorder ${draftName}`}
+                          >
+                            <GripIcon className="h-4 w-4" />
+                          </button>
+                          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-[#eadcc8] px-2 text-xs font-semibold text-[color:var(--ink)]">
+                            {index + 1}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            {isEditingTrack ? (
+                              <div className="grid gap-2">
+                                <TextInput
+                                  value={draftName}
+                                  disabled={savingTracks}
+                                  onChange={(event) => updateDraftTrackName(trackSlug, event.currentTarget.value)}
+                                  onBlur={() => {
+                                    if ((draftTrackNamesBySlug[trackSlug] ?? "").trim()) {
+                                      setEditingTrackSlug(null);
+                                    }
+                                  }}
+                                />
+                                <p className="text-xs text-[color:var(--muted)]">{trackSlug}</p>
+                              </div>
+                            ) : (
+                              <div className="grid gap-1">
+                                <Link href={`/tracks/${trackSlug}`} className="truncate font-medium underline-offset-4 hover:underline">
+                                  {draftName}
+                                </Link>
+                                <p className="text-xs text-[color:var(--muted)]">{trackSlug}</p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="rounded-lg bg-[#f4eadb] p-2 text-[color:var(--ink)] transition hover:bg-[#eadcc8] disabled:cursor-not-allowed disabled:opacity-60"
+                              aria-label={`Edit ${draftName}`}
+                              disabled={savingTracks}
+                              onClick={() =>
+                                setEditingTrackSlug((current) => (current === trackSlug ? null : trackSlug))
+                              }
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-lg bg-[#f4eadb] p-2 text-[color:var(--ink)] transition hover:bg-[#eadcc8] disabled:cursor-not-allowed disabled:opacity-60"
+                              aria-label={`Unlink ${draftName} from this project`}
+                              disabled={savingTracks}
+                              onClick={() => unlinkDraftTrack(trackSlug)}
+                            >
+                              <UnlinkIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              <div className="flex items-center gap-2">
+                <select
+                  className="w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none transition focus:border-[color:var(--accent)]"
+                  value={addTrackSlug}
+                  disabled={savingTracks || availableTracks.length === 0}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value;
+                    setAddTrackSlug(value);
+                    if (!value) {
+                      return;
+                    }
+                    addDraftTrack(value);
+                    setAddTrackSlug("");
+                  }}
+                >
+                  <option value="">Add track...</option>
+                  {availableTracks.map((track) => (
+                    <option key={track.slug} value={track.slug}>
+                      {track.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {hasBlankDraftTrackName ? (
+                <p className="text-sm text-red-700">Every linked track needs a name before you can save.</p>
+              ) : null}
+            </>
+          )}
         </div>
       </div>
 

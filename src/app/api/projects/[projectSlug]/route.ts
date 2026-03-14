@@ -15,6 +15,11 @@ interface ProjectRow {
   remasterDate: string | null;
 }
 
+interface TrackNameUpdate {
+  slug: string;
+  name: string;
+}
+
 function asProjectPayload(body: Record<string, unknown>): Record<string, unknown> {
   const maybeData = body.data;
   if (maybeData && typeof maybeData === "object" && !Array.isArray(maybeData)) {
@@ -78,6 +83,33 @@ function optionalSlugList(value: unknown, fieldName: string): string[] | undefin
   return deduped;
 }
 
+function optionalTrackNameUpdates(value: unknown): TrackNameUpdate[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(value)) {
+    throw badRequest(`trackNameUpdates must be an array.`);
+  }
+
+  const updates = value.map((item, index) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      throw badRequest(`trackNameUpdates[${index}] must be an object.`);
+    }
+    const record = item as Record<string, unknown>;
+    return {
+      slug: requireTrimmedString(record.slug, `trackNameUpdates[${index}].slug`),
+      name: requireTrimmedString(record.name, `trackNameUpdates[${index}].name`)
+    };
+  });
+
+  const uniqueSlugs = new Set(updates.map((update) => update.slug));
+  if (uniqueSlugs.size !== updates.length) {
+    throw badRequest(`trackNameUpdates must not contain duplicate track slugs.`);
+  }
+
+  return updates;
+}
+
 async function getProjectRowOrThrow(projectSlug: string): Promise<ProjectRow> {
   const rows = await queryD1<ProjectRow>(
     `
@@ -131,6 +163,7 @@ export async function PUT(request: Request, context: { params: Promise<{ project
     const nextRemasterDate = optionalDate(payload.remasterDate, "remasterDate");
     const nextArtistSlugs = optionalSlugList(payload.artistSlugs, "artistSlugs");
     const nextTrackSlugs = optionalSlugList(payload.trackSlugs, "trackSlugs");
+    const nextTrackNameUpdates = optionalTrackNameUpdates(payload.trackNameUpdates);
 
     await queryD1(
       `
@@ -163,6 +196,19 @@ export async function PUT(request: Request, context: { params: Promise<{ project
           ON CONFLICT(project_slug, artist_slug) DO NOTHING;
           `,
           [projectSlug, nextArtistSlug]
+        );
+      }
+    }
+
+    if (nextTrackNameUpdates) {
+      for (const update of nextTrackNameUpdates) {
+        await queryD1(
+          `
+          UPDATE tracks
+          SET name = ?
+          WHERE slug = ?;
+          `,
+          [update.name, update.slug]
         );
       }
     }

@@ -18,6 +18,10 @@ export interface ProjectUpdatePayload {
   remasterDate?: string | null;
   artistSlugs?: string[];
   trackSlugs?: string[];
+  trackNameUpdates?: Array<{
+    slug: string;
+    name: string;
+  }>;
 }
 
 export interface TrackUpdatePayload {
