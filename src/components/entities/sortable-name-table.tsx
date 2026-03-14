@@ -42,11 +42,13 @@ function renderLinks(links: TableCellLink[]) {
 export function SortableNameTable({
   items,
   columnHeaders,
-  emptyMessage
+  emptyMessage,
+  withPanel = true
 }: {
   items: SortableNameTableItem[];
   columnHeaders: string[];
   emptyMessage: string;
+  withPanel?: boolean;
 }) {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -58,8 +60,8 @@ export function SortableNameTable({
     return next;
   }, [items, sortDirection]);
 
-  return (
-    <div className="panel overflow-x-auto p-4">
+  const content = (
+    <div className="overflow-x-auto">
       <table className="min-w-full border-collapse text-left text-sm">
         <thead>
           <tr className="border-b border-[#ddcfbd] text-xs uppercase tracking-wide text-[color:var(--muted)]">
@@ -105,4 +107,6 @@ export function SortableNameTable({
       {sortedItems.length === 0 ? <p className="mt-3 text-sm text-[color:var(--muted)]">{emptyMessage}</p> : null}
     </div>
   );
+
+  return withPanel ? <div className="panel p-4">{content}</div> : content;
 }

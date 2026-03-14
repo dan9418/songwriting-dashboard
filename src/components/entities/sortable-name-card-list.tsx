@@ -73,33 +73,40 @@ function renderFieldValue(field: SortableNameCardField) {
 
 export function SortableNameCardList({
   items,
-  emptyMessage
+  emptyMessage,
+  sortable = true,
+  withPanel = true
 }: {
   items: SortableNameCardItem[];
   emptyMessage: string;
+  sortable?: boolean;
+  withPanel?: boolean;
 }) {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const effectiveSortDirection = sortable ? sortDirection : "asc";
 
   const sortedItems = useMemo(() => {
     const next = [...items];
     next.sort((a, b) =>
-      sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+      effectiveSortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
     );
     return next;
-  }, [items, sortDirection]);
+  }, [effectiveSortDirection, items]);
 
-  return (
-    <div className="panel grid gap-3 p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">List</p>
-        <button
-          type="button"
-          onClick={() => setSortDirection((current) => (current === "asc" ? "desc" : "asc"))}
-          className="rounded-lg bg-[color:var(--surface)] px-3 py-1.5 text-xs transition hover:bg-[#f3e8d7]"
-        >
-          Sort: {sortDirection === "asc" ? "A-Z" : "Z-A"}
-        </button>
-      </div>
+  const content = (
+    <>
+      {sortable ? (
+        <div className="flex items-center justify-between">
+          <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">List</p>
+          <button
+            type="button"
+            onClick={() => setSortDirection((current) => (current === "asc" ? "desc" : "asc"))}
+            className="rounded-lg bg-[color:var(--surface)] px-3 py-1.5 text-xs transition hover:bg-[#f3e8d7]"
+          >
+            Sort: {sortDirection === "asc" ? "A-Z" : "Z-A"}
+          </button>
+        </div>
+      ) : null}
 
       {sortedItems.length === 0 ? <p className="text-sm text-[color:var(--muted)]">{emptyMessage}</p> : null}
 
@@ -134,6 +141,8 @@ export function SortableNameCardList({
           </article>
         ))}
       </div>
-    </div>
+    </>
   );
+
+  return withPanel ? <div className="panel grid gap-3 p-4">{content}</div> : <div className="grid gap-3">{content}</div>;
 }

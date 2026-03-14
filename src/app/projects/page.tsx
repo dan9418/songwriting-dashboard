@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { EntityIndexLayout } from "@/components/entities/entity-index-layout";
 import { SortableNameCardList } from "@/components/entities/sortable-name-card-list";
 import { listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
 import { slugToTitle } from "@/lib/utils/slug-display";
@@ -17,22 +17,16 @@ export default async function ProjectsPage() {
     const sourceItems = await listProjectsFromCloudflare();
 
     return (
-      <section className="grid gap-4">
-        <div className="panel flex items-center justify-between gap-3 p-4">
-          <div>
-            <h1 className="text-2xl font-semibold">Projects</h1>
-            <p className="text-sm text-[color:var(--muted)]">Showing {sourceItems.length} projects.</p>
-          </div>
-          <Link
-            href="/projects/add"
-            className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
-          >
-            Add Project
-          </Link>
-        </div>
-
+      <EntityIndexLayout
+        title="Projects"
+        subtitle={sourceItems.length.toLocaleString()}
+        actionHref="/projects/add"
+        actionLabel="Add Project"
+      >
         <SortableNameCardList
           emptyMessage="No projects found."
+          sortable={false}
+          withPanel={false}
           items={sourceItems.map((project) => ({
             id: project.slug,
             name: project.name || slugToTitle(project.slug),
@@ -58,27 +52,16 @@ export default async function ProjectsPage() {
             ]
           }))}
         />
-      </section>
+      </EntityIndexLayout>
     );
   } catch (error) {
     return (
-      <section className="grid gap-4">
-        <div className="panel flex items-center justify-between gap-3 p-4">
-          <div>
-            <h1 className="text-2xl font-semibold">Projects</h1>
-            <p className="text-sm text-[color:var(--muted)]">
-              Failed to load projects from Cloudflare D1.
-              {error instanceof Error ? ` ${error.message}` : ""}
-            </p>
-          </div>
-          <Link
-            href="/projects/add"
-            className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
-          >
-            Add Project
-          </Link>
-        </div>
-      </section>
+      <EntityIndexLayout
+        title="Projects"
+        subtitle={`Failed to load projects from Cloudflare D1.${error instanceof Error ? ` ${error.message}` : ""}`}
+        actionHref="/projects/add"
+        actionLabel="Add Project"
+      />
     );
   }
 }

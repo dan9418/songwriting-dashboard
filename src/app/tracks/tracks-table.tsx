@@ -14,11 +14,18 @@ export interface TracksTableItem {
   audioCount: number;
 }
 
-export function TracksTable({ items }: { items: TracksTableItem[] }) {
+export function TracksTable({
+  items,
+  withPanel = true
+}: {
+  items: TracksTableItem[];
+  withPanel?: boolean;
+}) {
   return (
     <SortableNameTable
       columnHeaders={["Projects", "Artists", "Lyrics", "Chords", "Notes", "Audio"]}
       emptyMessage="No tracks found."
+      withPanel={withPanel}
       items={items.map((item) => ({
         id: item.slug,
         name: item.name,
