@@ -25,26 +25,30 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen px-3 pb-8 pt-4 md:px-6">
-      <div className="mx-auto grid w-full max-w-7xl gap-4">
-        <header className="panel sticky top-4 z-30 overflow-x-auto px-3 py-2">
-          <div className="flex min-w-max items-center gap-2 md:gap-3">
-            {PRIMARY_NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
-                  isActive(item.href)
-                    ? "bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
-                    : "bg-[color:var(--surface)] text-[color:var(--ink)] hover:bg-[color:var(--button-ghost-hover)]"
-                }`}
-              >
-                <AppIcon name={item.icon} className="h-4 w-4" />
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </header>
+    <div className="min-h-screen pb-8">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-[color:var(--border-soft)] bg-[color:var(--bg-panel)]/95 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-7xl px-3 md:px-6">
+          <nav className="flex min-w-0 flex-1 overflow-x-auto" aria-label="Primary">
+            <div className="flex min-w-max items-end gap-1">
+              {PRIMARY_NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`inline-flex items-center gap-2 border-b-2 px-3 py-4 text-sm font-medium transition ${
+                    isActive(item.href)
+                      ? "border-[color:var(--accent)] text-[color:var(--accent)]"
+                      : "border-transparent text-[color:var(--muted)] hover:border-[color:var(--border-strong)] hover:text-[color:var(--ink)]"
+                  }`}
+                >
+                  <AppIcon name={item.icon} className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        </div>
+      </header>
+      <div className="mx-auto grid w-full max-w-7xl gap-4 px-3 pt-20 md:px-6 md:pt-24">
         <main className="fade-up">{children}</main>
       </div>
     </div>
