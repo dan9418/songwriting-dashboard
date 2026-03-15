@@ -18,8 +18,9 @@ export default async function ProjectsPage() {
 
     return (
       <EntityIndexLayout
+        icon="project"
         title="Projects"
-        subtitle={sourceItems.length.toLocaleString()}
+        subtitle={`Total: ${sourceItems.length.toLocaleString()}`}
         actionHref="/projects/add"
         actionLabel="Add Project"
       >
@@ -32,6 +33,8 @@ export default async function ProjectsPage() {
             name: project.name || slugToTitle(project.slug),
             nameHref: `/projects/${project.slug}`,
             subtitle: toTypeLabel(project.type),
+            artworkIcon: "project",
+            artworkStyle: "cover",
             fields: [
               {
                 label: "Artists",
@@ -57,6 +60,7 @@ export default async function ProjectsPage() {
   } catch (error) {
     return (
       <EntityIndexLayout
+        icon="project"
         title="Projects"
         subtitle={`Failed to load projects from Cloudflare D1.${error instanceof Error ? ` ${error.message}` : ""}`}
         actionHref="/projects/add"

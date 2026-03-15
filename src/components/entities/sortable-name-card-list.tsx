@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import {
+  EntityPlaceholderArtwork,
+  type ArtworkKind
+} from "@/components/entities/entity-placeholder-artwork";
 import type { TableCellLink } from "@/components/entities/sortable-name-table";
 
 export interface SortableNameCardField {
@@ -16,6 +20,8 @@ export interface SortableNameCardItem {
   name: string;
   nameHref?: string;
   subtitle?: string;
+  artworkIcon?: ArtworkKind;
+  artworkStyle?: "avatar" | "cover";
   fields: SortableNameCardField[];
 }
 
@@ -71,6 +77,18 @@ function renderFieldValue(field: SortableNameCardField) {
   return field.text ?? "-";
 }
 
+function renderArtwork(item: SortableNameCardItem) {
+  if (!item.artworkIcon) {
+    return null;
+  }
+
+  if (item.artworkStyle === "cover") {
+    return <EntityPlaceholderArtwork kind={item.artworkIcon} variant="card-cover" />;
+  }
+
+  return <EntityPlaceholderArtwork kind={item.artworkIcon} variant="card-avatar" />;
+}
+
 export function SortableNameCardList({
   items,
   emptyMessage,
@@ -113,6 +131,7 @@ export function SortableNameCardList({
       <div className="grid gap-3 lg:grid-cols-2">
         {sortedItems.map((item) => (
           <article id={item.id} key={item.id} className="rounded-xl border border-[#ddcfbd] bg-[color:var(--surface)] p-4">
+            {renderArtwork(item)}
             <div className="flex flex-wrap items-start justify-between gap-2">
               <h2 className="text-lg font-semibold text-[color:var(--ink)]">
                 {item.nameHref ? (

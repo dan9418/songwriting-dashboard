@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
 import {
   ActionButton,
   Field,
@@ -333,8 +334,10 @@ export function ProjectDetailControls({
 
   return (
     <>
-      <div className="panel flex items-center justify-between gap-3 p-4">
-        <div className="min-w-0">
+      <div className="panel flex flex-col gap-4 p-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
+          <EntityPlaceholderArtwork kind="project" variant="detail-cover" />
+          <div className="min-w-0 flex-1">
           {!editingName ? (
             <>
               <div className="flex items-center gap-2">
@@ -416,7 +419,8 @@ export function ProjectDetailControls({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        </div>
+        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
           <Link
             href="/projects"
             className="rounded-lg bg-[#f4eadb] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
@@ -513,7 +517,7 @@ export function ProjectDetailControls({
               <p className="text-sm text-[color:var(--muted)]">No tracks linked.</p>
             ) : (
               <ol className="list-decimal pl-5 text-sm">
-                {trackSlugs.map((trackSlug, index) => (
+                {trackSlugs.map((trackSlug) => (
                   <li key={trackSlug}>
                     <Link href={`/tracks/${trackSlug}`} className="underline-offset-4 hover:underline">
                       {trackNamesBySlug[trackSlug] ?? trackSlug}

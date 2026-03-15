@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppIcon } from "@/components/ui/app-icons";
 
 export default function HomePage() {
   return (
@@ -14,45 +15,57 @@ export default function HomePage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="panel p-4">
-          <h2 className="text-lg font-semibold">Artists</h2>
+          <div className="flex items-center gap-2">
+            <AppIcon name="artist" className="h-6 w-6 text-[color:var(--ink)]" />
+            <h2 className="text-lg font-semibold">Artists</h2>
+          </div>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             Manage artist metadata and connected projects/tracks.
           </p>
           <div className="mt-4">
             <Link
               href="/artists/add"
-              className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
+              className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
             >
+              <AppIcon name="plus" className="h-4 w-4" />
               Add Artist
             </Link>
           </div>
         </div>
 
         <div className="panel p-4">
-          <h2 className="text-lg font-semibold">Projects</h2>
+          <div className="flex items-center gap-2">
+            <AppIcon name="project" className="h-6 w-6 text-[color:var(--ink)]" />
+            <h2 className="text-lg font-semibold">Projects</h2>
+          </div>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             View project type, artist memberships, and ordered tracklists.
           </p>
           <div className="mt-4">
             <Link
               href="/projects/add"
-              className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
+              className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
             >
+              <AppIcon name="plus" className="h-4 w-4" />
               Add Project
             </Link>
           </div>
         </div>
 
         <div className="panel p-4">
-          <h2 className="text-lg font-semibold">Tracks</h2>
+          <div className="flex items-center gap-2">
+            <AppIcon name="track" className="h-6 w-6 text-[color:var(--ink)]" />
+            <h2 className="text-lg font-semibold">Tracks</h2>
+          </div>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             Inspect track relationships, markdown docs, and synced audio metadata.
           </p>
           <div className="mt-4">
             <Link
               href="/tracks/add"
-              className="rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
+              className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
             >
+              <AppIcon name="plus" className="h-4 w-4" />
               Add Track
             </Link>
           </div>
@@ -60,7 +73,10 @@ export default function HomePage() {
       </div>
 
       <div className="panel p-4">
-        <h2 className="text-lg font-semibold">Relationship Model</h2>
+        <div className="flex items-center gap-2">
+          <AppIcon name="home" className="h-6 w-6 text-[color:var(--ink)]" />
+          <h2 className="text-lg font-semibold">Relationship Model</h2>
+        </div>
         <p className="mt-2 text-sm text-[color:var(--muted)]">Artists {"<->"} Projects via `project_artists`.</p>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
           Projects {"<->"} Tracks via `project_tracks` (with `position`).

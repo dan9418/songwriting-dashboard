@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { AppIcon, type AppIconName } from "@/components/ui/app-icons";
 
 const PRIMARY_NAV_ITEMS = [
-  { href: "/", label: "Home" },
-  { href: "/artists", label: "Artists" },
-  { href: "/projects", label: "Projects" },
-  { href: "/tracks", label: "Tracks" },
-  { href: "/admin", label: "Admin" }
-];
+  { href: "/", label: "Home", icon: "home" },
+  { href: "/artists", label: "Artists", icon: "artist" },
+  { href: "/projects", label: "Projects", icon: "project" },
+  { href: "/tracks", label: "Tracks", icon: "track" },
+  { href: "/admin", label: "Admin", icon: "admin" }
+] satisfies Array<{ href: string; label: string; icon: AppIconName }>;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -32,12 +33,13 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-lg px-3 py-2 text-sm transition ${
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
                   isActive(item.href)
                     ? "bg-[color:var(--accent)] text-white"
                     : "bg-[color:var(--surface)] text-[color:var(--ink)] hover:bg-[#f3e8d7]"
                 }`}
               >
+                <AppIcon name={item.icon} className="h-4 w-4" />
                 {item.label}
               </Link>
             ))}

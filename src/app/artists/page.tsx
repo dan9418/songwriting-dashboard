@@ -10,8 +10,9 @@ export default async function ArtistsPage() {
 
     return (
       <EntityIndexLayout
+        icon="artist"
         title="Artists"
-        subtitle={sourceItems.length.toLocaleString()}
+        subtitle={`Total: ${sourceItems.length.toLocaleString()}`}
         actionHref="/artists/add"
         actionLabel="Add Artist"
       >
@@ -23,6 +24,8 @@ export default async function ArtistsPage() {
             id: artist.slug,
             name: artist.name,
             nameHref: `/artists/${artist.slug}`,
+            artworkIcon: "artist",
+            artworkStyle: "avatar",
             fields: [
               {
                 label: "Projects",
@@ -40,6 +43,7 @@ export default async function ArtistsPage() {
   } catch (error) {
     return (
       <EntityIndexLayout
+        icon="artist"
         title="Artists"
         subtitle={`Failed to load artists from Cloudflare D1.${error instanceof Error ? ` ${error.message}` : ""}`}
         actionHref="/artists/add"

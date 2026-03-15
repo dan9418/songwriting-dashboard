@@ -20,8 +20,9 @@ export default async function TracksPage() {
 
     return (
       <EntityIndexLayout
+        icon="track"
         title="Tracks"
-        subtitle={items.length.toLocaleString()}
+        subtitle={`Total: ${items.length.toLocaleString()}`}
         actionHref="/tracks/add"
         actionLabel="Add Track"
       >
@@ -31,6 +32,7 @@ export default async function TracksPage() {
   } catch (error) {
     return (
       <EntityIndexLayout
+        icon="track"
         title="Tracks"
         subtitle={`Failed to load tracks from Cloudflare D1.${error instanceof Error ? ` ${error.message}` : ""}`}
         actionHref="/tracks/add"
