@@ -1,0 +1,8 @@
+- Improve theme
+- Complete back catalog
+- Image support
+- Search
+- Fragments
+- Tags
+- Social Media Links
+- Covers
