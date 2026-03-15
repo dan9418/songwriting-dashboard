@@ -26,7 +26,7 @@ const ENTITIES = [
     title: "Tracks",
     icon: "track",
     brief: "",
-    description: "Track each song's details, files, and where it belongs.",//
+    description: "Track song details, files, and where it belongs.",//
     addHref: "/tracks/add",
     listHref: "/tracks",
     addLabel: "Add New",
@@ -48,7 +48,7 @@ export default function HomePage() {
     <section className="grid gap-4">
       <div className="panel p-6 md:p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
-          Dan Bednarczyk's
+          Dan Bednarczyk
         </p>
         <h1 className="mt-3 text-4xl font-semibold md:text-5xl">Songwriting Dashboard</h1>
         <p className="mt-3 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
