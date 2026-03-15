@@ -3,10 +3,29 @@ interface CreatedEntityResponse {
   name: string;
 }
 
+export interface ArtistCreatePayload {
+  name: string;
+  description?: string;
+  projectSlugs?: string[];
+  trackSlugs?: string[];
+}
+
 export interface ArtistUpdatePayload {
   slug: string;
   name?: string;
   description?: string;
+  projectSlugs?: string[];
+  trackSlugs?: string[];
+}
+
+export interface ProjectCreatePayload {
+  name: string;
+  description?: string;
+  type?: "album" | "ep" | "single" | "setlist";
+  releaseDate?: string | null;
+  remasterDate?: string | null;
+  artistSlugs?: string[];
+  trackSlugs?: string[];
 }
 
 export interface ProjectUpdatePayload {
@@ -22,6 +41,12 @@ export interface ProjectUpdatePayload {
     slug: string;
     name: string;
   }>;
+}
+
+export interface TrackCreatePayload {
+  name: string;
+  artistSlugs?: string[];
+  projectSlugs?: string[];
 }
 
 export interface TrackUpdatePayload {
@@ -52,10 +77,10 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  postArtist: (name: string) =>
+  postArtist: (payload: ArtistCreatePayload) =>
     apiRequest<CreatedEntityResponse>(`/api/artists`, {
       method: "POST",
-      body: JSON.stringify({ name })
+      body: JSON.stringify(payload)
     }),
 
   updateArtist: (artistSlug: string, payload: ArtistUpdatePayload) =>
@@ -69,10 +94,10 @@ export const api = {
       method: "DELETE"
     }),
 
-  postProject: (name: string) =>
+  postProject: (payload: ProjectCreatePayload) =>
     apiRequest<CreatedEntityResponse>(`/api/projects`, {
       method: "POST",
-      body: JSON.stringify({ name })
+      body: JSON.stringify(payload)
     }),
 
   updateProject: (projectSlug: string, payload: ProjectUpdatePayload) =>
@@ -86,10 +111,10 @@ export const api = {
       method: "DELETE"
     }),
 
-  createTrack: (name: string) =>
+  createTrack: (payload: TrackCreatePayload) =>
     apiRequest<CreatedEntityResponse>(`/api/tracks`, {
       method: "POST",
-      body: JSON.stringify({ name })
+      body: JSON.stringify(payload)
     }),
 
   updateTrack: (trackSlug: string, payload: TrackUpdatePayload) =>

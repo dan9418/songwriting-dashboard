@@ -28,6 +28,21 @@ function requireOptionalString(value: unknown, fieldName: string): string | unde
   return value;
 }
 
+function optionalSlugList(value: unknown, fieldName: string): string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(value)) {
+    throw badRequest(`${fieldName} must be an array of slugs.`);
+  }
+  const list = value.map((item) => requireTrimmedString(item, `${fieldName}[]`));
+  const deduped = Array.from(new Set(list));
+  if (deduped.length !== list.length) {
+    throw badRequest(`${fieldName} must not contain duplicates.`);
+  }
+  return deduped;
+}
+
 async function getArtistRowOrThrow(artistSlug: string): Promise<ArtistRow> {
   const rows = await queryD1<ArtistRow>(
     `
@@ -69,6 +84,8 @@ export async function PUT(request: Request, context: { params: Promise<{ artistS
     const nextName =
       payload.name === undefined ? current.name : requireTrimmedString(payload.name, "name");
     const nextDescription = requireOptionalString(payload.description, "description");
+    const nextProjectSlugs = optionalSlugList(payload.projectSlugs, "projectSlugs");
+    const nextTrackSlugs = optionalSlugList(payload.trackSlugs, "trackSlugs");
 
     await queryD1(
       `
@@ -78,6 +95,34 @@ export async function PUT(request: Request, context: { params: Promise<{ artistS
       `,
       [nextName, nextDescription ?? current.description, artistSlug]
     );
+
+    if (nextProjectSlugs) {
+      await queryD1(`DELETE FROM project_artists WHERE artist_slug = ?;`, [artistSlug]);
+      for (const projectSlug of nextProjectSlugs) {
+        await queryD1(
+          `
+          INSERT INTO project_artists (project_slug, artist_slug)
+          VALUES (?, ?)
+          ON CONFLICT(project_slug, artist_slug) DO NOTHING;
+          `,
+          [projectSlug, artistSlug]
+        );
+      }
+    }
+
+    if (nextTrackSlugs) {
+      await queryD1(`DELETE FROM track_artists WHERE artist_slug = ?;`, [artistSlug]);
+      for (const trackSlug of nextTrackSlugs) {
+        await queryD1(
+          `
+          INSERT INTO track_artists (track_slug, artist_slug)
+          VALUES (?, ?)
+          ON CONFLICT(track_slug, artist_slug) DO NOTHING;
+          `,
+          [trackSlug, artistSlug]
+        );
+      }
+    }
 
     const items = await listArtistsFromCloudflare();
     const updated = items.find((item) => item.slug === artistSlug);

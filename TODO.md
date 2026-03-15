@@ -1,9 +1,10 @@
-- Improve theme
-- Complete back catalog
+- Social Media Links
 - Image support
+- Complete back catalog
+- Improve theme
 - Search
 - Fragments
 - Tags
-- Social Media Links
 - Covers
 - Enforce slug updates when renaming
+- Audit delete/unlink
