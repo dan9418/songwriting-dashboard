@@ -12,6 +12,15 @@ interface SlugOption {
   name: string;
 }
 
+function PencilIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 3.5a2.1 2.1 0 1 1 3 3L7 16l-4 1 1-4 9.5-9.5Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m12 5 3 3" />
+    </svg>
+  );
+}
+
 export function TrackDetailControls({
   trackSlug,
   initialName,
@@ -148,7 +157,7 @@ export function TrackDetailControls({
 
   return (
     <>
-      <div className="panel flex items-center justify-between gap-3 p-4">
+      <div className="panel flex flex-col gap-4 p-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           {!editingName ? (
             <>
@@ -160,15 +169,15 @@ export function TrackDetailControls({
                   aria-label="Edit track name"
                   onClick={() => setEditingName(true)}
                 >
-                  ✎
+                  <PencilIcon className="h-4 w-4" />
                 </button>
               </div>
               <p className="text-sm text-[color:var(--muted)]">{trackSlug}</p>
             </>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <TextInput
-                className="max-w-md"
+                className="w-full sm:max-w-md"
                 value={name}
                 onChange={(event) => setName(event.currentTarget.value)}
               />
@@ -188,11 +197,8 @@ export function TrackDetailControls({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/tracks"
-            className="theme-button-link theme-button-link--ghost"
-          >
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <Link href="/tracks" className="theme-button-link theme-button-link--ghost">
             Back To Tracks
           </Link>
           <ActionButton tone="danger" disabled={deleting || savingHeader} onClick={onDelete}>
@@ -201,8 +207,8 @@ export function TrackDetailControls({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="panel grid gap-3 p-4">
+      <div className="grid items-start gap-4 md:grid-cols-2">
+        <div className="panel grid self-start gap-3 p-4">
           <h2 className="text-lg font-semibold">Artists</h2>
           {artistSlugs.length === 0 ? (
             <p className="text-sm text-[color:var(--muted)]">No artists linked.</p>
@@ -249,7 +255,7 @@ export function TrackDetailControls({
           </div>
         </div>
 
-        <div className="panel grid gap-3 p-4">
+        <div className="panel grid self-start gap-3 p-4">
           <h2 className="text-lg font-semibold">Projects</h2>
           {projectSlugs.length === 0 ? (
             <p className="text-sm text-[color:var(--muted)]">No projects linked.</p>
@@ -263,9 +269,7 @@ export function TrackDetailControls({
                   <ActionButton
                     tone="ghost"
                     disabled={savingProjects}
-                    onClick={() =>
-                      saveProjectLinks(projectSlugs.filter((slug) => slug !== projectSlug))
-                    }
+                    onClick={() => saveProjectLinks(projectSlugs.filter((slug) => slug !== projectSlug))}
                   >
                     Remove
                   </ActionButton>

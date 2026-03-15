@@ -11,13 +11,11 @@ import { api } from "@/lib/client/api";
 interface ProjectOption {
   slug: string;
   name: string;
-  artistSlugs: string[];
 }
 
 interface TrackOption {
   slug: string;
   name: string;
-  artistSlugs: string[];
 }
 
 function PencilIcon({ className = "" }: { className?: string }) {

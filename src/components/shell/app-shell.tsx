@@ -27,8 +27,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen px-3 pb-8 pt-4 md:px-6">
       <div className="mx-auto grid w-full max-w-7xl gap-4">
-        <header className="panel sticky top-4 z-30 flex items-center justify-between gap-3 px-3 py-2">
-          <div className="flex items-center gap-2 md:gap-3">
+        <header className="panel sticky top-4 z-30 overflow-x-auto px-3 py-2">
+          <div className="flex min-w-max items-center gap-2 md:gap-3">
             {PRIMARY_NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
