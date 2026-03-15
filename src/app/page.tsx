@@ -5,7 +5,8 @@ const ENTITIES = [
   {
     title: "Artists",
     icon: "artist",
-    description: "Manage artist names, descriptions, and the projects and tracks connected to each artist.",
+    brief: "",
+    description: "Keep artist names, notes, and linked songs in one place.",
     addHref: "/artists/add",
     listHref: "/artists",
     addLabel: "Add New",
@@ -14,7 +15,8 @@ const ENTITIES = [
   {
     title: "Projects",
     icon: "project",
-    description: "Organize releases, sets, and singles with the right metadata, artist links, and track order.",
+    brief: "",
+    description: "Organize releases, sets, and singles without losing the details.",
     addHref: "/projects/add",
     listHref: "/projects",
     addLabel: "Add New",
@@ -23,7 +25,8 @@ const ENTITIES = [
   {
     title: "Tracks",
     icon: "track",
-    description: "Keep track details, connected artists and projects, plus any related docs and audio versions.",
+    brief: "",
+    description: "Track each song's details, files, and where it belongs.",
     addHref: "/tracks/add",
     listHref: "/tracks",
     addLabel: "Add New",
@@ -32,6 +35,7 @@ const ENTITIES = [
 ] satisfies Array<{
   title: string;
   icon: AppIconName;
+  brief: string;
   description: string;
   addHref: string;
   listHref: string;
@@ -44,12 +48,11 @@ export default function HomePage() {
     <section className="grid gap-4">
       <div className="panel p-6 md:p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
-          Songwriting Dashboard
+          Dan Bednarczyk's
         </p>
-        <h1 className="mt-3 text-4xl font-semibold md:text-5xl">Manage your core catalog entities.</h1>
+        <h1 className="mt-3 text-4xl font-semibold md:text-5xl">Songwriting Dashboard</h1>
         <p className="mt-3 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
-          Start with the area you need: artists, projects, or tracks. Each section gives you quick access to the most
-          common actions.
+          A creativity workspace and discography catalog
         </p>
       </div>
 
@@ -62,7 +65,7 @@ export default function HomePage() {
               </span>
               <div>
                 <h2 className="text-xl font-semibold">{entity.title}</h2>
-                <p className="text-sm text-[color:var(--muted)]">Core entity</p>
+                <p className="text-sm text-[color:var(--muted)]">{entity.brief}</p>
               </div>
             </div>
 
