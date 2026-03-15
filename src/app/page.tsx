@@ -26,7 +26,7 @@ const ENTITIES = [
     title: "Tracks",
     icon: "track",
     brief: "",
-    description: "Track each song's details, files, and where it belongs.",
+    description: "Track each song's details, files, and where it belongs.",//
     addHref: "/tracks/add",
     listHref: "/tracks",
     addLabel: "Add New",
