@@ -430,8 +430,8 @@ export function ProjectDetailControls({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="panel grid gap-3 p-4">
+      <div className="grid items-start gap-4 md:grid-cols-2">
+        <div className="panel grid self-start gap-3 p-4">
           <h2 className="text-lg font-semibold">Artists</h2>
           {artistSlugs.length === 0 ? (
             <p className="text-sm text-[color:var(--muted)]">No artists linked.</p>
@@ -480,7 +480,7 @@ export function ProjectDetailControls({
           </div>
         </div>
 
-        <div className="panel grid gap-3 p-4">
+        <div className="panel grid self-start gap-3 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold">Tracks</h2>

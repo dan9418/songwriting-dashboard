@@ -128,9 +128,9 @@ export function SortableNameCardList({
 
       {sortedItems.length === 0 ? <p className="text-sm text-[color:var(--muted)]">{emptyMessage}</p> : null}
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid items-start gap-3 lg:grid-cols-2">
         {sortedItems.map((item) => (
-          <article id={item.id} key={item.id} className="theme-card p-4">
+          <article id={item.id} key={item.id} className="theme-card self-start p-4">
             {renderArtwork(item)}
             <div className="flex flex-wrap items-start justify-between gap-2">
               <h2 className="text-lg font-semibold text-[color:var(--ink)]">

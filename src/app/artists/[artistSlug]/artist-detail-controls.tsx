@@ -20,10 +20,6 @@ interface TrackOption {
   artistSlugs: string[];
 }
 
-function unique(values: string[]): string[] {
-  return Array.from(new Set(values));
-}
-
 function PencilIcon({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
@@ -55,22 +51,9 @@ export function ArtistDetailControls({
 
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
-  const [projectSlugs, setProjectSlugs] = useState(initialProjectSlugs);
-  const [trackSlugs, setTrackSlugs] = useState(initialTrackSlugs);
-  const [projectArtistsBySlug, setProjectArtistsBySlug] = useState<Record<string, string[]>>(
-    Object.fromEntries(projectOptions.map((project) => [project.slug, project.artistSlugs]))
-  );
-  const [trackArtistsBySlug, setTrackArtistsBySlug] = useState<Record<string, string[]>>(
-    Object.fromEntries(trackOptions.map((track) => [track.slug, track.artistSlugs]))
-  );
-
   const [editingName, setEditingName] = useState(false);
   const [savingHeader, setSavingHeader] = useState(false);
-  const [savingProjects, setSavingProjects] = useState(false);
-  const [savingTracks, setSavingTracks] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [addProjectSlug, setAddProjectSlug] = useState("");
-  const [addTrackSlug, setAddTrackSlug] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const projectNameBySlug = useMemo(
@@ -82,20 +65,8 @@ export function ArtistDetailControls({
     [trackOptions]
   );
 
-  const availableProjects = useMemo(
-    () =>
-      projectOptions
-        .filter((project) => !projectSlugs.includes(project.slug))
-        .sort((left, right) => left.name.localeCompare(right.name)),
-    [projectOptions, projectSlugs]
-  );
-  const availableTracks = useMemo(
-    () =>
-      trackOptions
-        .filter((track) => !trackSlugs.includes(track.slug))
-        .sort((left, right) => left.name.localeCompare(right.name)),
-    [trackOptions, trackSlugs]
-  );
+  const projectSlugs = initialProjectSlugs;
+  const trackSlugs = initialTrackSlugs;
 
   async function saveHeader() {
     setSavingHeader(true);
@@ -116,86 +87,6 @@ export function ArtistDetailControls({
       showToast("Failed to update artist.", "error");
     } finally {
       setSavingHeader(false);
-    }
-  }
-
-  async function saveProjectLinks(nextProjectSlugs: string[]) {
-    setSavingProjects(true);
-    setErrorMessage(null);
-    try {
-      const nextSet = new Set(nextProjectSlugs);
-      const currentSet = new Set(projectSlugs);
-      const nextMap: Record<string, string[]> = { ...projectArtistsBySlug };
-
-      for (const project of projectOptions) {
-        const currentlyLinked = currentSet.has(project.slug);
-        const shouldBeLinked = nextSet.has(project.slug);
-        if (currentlyLinked === shouldBeLinked) {
-          continue;
-        }
-
-        const currentArtists = projectArtistsBySlug[project.slug] ?? project.artistSlugs;
-        const nextArtists = shouldBeLinked
-          ? unique([...currentArtists, artistSlug])
-          : currentArtists.filter((slug) => slug !== artistSlug);
-
-        await api.updateProject(project.slug, {
-          slug: project.slug,
-          artistSlugs: nextArtists
-        });
-
-        nextMap[project.slug] = nextArtists;
-      }
-
-      setProjectArtistsBySlug(nextMap);
-      setProjectSlugs(nextProjectSlugs);
-      showToast("Project links updated.");
-      router.refresh();
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to update project links.");
-      showToast("Failed to update project links.", "error");
-    } finally {
-      setSavingProjects(false);
-    }
-  }
-
-  async function saveTrackLinks(nextTrackSlugs: string[]) {
-    setSavingTracks(true);
-    setErrorMessage(null);
-    try {
-      const nextSet = new Set(nextTrackSlugs);
-      const currentSet = new Set(trackSlugs);
-      const nextMap: Record<string, string[]> = { ...trackArtistsBySlug };
-
-      for (const track of trackOptions) {
-        const currentlyLinked = currentSet.has(track.slug);
-        const shouldBeLinked = nextSet.has(track.slug);
-        if (currentlyLinked === shouldBeLinked) {
-          continue;
-        }
-
-        const currentArtists = trackArtistsBySlug[track.slug] ?? track.artistSlugs;
-        const nextArtists = shouldBeLinked
-          ? unique([...currentArtists, artistSlug])
-          : currentArtists.filter((slug) => slug !== artistSlug);
-
-        await api.updateTrack(track.slug, {
-          slug: track.slug,
-          artistSlugs: nextArtists
-        });
-
-        nextMap[track.slug] = nextArtists;
-      }
-
-      setTrackArtistsBySlug(nextMap);
-      setTrackSlugs(nextTrackSlugs);
-      showToast("Track links updated.");
-      router.refresh();
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to update track links.");
-      showToast("Failed to update track links.", "error");
-    } finally {
-      setSavingTracks(false);
     }
   }
 
@@ -290,101 +181,39 @@ export function ArtistDetailControls({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="panel grid gap-3 p-4">
+      <div className="grid items-start gap-4 md:grid-cols-2">
+        <div className="panel grid self-start gap-3 p-4">
           <h2 className="text-lg font-semibold">Projects</h2>
           {projectSlugs.length === 0 ? (
             <p className="text-sm text-[color:var(--muted)]">No projects linked.</p>
           ) : (
             <ul className="grid gap-2 text-sm">
               {projectSlugs.map((projectSlug) => (
-                <li key={projectSlug} className="flex items-center justify-between gap-2">
+                <li key={projectSlug}>
                   <Link href={`/projects/${projectSlug}`} className="underline-offset-4 hover:underline">
                     {projectNameBySlug[projectSlug] ?? projectSlug}
                   </Link>
-                  <ActionButton
-                    tone="ghost"
-                    disabled={savingProjects}
-                    onClick={() =>
-                      saveProjectLinks(projectSlugs.filter((slug) => slug !== projectSlug))
-                    }
-                  >
-                    Remove
-                  </ActionButton>
                 </li>
               ))}
             </ul>
           )}
-          <div className="flex items-center gap-2">
-            <select
-              className="theme-input"
-              value={addProjectSlug}
-              disabled={savingProjects || availableProjects.length === 0}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setAddProjectSlug(value);
-                if (!value) {
-                  return;
-                }
-                setAddProjectSlug("");
-                void saveProjectLinks([...projectSlugs, value]);
-              }}
-            >
-              <option value="">Add project...</option>
-              {availableProjects.map((project) => (
-                <option key={project.slug} value={project.slug}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
-        <div className="panel grid gap-3 p-4">
+        <div className="panel grid self-start gap-3 p-4">
           <h2 className="text-lg font-semibold">Tracks</h2>
           {trackSlugs.length === 0 ? (
             <p className="text-sm text-[color:var(--muted)]">No tracks linked.</p>
           ) : (
             <ul className="grid gap-2 text-sm">
               {trackSlugs.map((trackSlug) => (
-                <li key={trackSlug} className="flex items-center justify-between gap-2">
+                <li key={trackSlug}>
                   <Link href={`/tracks/${trackSlug}`} className="underline-offset-4 hover:underline">
                     {trackNameBySlug[trackSlug] ?? trackSlug}
                   </Link>
-                  <ActionButton
-                    tone="ghost"
-                    disabled={savingTracks}
-                    onClick={() => saveTrackLinks(trackSlugs.filter((slug) => slug !== trackSlug))}
-                  >
-                    Remove
-                  </ActionButton>
                 </li>
               ))}
             </ul>
           )}
-          <div className="flex items-center gap-2">
-            <select
-              className="theme-input"
-              value={addTrackSlug}
-              disabled={savingTracks || availableTracks.length === 0}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setAddTrackSlug(value);
-                if (!value) {
-                  return;
-                }
-                setAddTrackSlug("");
-                void saveTrackLinks([...trackSlugs, value]);
-              }}
-            >
-              <option value="">Add track...</option>
-              {availableTracks.map((track) => (
-                <option key={track.slug} value={track.slug}>
-                  {track.name}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
       </div>
 
