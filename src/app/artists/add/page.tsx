@@ -14,10 +14,7 @@ export default function AddArtistPage() {
             Create an artist from its name. The slug is generated automatically.
           </p>
         </div>
-        <Link
-          href="/artists"
-          className="rounded-lg bg-[#f4eadb] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
-        >
+        <Link href="/artists" className="theme-button-link theme-button-link--ghost">
           Back To Artists
         </Link>
       </div>

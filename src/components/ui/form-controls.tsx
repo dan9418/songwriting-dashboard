@@ -21,7 +21,7 @@ export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none ring-0 transition focus:border-[color:var(--accent)] ${props.className ?? ""}`}
+      className={`theme-input ring-0 ${props.className ?? ""}`}
     />
   );
 }
@@ -30,7 +30,7 @@ export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className={`w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none ring-0 transition focus:border-[color:var(--accent)] ${props.className ?? ""}`}
+      className={`theme-input ring-0 ${props.className ?? ""}`}
     />
   );
 }
@@ -41,7 +41,7 @@ export function SelectInput(
   return (
     <select
       {...props}
-      className={`w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none ring-0 transition focus:border-[color:var(--accent)] ${props.className ?? ""}`}
+      className={`theme-input ring-0 ${props.className ?? ""}`}
     >
       {props.options.map((option) => (
         <option key={option} value={option}>
@@ -86,15 +86,15 @@ export function ActionButton({
 }) {
   const toneClass =
     tone === "primary"
-      ? "bg-[color:var(--accent)] text-white hover:bg-[#0d675f]"
+      ? "bg-[color:var(--accent)] text-[color:var(--accent-contrast)] hover:bg-[color:var(--accent-hover)]"
       : tone === "danger"
-        ? "bg-red-700 text-white hover:bg-red-800"
-        : "bg-[#f4eadb] text-[color:var(--ink)] hover:bg-[#eadcc8]";
+        ? "bg-[color:var(--danger)] text-white hover:bg-[color:var(--danger-hover)]"
+        : "bg-[color:var(--button-ghost-bg)] text-[color:var(--button-ghost-text)] hover:bg-[color:var(--button-ghost-hover)]";
 
   return (
     <button
       {...props}
-      className={`rounded-lg px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${toneClass} ${props.className ?? ""}`}
+      className={`rounded-lg border border-transparent px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${toneClass} ${props.className ?? ""}`}
     >
       {children}
     </button>

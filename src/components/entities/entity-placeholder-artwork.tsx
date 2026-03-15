@@ -12,7 +12,7 @@ export function EntityPlaceholderArtwork({
 }) {
   if (variant === "card-cover") {
     return (
-      <div className="mb-4 flex aspect-square w-full max-w-[180px] items-center justify-center rounded-xl border border-[#ddcfbd] bg-[#f6eee2] text-[color:var(--muted)]">
+      <div className="mb-4 flex aspect-square w-full max-w-[180px] items-center justify-center rounded-xl border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--icon-color)]">
         <AppIcon name={kind} className="h-14 w-14" />
       </div>
     );
@@ -20,7 +20,7 @@ export function EntityPlaceholderArtwork({
 
   if (variant === "detail-cover") {
     return (
-      <div className="flex aspect-square w-full max-w-[220px] items-center justify-center rounded-2xl border border-[#ddcfbd] bg-[#f6eee2] text-[color:var(--muted)] md:max-w-[240px]">
+      <div className="flex aspect-square w-full max-w-[220px] items-center justify-center rounded-2xl border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--icon-color)] md:max-w-[240px]">
         <AppIcon name={kind} className="h-16 w-16 md:h-20 md:w-20" />
       </div>
     );
@@ -28,7 +28,7 @@ export function EntityPlaceholderArtwork({
 
   if (variant === "detail-avatar") {
     return (
-      <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full border border-[#ddcfbd] bg-[#f6eee2] text-[color:var(--muted)] md:h-32 md:w-32">
+      <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--icon-color)] md:h-32 md:w-32">
         <AppIcon name={kind} className="h-12 w-12 md:h-14 md:w-14" />
       </div>
     );
@@ -36,7 +36,7 @@ export function EntityPlaceholderArtwork({
 
   return (
     <div className="mb-4 flex items-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[#ddcfbd] bg-[#f6eee2] text-[color:var(--muted)]">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--icon-color)]">
         <AppIcon name={kind} className="h-8 w-8" />
       </div>
     </div>

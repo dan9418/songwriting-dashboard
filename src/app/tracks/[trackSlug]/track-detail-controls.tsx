@@ -156,7 +156,7 @@ export function TrackDetailControls({
                 <h1 className="truncate text-2xl font-semibold">{name}</h1>
                 <button
                   type="button"
-                  className="rounded-lg bg-[#f4eadb] px-2 py-1 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
+                  className="rounded-lg bg-[color:var(--button-ghost-bg)] px-2 py-1 text-sm text-[color:var(--button-ghost-text)] transition hover:bg-[color:var(--button-ghost-hover)]"
                   aria-label="Edit track name"
                   onClick={() => setEditingName(true)}
                 >
@@ -191,7 +191,7 @@ export function TrackDetailControls({
         <div className="flex items-center gap-2">
           <Link
             href="/tracks"
-            className="rounded-lg bg-[#f4eadb] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
+            className="theme-button-link theme-button-link--ghost"
           >
             Back To Tracks
           </Link>
@@ -226,7 +226,7 @@ export function TrackDetailControls({
           )}
           <div className="flex items-center gap-2">
             <select
-              className="w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none transition focus:border-[color:var(--accent)]"
+              className="theme-input"
               value={addArtistSlug}
               disabled={savingArtists || availableArtists.length === 0}
               onChange={(event) => {
@@ -275,7 +275,7 @@ export function TrackDetailControls({
           )}
           <div className="flex items-center gap-2">
             <select
-              className="w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none transition focus:border-[color:var(--accent)]"
+              className="theme-input"
               value={addProjectSlug}
               disabled={savingProjects || availableProjects.length === 0}
               onChange={(event) => {

@@ -233,7 +233,7 @@ export function ArtistDetailControls({
                   <h1 className="truncate text-2xl font-semibold">{name}</h1>
                   <button
                     type="button"
-                    className="rounded-lg bg-[#f4eadb] px-2 py-1 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
+                    className="rounded-lg bg-[color:var(--button-ghost-bg)] px-2 py-1 text-sm text-[color:var(--button-ghost-text)] transition hover:bg-[color:var(--button-ghost-hover)]"
                     aria-label="Edit artist header"
                     onClick={() => setEditingName(true)}
                   >
@@ -281,10 +281,7 @@ export function ArtistDetailControls({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <Link
-            href="/artists"
-            className="rounded-lg bg-[#f4eadb] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
-          >
+          <Link href="/artists" className="theme-button-link theme-button-link--ghost">
             Back To Artists
           </Link>
           <ActionButton tone="danger" disabled={deleting || savingHeader} onClick={onDelete}>
@@ -320,7 +317,7 @@ export function ArtistDetailControls({
           )}
           <div className="flex items-center gap-2">
             <select
-              className="w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none transition focus:border-[color:var(--accent)]"
+              className="theme-input"
               value={addProjectSlug}
               disabled={savingProjects || availableProjects.length === 0}
               onChange={(event) => {
@@ -367,7 +364,7 @@ export function ArtistDetailControls({
           )}
           <div className="flex items-center gap-2">
             <select
-              className="w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none transition focus:border-[color:var(--accent)]"
+              className="theme-input"
               value={addTrackSlug}
               disabled={savingTracks || availableTracks.length === 0}
               onChange={(event) => {

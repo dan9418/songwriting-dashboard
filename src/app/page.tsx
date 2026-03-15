@@ -16,17 +16,16 @@ export default function HomePage() {
       <div className="grid gap-4 md:grid-cols-3">
         <div className="panel p-4">
           <div className="flex items-center gap-2">
-            <AppIcon name="artist" className="h-6 w-6 text-[color:var(--ink)]" />
+            <span className="theme-icon-frame h-10 w-10">
+              <AppIcon name="artist" className="h-5 w-5" />
+            </span>
             <h2 className="text-lg font-semibold">Artists</h2>
           </div>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             Manage artist metadata and connected projects/tracks.
           </p>
           <div className="mt-4">
-            <Link
-              href="/artists/add"
-              className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
-            >
+            <Link href="/artists/add" className="theme-button-link theme-button-link--primary">
               <AppIcon name="plus" className="h-4 w-4" />
               Add Artist
             </Link>
@@ -35,17 +34,16 @@ export default function HomePage() {
 
         <div className="panel p-4">
           <div className="flex items-center gap-2">
-            <AppIcon name="project" className="h-6 w-6 text-[color:var(--ink)]" />
+            <span className="theme-icon-frame h-10 w-10">
+              <AppIcon name="project" className="h-5 w-5" />
+            </span>
             <h2 className="text-lg font-semibold">Projects</h2>
           </div>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             View project type, artist memberships, and ordered tracklists.
           </p>
           <div className="mt-4">
-            <Link
-              href="/projects/add"
-              className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
-            >
+            <Link href="/projects/add" className="theme-button-link theme-button-link--primary">
               <AppIcon name="plus" className="h-4 w-4" />
               Add Project
             </Link>
@@ -54,17 +52,16 @@ export default function HomePage() {
 
         <div className="panel p-4">
           <div className="flex items-center gap-2">
-            <AppIcon name="track" className="h-6 w-6 text-[color:var(--ink)]" />
+            <span className="theme-icon-frame h-10 w-10">
+              <AppIcon name="track" className="h-5 w-5" />
+            </span>
             <h2 className="text-lg font-semibold">Tracks</h2>
           </div>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             Inspect track relationships, markdown docs, and synced audio metadata.
           </p>
           <div className="mt-4">
-            <Link
-              href="/tracks/add"
-              className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent)] px-3 py-2 text-sm text-white transition hover:bg-[#0d675f]"
-            >
+            <Link href="/tracks/add" className="theme-button-link theme-button-link--primary">
               <AppIcon name="plus" className="h-4 w-4" />
               Add Track
             </Link>
@@ -74,7 +71,9 @@ export default function HomePage() {
 
       <div className="panel p-4">
         <div className="flex items-center gap-2">
-          <AppIcon name="home" className="h-6 w-6 text-[color:var(--ink)]" />
+          <span className="theme-icon-frame h-10 w-10">
+            <AppIcon name="home" className="h-5 w-5" />
+          </span>
           <h2 className="text-lg font-semibold">Relationship Model</h2>
         </div>
         <p className="mt-2 text-sm text-[color:var(--muted)]">Artists {"<->"} Projects via `project_artists`.</p>

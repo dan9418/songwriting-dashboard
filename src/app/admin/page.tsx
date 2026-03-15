@@ -1,4 +1,5 @@
 import { AdminConsole } from "@/app/admin/admin-console";
+import { ThemeSystemPanel } from "@/app/admin/theme-system-panel";
 import { AppIcon } from "@/components/ui/app-icons";
 import { listD1TableShapes, listR2BucketShapes } from "@/lib/cloudflare/admin";
 
@@ -12,7 +13,9 @@ export default async function AdminPage() {
       <section className="grid gap-4">
         <div className="panel p-4">
           <div className="flex items-start gap-3">
-            <AppIcon name="admin" className="mt-0.5 h-8 w-8 text-[color:var(--ink)]" />
+            <span className="theme-icon-frame mt-0.5 h-12 w-12 shrink-0">
+              <AppIcon name="admin" className="h-6 w-6" />
+            </span>
             <div>
               <h1 className="text-2xl font-semibold">Admin</h1>
               <p className="text-sm text-[color:var(--muted)]">
@@ -21,6 +24,7 @@ export default async function AdminPage() {
             </div>
           </div>
         </div>
+        <ThemeSystemPanel />
         <AdminConsole tables={tables} buckets={buckets} />
       </section>
     );
@@ -29,7 +33,9 @@ export default async function AdminPage() {
       <section className="grid gap-4">
         <div className="panel p-4">
           <div className="flex items-start gap-3">
-            <AppIcon name="admin" className="mt-0.5 h-8 w-8 text-[color:var(--ink)]" />
+            <span className="theme-icon-frame mt-0.5 h-12 w-12 shrink-0">
+              <AppIcon name="admin" className="h-6 w-6" />
+            </span>
             <div>
               <h1 className="text-2xl font-semibold">Admin</h1>
               <p className="text-sm text-[color:var(--muted)]">

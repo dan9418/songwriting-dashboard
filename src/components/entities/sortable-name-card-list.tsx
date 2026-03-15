@@ -119,7 +119,7 @@ export function SortableNameCardList({
           <button
             type="button"
             onClick={() => setSortDirection((current) => (current === "asc" ? "desc" : "asc"))}
-            className="rounded-lg bg-[color:var(--surface)] px-3 py-1.5 text-xs transition hover:bg-[#f3e8d7]"
+            className="rounded-lg bg-[color:var(--button-ghost-bg)] px-3 py-1.5 text-xs transition hover:bg-[color:var(--button-ghost-hover)]"
           >
             Sort: {sortDirection === "asc" ? "A-Z" : "Z-A"}
           </button>
@@ -130,7 +130,7 @@ export function SortableNameCardList({
 
       <div className="grid gap-3 lg:grid-cols-2">
         {sortedItems.map((item) => (
-          <article id={item.id} key={item.id} className="rounded-xl border border-[#ddcfbd] bg-[color:var(--surface)] p-4">
+          <article id={item.id} key={item.id} className="theme-card p-4">
             {renderArtwork(item)}
             <div className="flex flex-wrap items-start justify-between gap-2">
               <h2 className="text-lg font-semibold text-[color:var(--ink)]">
@@ -143,7 +143,7 @@ export function SortableNameCardList({
                 )}
               </h2>
               {item.subtitle ? (
-                <span className="rounded-full bg-[#f8efe3] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+                <span className="rounded-full bg-[color:var(--accent-soft)] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--icon-color)]">
                   {item.subtitle}
                 </span>
               ) : null}

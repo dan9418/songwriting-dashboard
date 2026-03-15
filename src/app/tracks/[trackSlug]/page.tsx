@@ -61,9 +61,9 @@ export default async function TrackByIdPage({
 
       <div className="panel overflow-x-auto p-4">
         <h2 className="text-lg font-semibold">Audio</h2>
-        <table className="mt-3 min-w-full border-collapse text-left text-sm">
+        <table className="theme-table mt-3 text-sm">
           <thead>
-            <tr className="border-b border-[#ddcfbd] text-xs uppercase tracking-wide text-[color:var(--muted)]">
+            <tr className="text-xs uppercase tracking-wide">
               <th className="px-2 py-2 font-semibold">Filename</th>
               <th className="px-2 py-2 font-semibold">Version</th>
               <th className="px-2 py-2 font-semibold">Description</th>
@@ -72,14 +72,14 @@ export default async function TrackByIdPage({
           </thead>
           <tbody>
             {track.audio.map((audioItem) => (
-              <tr key={audioItem.slug} className="border-b border-[#efe3d3]">
+              <tr key={audioItem.slug}>
                 <td className="px-2 py-2">
                   {audioItem.fileHref ? (
                     <a
                       href={audioItem.fileHref}
                       target="_blank"
                       rel="noreferrer"
-                      className="underline decoration-[#ccb089] underline-offset-4 hover:text-[color:var(--accent)]"
+                      className="underline decoration-[color:var(--border-strong)] underline-offset-4 hover:text-[color:var(--accent)]"
                     >
                       {audioItem.fileName}
                     </a>

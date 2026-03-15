@@ -12,10 +12,7 @@ export default function AddTrackPage() {
           <h1 className="text-2xl font-semibold">Add Track</h1>
           <p className="text-sm text-[color:var(--muted)]">Create a track from its name. The slug is generated automatically.</p>
         </div>
-        <Link
-          href="/tracks"
-          className="rounded-lg bg-[#f4eadb] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
-        >
+        <Link href="/tracks" className="theme-button-link theme-button-link--ghost">
           Back To Tracks
         </Link>
       </div>

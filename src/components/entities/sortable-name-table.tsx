@@ -62,9 +62,9 @@ export function SortableNameTable({
 
   const content = (
     <div className="overflow-x-auto">
-      <table className="min-w-full border-collapse text-left text-sm">
+      <table className="theme-table text-sm">
         <thead>
-          <tr className="border-b border-[#ddcfbd] text-xs uppercase tracking-wide text-[color:var(--muted)]">
+          <tr className="text-xs uppercase tracking-wide">
             <th className="px-2 py-2 font-semibold">
               <button
                 type="button"
@@ -84,7 +84,7 @@ export function SortableNameTable({
         </thead>
         <tbody>
           {sortedItems.map((item) => (
-            <tr id={item.id} key={item.id} className="border-b border-[#efe3d3] align-top">
+            <tr id={item.id} key={item.id} className="align-top">
               <td className="px-2 py-2 font-medium text-[color:var(--ink)]">
                 {item.nameHref ? (
                   <Link href={item.nameHref} className="underline-offset-4 hover:underline">

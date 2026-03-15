@@ -344,7 +344,7 @@ export function ProjectDetailControls({
                 <h1 className="truncate text-2xl font-semibold">{name}</h1>
                 <button
                   type="button"
-                  className="rounded-lg bg-[#f4eadb] px-2 py-1 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
+                  className="rounded-lg bg-[color:var(--button-ghost-bg)] px-2 py-1 text-sm text-[color:var(--button-ghost-text)] transition hover:bg-[color:var(--button-ghost-hover)]"
                   aria-label="Edit project header"
                   onClick={() => setEditingName(true)}
                 >
@@ -421,10 +421,7 @@ export function ProjectDetailControls({
         </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-          <Link
-            href="/projects"
-            className="rounded-lg bg-[#f4eadb] px-3 py-2 text-sm text-[color:var(--ink)] transition hover:bg-[#eadcc8]"
-          >
+          <Link href="/projects" className="theme-button-link theme-button-link--ghost">
             Back To Projects
           </Link>
           <ActionButton tone="danger" disabled={deleting || savingHeader} onClick={onDelete}>
@@ -460,7 +457,7 @@ export function ProjectDetailControls({
           )}
           <div className="flex items-center gap-2">
             <select
-              className="w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none transition focus:border-[color:var(--accent)]"
+              className="theme-input"
               value={addArtistSlug}
               disabled={savingArtists || availableArtists.length === 0}
               onChange={(event) => {
@@ -550,19 +547,19 @@ export function ProjectDetailControls({
                         }}
                         className={`rounded-xl border px-3 py-3 transition ${
                           draggedTrackSlug === trackSlug
-                            ? "border-[color:var(--accent)] bg-[#eef7f5]"
-                            : "border-[#ddcfbd] bg-[color:var(--surface)]"
+                            ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]"
+                            : "border-[color:var(--border-strong)] bg-[color:var(--surface)]"
                         }`}
                       >
                         <div className="flex items-start gap-3">
                           <button
                             type="button"
-                            className="mt-1 cursor-grab rounded-md p-1 text-[color:var(--muted)] transition hover:bg-[#efe3d3] active:cursor-grabbing"
+                            className="mt-1 cursor-grab rounded-md p-1 text-[color:var(--muted)] transition hover:bg-[color:var(--button-ghost-hover)] active:cursor-grabbing"
                             aria-label={`Drag to reorder ${draftName}`}
                           >
                             <GripIcon className="h-4 w-4" />
                           </button>
-                          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-[#eadcc8] px-2 text-xs font-semibold text-[color:var(--ink)]">
+                          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-[color:var(--button-ghost-hover)] px-2 text-xs font-semibold text-[color:var(--ink)]">
                             {index + 1}
                           </span>
                           <div className="min-w-0 flex-1">
@@ -592,7 +589,7 @@ export function ProjectDetailControls({
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              className="rounded-lg bg-[#f4eadb] p-2 text-[color:var(--ink)] transition hover:bg-[#eadcc8] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-lg bg-[color:var(--button-ghost-bg)] p-2 text-[color:var(--button-ghost-text)] transition hover:bg-[color:var(--button-ghost-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                               aria-label={`Edit ${draftName}`}
                               disabled={savingTracks}
                               onClick={() =>
@@ -603,7 +600,7 @@ export function ProjectDetailControls({
                             </button>
                             <button
                               type="button"
-                              className="rounded-lg bg-[#f4eadb] p-2 text-[color:var(--ink)] transition hover:bg-[#eadcc8] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-lg bg-[color:var(--button-ghost-bg)] p-2 text-[color:var(--button-ghost-text)] transition hover:bg-[color:var(--button-ghost-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                               aria-label={`Unlink ${draftName} from this project`}
                               disabled={savingTracks}
                               onClick={() => unlinkDraftTrack(trackSlug)}
@@ -620,7 +617,7 @@ export function ProjectDetailControls({
 
               <div className="flex items-center gap-2">
                 <select
-                  className="w-full rounded-lg border border-[#d9ccb8] bg-white px-3 py-2 text-sm outline-none transition focus:border-[color:var(--accent)]"
+                  className="theme-input"
                   value={addTrackSlug}
                   disabled={savingTracks || availableTracks.length === 0}
                   onChange={(event) => {

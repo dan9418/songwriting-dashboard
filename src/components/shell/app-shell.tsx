@@ -35,8 +35,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 href={item.href}
                 className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
                   isActive(item.href)
-                    ? "bg-[color:var(--accent)] text-white"
-                    : "bg-[color:var(--surface)] text-[color:var(--ink)] hover:bg-[#f3e8d7]"
+                    ? "bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
+                    : "bg-[color:var(--surface)] text-[color:var(--ink)] hover:bg-[color:var(--button-ghost-hover)]"
                 }`}
               >
                 <AppIcon name={item.icon} className="h-4 w-4" />

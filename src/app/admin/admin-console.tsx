@@ -113,9 +113,9 @@ export function AdminConsole({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse text-left text-xs">
+              <table className="theme-table text-xs">
                 <thead>
-                  <tr className="border-b border-[#ddcfbd] uppercase tracking-wide text-[color:var(--muted)]">
+                  <tr className="uppercase tracking-wide">
                     <th className="px-2 py-2">Column</th>
                     <th className="px-2 py-2">Type</th>
                     <th className="px-2 py-2">Not Null</th>
@@ -125,7 +125,7 @@ export function AdminConsole({
                 </thead>
                 <tbody>
                   {table.columns.map((column) => (
-                    <tr key={`${table.name}-${column.cid}`} className="border-b border-[#efe3d3]">
+                    <tr key={`${table.name}-${column.cid}`}>
                       <td className="px-2 py-2">{column.name}</td>
                       <td className="px-2 py-2">{column.type || "-"}</td>
                       <td className="px-2 py-2">{column.notNull ? "yes" : "no"}</td>
@@ -139,11 +139,11 @@ export function AdminConsole({
 
             {tableErrors[table.name] ? <p className="text-sm text-red-700">{tableErrors[table.name]}</p> : null}
             {tableRows[table.name] ? (
-              <details className="rounded-lg bg-[#f8efe3]">
+              <details className="theme-detail">
                 <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
                   Loaded Data ({tableRows[table.name].length} rows)
                 </summary>
-                <pre className="overflow-x-auto border-t border-[#e2d4c1] p-3 text-xs text-[color:var(--ink)]">
+                <pre className="theme-code-block overflow-x-auto p-3 text-xs text-[color:var(--ink)]">
                   {JSON.stringify(tableRows[table.name], null, 2)}
                 </pre>
               </details>
@@ -167,9 +167,9 @@ export function AdminConsole({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse text-left text-xs">
+              <table className="theme-table text-xs">
                 <thead>
-                  <tr className="border-b border-[#ddcfbd] uppercase tracking-wide text-[color:var(--muted)]">
+                  <tr className="uppercase tracking-wide">
                     <th className="px-2 py-2">Column</th>
                     <th className="px-2 py-2">Type</th>
                     <th className="px-2 py-2">Not Null</th>
@@ -179,7 +179,7 @@ export function AdminConsole({
                 </thead>
                 <tbody>
                   {table.columns.map((column) => (
-                    <tr key={`${table.name}-${column.cid}`} className="border-b border-[#efe3d3]">
+                    <tr key={`${table.name}-${column.cid}`}>
                       <td className="px-2 py-2">{column.name}</td>
                       <td className="px-2 py-2">{column.type || "-"}</td>
                       <td className="px-2 py-2">{column.notNull ? "yes" : "no"}</td>
@@ -193,11 +193,11 @@ export function AdminConsole({
 
             {tableErrors[table.name] ? <p className="text-sm text-red-700">{tableErrors[table.name]}</p> : null}
             {tableRows[table.name] ? (
-              <details className="rounded-lg bg-[#f8efe3]">
+              <details className="theme-detail">
                 <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
                   Loaded Data ({tableRows[table.name].length} rows)
                 </summary>
-                <pre className="overflow-x-auto border-t border-[#e2d4c1] p-3 text-xs text-[color:var(--ink)]">
+                <pre className="theme-code-block overflow-x-auto p-3 text-xs text-[color:var(--ink)]">
                   {JSON.stringify(tableRows[table.name], null, 2)}
                 </pre>
               </details>
@@ -223,11 +223,11 @@ export function AdminConsole({
             <p className="text-xs text-[color:var(--muted)]">Object shape: {bucket.fields.join(", ")}</p>
             {bucketErrors[bucket.name] ? <p className="text-sm text-red-700">{bucketErrors[bucket.name]}</p> : null}
             {bucketRows[bucket.name] ? (
-              <details className="rounded-lg bg-[#f8efe3]">
+              <details className="theme-detail">
                 <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
                   Loaded Data ({bucketRows[bucket.name].length} objects)
                 </summary>
-                <pre className="overflow-x-auto border-t border-[#e2d4c1] p-3 text-xs text-[color:var(--ink)]">
+                <pre className="theme-code-block overflow-x-auto p-3 text-xs text-[color:var(--ink)]">
                   {JSON.stringify(bucketRows[bucket.name], null, 2)}
                 </pre>
               </details>
