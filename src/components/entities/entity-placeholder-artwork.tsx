@@ -1,6 +1,6 @@
 import { AppIcon } from "@/components/ui/app-icons";
 
-type ArtworkVariant = "card-avatar" | "card-cover" | "detail-avatar" | "detail-cover";
+type ArtworkVariant = "card-avatar" | "card-cover" | "list-cover" | "detail-avatar" | "detail-cover";
 export type ArtworkKind = "artist" | "project";
 
 export function EntityPlaceholderArtwork({
@@ -22,6 +22,14 @@ export function EntityPlaceholderArtwork({
     return (
       <div className="flex aspect-square w-full max-w-[220px] items-center justify-center rounded-2xl border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--icon-color)] md:max-w-[240px]">
         <AppIcon name={kind} className="h-16 w-16 md:h-20 md:w-20" />
+      </div>
+    );
+  }
+
+  if (variant === "list-cover") {
+    return (
+      <div className="flex aspect-square w-full max-w-[160px] items-center justify-center rounded-2xl border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--icon-color)]">
+        <AppIcon name={kind} className="h-14 w-14" />
       </div>
     );
   }

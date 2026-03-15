@@ -10,6 +10,7 @@ interface ProjectRow {
   slug: string;
   name: string;
   type: "album" | "ep" | "single" | "setlist";
+  releaseDate: string | null;
 }
 
 interface ArtistProjectRow {
@@ -45,6 +46,7 @@ export interface CloudflareProjectListItem {
   slug: string;
   name: string;
   type: "album" | "ep" | "single" | "setlist";
+  releaseDate: string | null;
   artistSlugs: Array<{ slug: string; name: string }>;
   trackSlugs: string[];
 }
@@ -105,7 +107,7 @@ export async function listArtistsFromCloudflare(): Promise<CloudflareArtistListI
 export async function listProjectsFromCloudflare(): Promise<CloudflareProjectListItem[]> {
   const projectRows = await queryD1<ProjectRow>(
     `
-    SELECT slug, name, type
+    SELECT slug, name, type, release_date AS releaseDate
     FROM projects
     ORDER BY name ASC, slug ASC;
     `
@@ -149,6 +151,7 @@ export async function listProjectsFromCloudflare(): Promise<CloudflareProjectLis
     slug: project.slug,
     name: project.name || slugToTitle(project.slug),
     type: project.type,
+    releaseDate: project.releaseDate,
     artistSlugs: artistsByProject.get(project.slug) ?? [],
     trackSlugs: tracksByProject.get(project.slug) ?? []
   }));

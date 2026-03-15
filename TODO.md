@@ -6,3 +6,4 @@
 - Tags
 - Social Media Links
 - Covers
+- Enforce slug updates when renaming
