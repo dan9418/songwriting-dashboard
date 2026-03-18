@@ -7,6 +7,7 @@ import { EntityPlaceholderArtwork } from "@/components/entities/entity-placehold
 import { ActionButton, Field, TextArea, TextInput } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
+import { slugToTitle } from "@/lib/utils/slug-display";
 
 interface ProjectOption {
   slug: string;
@@ -16,6 +17,11 @@ interface ProjectOption {
 interface TrackOption {
   slug: string;
   name: string;
+}
+
+interface ExternalLink {
+  platform: string;
+  url: string;
 }
 
 function PencilIcon({ className = "" }: { className?: string }) {
@@ -33,6 +39,7 @@ export function ArtistDetailControls({
   initialDescription,
   initialProjectSlugs,
   initialTrackSlugs,
+  initialExternalLinks,
   projectOptions,
   trackOptions
 }: {
@@ -41,6 +48,7 @@ export function ArtistDetailControls({
   initialDescription: string;
   initialProjectSlugs: string[];
   initialTrackSlugs: string[];
+  initialExternalLinks: ExternalLink[];
   projectOptions: ProjectOption[];
   trackOptions: TrackOption[];
 }) {
@@ -187,6 +195,21 @@ export function ArtistDetailControls({
                 <p className="text-sm text-[color:var(--muted)]">{artistSlug}</p>
                 {description.trim() ? (
                   <p className="mt-1 text-sm text-[color:var(--muted)]">{description}</p>
+                ) : null}
+                {initialExternalLinks.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2 text-sm">
+                    {initialExternalLinks.map((link) => (
+                      <a
+                        key={`${link.platform}-${link.url}`}
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline-offset-4 hover:underline"
+                      >
+                        {slugToTitle(link.platform)}
+                      </a>
+                    ))}
+                  </div>
                 ) : null}
               </>
             ) : (

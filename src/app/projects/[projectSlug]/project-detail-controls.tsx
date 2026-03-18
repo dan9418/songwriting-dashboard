@@ -13,12 +13,18 @@ import {
 } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
+import { slugToTitle } from "@/lib/utils/slug-display";
 
 type ProjectType = "album" | "ep" | "single" | "setlist";
 
 interface SlugOption {
   slug: string;
   name: string;
+}
+
+interface ExternalLink {
+  platform: string;
+  url: string;
 }
 
 function PencilIcon({ className = "" }: { className?: string }) {
@@ -76,6 +82,7 @@ export function ProjectDetailControls({
   initialRemasterDate,
   initialArtistSlugs,
   initialTrackSlugs,
+  initialExternalLinks,
   artistOptions,
   trackOptions
 }: {
@@ -87,6 +94,7 @@ export function ProjectDetailControls({
   initialRemasterDate: string | null;
   initialArtistSlugs: string[];
   initialTrackSlugs: string[];
+  initialExternalLinks: ExternalLink[];
   artistOptions: SlugOption[];
   trackOptions: SlugOption[];
 }) {
@@ -356,6 +364,21 @@ export function ProjectDetailControls({
               </p>
               {description.trim() ? (
                 <p className="mt-1 text-sm text-[color:var(--muted)]">{description}</p>
+              ) : null}
+              {initialExternalLinks.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2 text-sm">
+                  {initialExternalLinks.map((link) => (
+                    <a
+                      key={`${link.platform}-${link.url}`}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline-offset-4 hover:underline"
+                    >
+                      {slugToTitle(link.platform)}
+                    </a>
+                  ))}
+                </div>
               ) : null}
               <p className="mt-1 text-xs text-[color:var(--muted)]">
                 Release: {releaseDate.trim() || "-"} | Remaster: {remasterDate.trim() || "-"}

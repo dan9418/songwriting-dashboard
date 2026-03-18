@@ -15,13 +15,18 @@ interface ProjectDetailRow {
   remasterDate: string | null;
 }
 
+interface ProjectExternalLinkRow {
+  platform: string;
+  url: string;
+}
+
 export default async function ProjectBySlugPage({
   params
 }: {
   params: Promise<{ projectSlug: string }>;
 }) {
   const { projectSlug } = await params;
-  const [projects, artists, tracks, detailRows] = await Promise.all([
+  const [projects, artists, tracks, detailRows, externalLinkRows] = await Promise.all([
     listProjectsFromCloudflare(),
     listArtistsFromCloudflare(),
     listTracksFromCloudflare(),
@@ -34,6 +39,19 @@ export default async function ProjectBySlugPage({
       FROM projects
       WHERE slug = ?
       LIMIT 1;
+      `,
+      [projectSlug]
+    ),
+    queryD1<ProjectExternalLinkRow>(
+      `
+      SELECT
+        external_links.platform AS platform,
+        external_links.url AS url
+      FROM project_external_links
+      JOIN external_links
+        ON external_links.id = project_external_links.external_link_id
+      WHERE project_external_links.project_slug = ?
+      ORDER BY external_links.platform ASC, external_links.url ASC;
       `,
       [projectSlug]
     )
@@ -56,6 +74,7 @@ export default async function ProjectBySlugPage({
         initialRemasterDate={details?.remasterDate ?? null}
         initialArtistSlugs={project.artistSlugs.map((artist) => artist.slug)}
         initialTrackSlugs={project.trackSlugs}
+        initialExternalLinks={externalLinkRows}
         artistOptions={artists.map((artist) => ({
           slug: artist.slug,
           name: artist.name || slugToTitle(artist.slug)
