@@ -13,3 +13,11 @@ Do not guess when a material assumption could affect:
 - whether work might be destructive, risky, or wasteful
 
 When in doubt, pause and ask a concise clarification question first.
+
+## Database Rule
+
+All database operations for this repo must be performed against the remote Cloudflare D1 database only.
+
+Do not run local D1 migration, execute, or apply commands.
+Do not use `--local` or `--preview` for D1 operations in this repo.
+Before any remote D1 operation, get explicit user consent and state the exact command you plan to run.

@@ -23,11 +23,11 @@ Relationship model:
 - Artist <-> Track (M:N via `track_artists`)
 - Track -> Audio (1:N via `audio.track_slug`)
 
-Supplemental schema tables exist for images/social link metadata:
-- `images`, `social_links`
-- `artist_images`, `artist_social_links`
-- `project_images`, `project_social_links`
-- `track_images`
+Supplemental schema tables exist for images/external link metadata:
+- `images`, `external_links`
+- `artist_images`, `artist_external_links`
+- `project_images`, `project_external_links`
+- `track_images`, `track_external_links`
 
 ## Data Architecture
 

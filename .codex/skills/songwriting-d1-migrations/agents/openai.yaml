@@ -1,0 +1,4 @@
+interface:
+  display_name: "Songwriting D1 Migrations"
+  short_description: "Plan and execute repo-specific D1 schema changes"
+  default_prompt: "Use $songwriting-d1-migrations to plan, review, or safely execute a remote-only Cloudflare D1 schema change in this repo."

@@ -12,12 +12,13 @@ type LoadingMap = Record<string, boolean>;
 
 const JOIN_TABLE_NAMES = new Set([
   "artist_images",
-  "artist_social_links",
+  "artist_external_links",
   "project_artists",
   "project_tracks",
   "project_images",
-  "project_social_links",
+  "project_external_links",
   "track_artists",
+  "track_external_links",
   "track_images"
 ]);
 

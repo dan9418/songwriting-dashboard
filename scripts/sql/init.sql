@@ -30,11 +30,11 @@ CREATE TABLE IF NOT EXISTS images (
   UNIQUE (path)
 );
 
-CREATE TABLE IF NOT EXISTS social_links (
+CREATE TABLE IF NOT EXISTS external_links (
   id INTEGER PRIMARY KEY,
   platform TEXT NOT NULL CHECK (length(trim(platform)) > 0),
-  href TEXT NOT NULL CHECK (length(trim(href)) > 0),
-  UNIQUE (platform, href)
+  url TEXT NOT NULL CHECK (length(trim(url)) > 0),
+  UNIQUE (url)
 );
 
 CREATE TABLE IF NOT EXISTS audio (
@@ -58,12 +58,12 @@ CREATE TABLE IF NOT EXISTS artist_images (
   FOREIGN KEY (image_slug) REFERENCES images(slug) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS artist_social_links (
+CREATE TABLE IF NOT EXISTS artist_external_links (
   artist_slug TEXT NOT NULL,
-  social_link_id INTEGER NOT NULL,
-  PRIMARY KEY (artist_slug, social_link_id),
+  external_link_id INTEGER NOT NULL,
+  PRIMARY KEY (artist_slug, external_link_id),
   FOREIGN KEY (artist_slug) REFERENCES artists(slug) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (social_link_id) REFERENCES social_links(id) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY (external_link_id) REFERENCES external_links(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS project_artists (
@@ -92,12 +92,20 @@ CREATE TABLE IF NOT EXISTS project_images (
   FOREIGN KEY (image_slug) REFERENCES images(slug) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS project_social_links (
+CREATE TABLE IF NOT EXISTS project_external_links (
   project_slug TEXT NOT NULL,
-  social_link_id INTEGER NOT NULL,
-  PRIMARY KEY (project_slug, social_link_id),
+  external_link_id INTEGER NOT NULL,
+  PRIMARY KEY (project_slug, external_link_id),
   FOREIGN KEY (project_slug) REFERENCES projects(slug) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (social_link_id) REFERENCES social_links(id) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY (external_link_id) REFERENCES external_links(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS track_external_links (
+  track_slug TEXT NOT NULL,
+  external_link_id INTEGER NOT NULL,
+  PRIMARY KEY (track_slug, external_link_id),
+  FOREIGN KEY (track_slug) REFERENCES tracks(slug) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (external_link_id) REFERENCES external_links(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS track_artists (
@@ -119,10 +127,11 @@ CREATE TABLE IF NOT EXISTS track_images (
 CREATE INDEX IF NOT EXISTS idx_audio_track ON audio(track_slug);
 
 CREATE INDEX IF NOT EXISTS idx_artist_images_by_image ON artist_images(image_slug);
-CREATE INDEX IF NOT EXISTS idx_artist_social_links_by_social ON artist_social_links(social_link_id);
+CREATE INDEX IF NOT EXISTS idx_artist_external_links_by_link ON artist_external_links(external_link_id);
 CREATE INDEX IF NOT EXISTS idx_project_artists_by_artist ON project_artists(artist_slug);
 CREATE INDEX IF NOT EXISTS idx_project_tracks_by_track ON project_tracks(track_slug);
 CREATE INDEX IF NOT EXISTS idx_project_images_by_image ON project_images(image_slug);
-CREATE INDEX IF NOT EXISTS idx_project_social_links_by_social ON project_social_links(social_link_id);
+CREATE INDEX IF NOT EXISTS idx_project_external_links_by_link ON project_external_links(external_link_id);
 CREATE INDEX IF NOT EXISTS idx_track_artists_by_artist ON track_artists(artist_slug);
+CREATE INDEX IF NOT EXISTS idx_track_external_links_by_link ON track_external_links(external_link_id);
 CREATE INDEX IF NOT EXISTS idx_track_images_by_image ON track_images(image_slug);

@@ -54,10 +54,10 @@ erDiagram
     TEXT path UNIQUE
   }
 
-  SOCIAL_LINKS {
+  EXTERNAL_LINKS {
     INTEGER id PK
     TEXT platform
-    TEXT href
+    TEXT url UNIQUE
   }
 
   ARTIST_IMAGES {
@@ -65,9 +65,9 @@ erDiagram
     TEXT image_slug PK, FK
   }
 
-  ARTIST_SOCIAL_LINKS {
+  ARTIST_EXTERNAL_LINKS {
     TEXT artist_slug PK, FK
-    INTEGER social_link_id PK, FK
+    INTEGER external_link_id PK, FK
   }
 
   PROJECT_IMAGES {
@@ -75,9 +75,14 @@ erDiagram
     TEXT image_slug PK, FK
   }
 
-  PROJECT_SOCIAL_LINKS {
+  PROJECT_EXTERNAL_LINKS {
     TEXT project_slug PK, FK
-    INTEGER social_link_id PK, FK
+    INTEGER external_link_id PK, FK
+  }
+
+  TRACK_EXTERNAL_LINKS {
+    TEXT track_slug PK, FK
+    INTEGER external_link_id PK, FK
   }
 
   TRACK_IMAGES {
@@ -94,11 +99,13 @@ erDiagram
   TRACKS ||--o{ AUDIO : has
   ARTISTS ||--o{ ARTIST_IMAGES : links
   IMAGES ||--o{ ARTIST_IMAGES : linked_to
-  ARTISTS ||--o{ ARTIST_SOCIAL_LINKS : links
-  SOCIAL_LINKS ||--o{ ARTIST_SOCIAL_LINKS : linked_to
+  ARTISTS ||--o{ ARTIST_EXTERNAL_LINKS : links
+  EXTERNAL_LINKS ||--o{ ARTIST_EXTERNAL_LINKS : linked_to
   PROJECTS ||--o{ PROJECT_IMAGES : links
   IMAGES ||--o{ PROJECT_IMAGES : linked_to
-  PROJECTS ||--o{ PROJECT_SOCIAL_LINKS : links
-  SOCIAL_LINKS ||--o{ PROJECT_SOCIAL_LINKS : linked_to
+  PROJECTS ||--o{ PROJECT_EXTERNAL_LINKS : links
+  EXTERNAL_LINKS ||--o{ PROJECT_EXTERNAL_LINKS : linked_to
+  TRACKS ||--o{ TRACK_EXTERNAL_LINKS : links
+  EXTERNAL_LINKS ||--o{ TRACK_EXTERNAL_LINKS : linked_to
   TRACKS ||--o{ TRACK_IMAGES : links
   IMAGES ||--o{ TRACK_IMAGES : linked_to
