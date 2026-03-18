@@ -48,3 +48,4 @@ Use this file to rebuild context quickly before planning or implementing a D1 mi
 - Check for direct SQL dependencies instead of assuming type errors will catch everything.
 - Use remote D1 operations only. Do not use `--local` or `--preview` for D1 work in this repo.
 - Before any remote D1 command, confirm the exact command with the user.
+- For `wrangler d1 execute --remote --file`, do not include explicit transaction statements such as `BEGIN TRANSACTION`, `COMMIT`, or `SAVEPOINT`.

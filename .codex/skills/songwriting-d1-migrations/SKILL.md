@@ -47,6 +47,8 @@ Start by reading [references/repo-map.md](references/repo-map.md), then inspect 
 - Preserve and restore the foreign-key posture deliberately.
   Use `PRAGMA defer_foreign_keys = true` when a migration only needs temporary deferral during apply.
   If you choose `PRAGMA foreign_keys = OFF`, explain why that stronger setting is necessary and ensure it is turned back on in the same migration.
+- For ad hoc SQL files executed through `npx wrangler d1 execute ... --remote --file`, do not include explicit `BEGIN TRANSACTION`, `COMMIT`, or `SAVEPOINT` statements.
+  Wrangler/D1 rejects those statements in this execution path.
 - Backfill before dropping old columns or tables.
 - Keep slug-based relationships intact across `artists`, `projects`, `tracks`, `audio`, and join tables.
 - If a column rename or removal affects inserts, updates, or reads, update all dependent SQL in the app during the same change.
@@ -70,6 +72,7 @@ Use the database name from `wrangler.jsonc`, which is currently `songwriting-das
 - List unapplied migrations remotely: `npx wrangler d1 migrations list songwriting-dashboard --remote`
 - Apply remotely: `npx wrangler d1 migrations apply songwriting-dashboard --remote`
 - Run ad hoc SQL only when a one-off query is more appropriate than a tracked migration: `npx wrangler d1 execute songwriting-dashboard --remote --file <path>` or `--command "<sql>"`
+  When using `--file`, omit explicit transaction wrappers such as `BEGIN TRANSACTION` and `COMMIT`.
 
 Prefer tracked migrations in `scripts/sql/migrations/` over ad hoc remote SQL whenever the schema changes.
 
