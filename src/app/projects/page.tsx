@@ -2,6 +2,7 @@ import Link from "next/link";
 import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
 import { EntityIndexLayout } from "@/components/entities/entity-index-layout";
 import { listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
+import { imageApiHref, listPrimaryProjectImageSlugs } from "@/lib/cloudflare/images";
 import { slugToTitle } from "@/lib/utils/slug-display";
 
 export const dynamic = "force-dynamic";
@@ -73,7 +74,10 @@ function compareProjects(
 
 export default async function ProjectsPage() {
   try {
-    const sourceItems = await listProjectsFromCloudflare();
+    const [sourceItems, imageSlugsByProject] = await Promise.all([
+      listProjectsFromCloudflare(),
+      listPrimaryProjectImageSlugs()
+    ]);
     const artistGroups = Array.from(
       sourceItems.reduce<
         Map<
@@ -141,7 +145,16 @@ export default async function ProjectsPage() {
                       className="theme-card flex w-full flex-col gap-4 p-4 md:grid md:grid-cols-[160px_minmax(0,1fr)] md:items-start md:gap-5"
                     >
                       <div className="w-full self-start">
-                        <EntityPlaceholderArtwork kind="project" variant="list-cover" />
+                        <EntityPlaceholderArtwork
+                          kind="project"
+                          variant="list-cover"
+                          imageHref={
+                            imageSlugsByProject.get(project.slug)
+                              ? imageApiHref(imageSlugsByProject.get(project.slug) ?? "")
+                              : null
+                          }
+                          alt={`${project.name || slugToTitle(project.slug)} artwork`}
+                        />
                       </div>
 
                       <div className="min-w-0 self-start grid gap-4">

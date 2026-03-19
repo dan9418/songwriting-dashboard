@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import {
+  EntityPlaceholderArtwork,
+  type ArtworkKind
+} from "@/components/entities/entity-placeholder-artwork";
 
 export interface TableCellLink {
   label: string;
@@ -12,6 +16,11 @@ export interface SortableNameTableItem {
   id: string;
   name: string;
   nameHref?: string;
+  artwork?: {
+    kind: ArtworkKind;
+    imageHref?: string | null;
+    alt?: string;
+  };
   cells: Array<
     | {
         text: string;
@@ -86,13 +95,25 @@ export function SortableNameTable({
           {sortedItems.map((item) => (
             <tr id={item.id} key={item.id} className="align-top">
               <td className="px-2 py-2 font-medium text-[color:var(--ink)]">
-                {item.nameHref ? (
-                  <Link href={item.nameHref} className="underline-offset-4 hover:underline">
-                    {item.name}
-                  </Link>
-                ) : (
-                  item.name
-                )}
+                <div className="flex items-center gap-3">
+                  {item.artwork ? (
+                    <EntityPlaceholderArtwork
+                      kind={item.artwork.kind}
+                      variant="table-thumb"
+                      imageHref={item.artwork.imageHref}
+                      alt={item.artwork.alt}
+                    />
+                  ) : null}
+                  <div className="min-w-0">
+                    {item.nameHref ? (
+                      <Link href={item.nameHref} className="underline-offset-4 hover:underline">
+                        {item.name}
+                      </Link>
+                    ) : (
+                      item.name
+                    )}
+                  </div>
+                </div>
               </td>
               {item.cells.map((cell, index) => (
                 <td key={`${item.id}-${index}`} className="px-2 py-2">

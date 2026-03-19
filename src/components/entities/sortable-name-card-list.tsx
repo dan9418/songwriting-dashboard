@@ -21,6 +21,8 @@ export interface SortableNameCardItem {
   nameHref?: string;
   subtitle?: string;
   artworkIcon?: ArtworkKind;
+  artworkImageHref?: string | null;
+  artworkAlt?: string;
   artworkStyle?: "avatar" | "cover";
   fields: SortableNameCardField[];
 }
@@ -83,10 +85,24 @@ function renderArtwork(item: SortableNameCardItem) {
   }
 
   if (item.artworkStyle === "cover") {
-    return <EntityPlaceholderArtwork kind={item.artworkIcon} variant="card-cover" />;
+    return (
+      <EntityPlaceholderArtwork
+        kind={item.artworkIcon}
+        variant="card-cover"
+        imageHref={item.artworkImageHref}
+        alt={item.artworkAlt}
+      />
+    );
   }
 
-  return <EntityPlaceholderArtwork kind={item.artworkIcon} variant="card-avatar" />;
+  return (
+    <EntityPlaceholderArtwork
+      kind={item.artworkIcon}
+      variant="card-avatar"
+      imageHref={item.artworkImageHref}
+      alt={item.artworkAlt}
+    />
+  );
 }
 
 export function SortableNameCardList({

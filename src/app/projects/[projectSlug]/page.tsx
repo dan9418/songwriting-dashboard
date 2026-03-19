@@ -5,6 +5,7 @@ import {
   listProjectsFromCloudflare
 } from "@/lib/cloudflare/catalog";
 import { queryD1 } from "@/lib/cloudflare/d1";
+import { getPrimaryProjectImageSlug, imageApiHref } from "@/lib/cloudflare/images";
 import { listTracksFromCloudflare } from "@/lib/cloudflare/tracks";
 import { slugToTitle } from "@/lib/utils/slug-display";
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export default async function ProjectBySlugPage({
   params: Promise<{ projectSlug: string }>;
 }) {
   const { projectSlug } = await params;
-  const [projects, artists, tracks, detailRows, externalLinkRows] = await Promise.all([
+  const [projects, artists, tracks, detailRows, externalLinkRows, imageSlug] = await Promise.all([
     listProjectsFromCloudflare(),
     listArtistsFromCloudflare(),
     listTracksFromCloudflare(),
@@ -54,7 +55,8 @@ export default async function ProjectBySlugPage({
       ORDER BY external_links.platform ASC, external_links.url ASC;
       `,
       [projectSlug]
-    )
+    ),
+    getPrimaryProjectImageSlug(projectSlug)
   ]);
   const project = projects.find((item) => item.slug === projectSlug);
 
@@ -75,6 +77,7 @@ export default async function ProjectBySlugPage({
         initialArtistSlugs={project.artistSlugs.map((artist) => artist.slug)}
         initialTrackSlugs={project.trackSlugs}
         initialExternalLinks={externalLinkRows}
+        imageHref={imageSlug ? imageApiHref(imageSlug) : null}
         artistOptions={artists.map((artist) => ({
           slug: artist.slug,
           name: artist.name || slugToTitle(artist.slug)

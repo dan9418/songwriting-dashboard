@@ -1,12 +1,16 @@
 import { EntityIndexLayout } from "@/components/entities/entity-index-layout";
 import { SortableNameCardList } from "@/components/entities/sortable-name-card-list";
 import { listArtistsFromCloudflare } from "@/lib/cloudflare/catalog";
+import { imageApiHref, listPrimaryArtistImageSlugs } from "@/lib/cloudflare/images";
 
 export const dynamic = "force-dynamic";
 
 export default async function ArtistsPage() {
   try {
-    const sourceItems = await listArtistsFromCloudflare();
+    const [sourceItems, imageSlugsByArtist] = await Promise.all([
+      listArtistsFromCloudflare(),
+      listPrimaryArtistImageSlugs()
+    ]);
 
     return (
       <EntityIndexLayout
@@ -26,6 +30,10 @@ export default async function ArtistsPage() {
             nameHref: `/artists/${artist.slug}`,
             artworkIcon: "artist",
             artworkStyle: "avatar",
+            artworkImageHref: imageSlugsByArtist.get(artist.slug)
+              ? imageApiHref(imageSlugsByArtist.get(artist.slug) ?? "")
+              : null,
+            artworkAlt: `${artist.name} artwork`,
             fields: [
               {
                 label: "Projects",

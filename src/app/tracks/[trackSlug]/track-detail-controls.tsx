@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
 import { useRouter } from "next/navigation";
 import { ActionButton, TextInput } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
@@ -26,6 +27,7 @@ export function TrackDetailControls({
   initialName,
   initialArtistSlugs,
   initialProjectSlugs,
+  imageHref,
   artistOptions,
   projectOptions
 }: {
@@ -33,6 +35,7 @@ export function TrackDetailControls({
   initialName: string;
   initialArtistSlugs: string[];
   initialProjectSlugs: string[];
+  imageHref: string | null;
   artistOptions: SlugOption[];
   projectOptions: SlugOption[];
 }) {
@@ -158,7 +161,14 @@ export function TrackDetailControls({
   return (
     <>
       <div className="panel flex flex-col gap-4 p-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
+        <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
+          <EntityPlaceholderArtwork
+            kind="track"
+            variant="detail-cover"
+            imageHref={imageHref}
+            alt={`${name} artwork`}
+          />
+          <div className="min-w-0 flex-1">
           {!editingName ? (
             <>
               <div className="flex items-center gap-2">
@@ -196,6 +206,7 @@ export function TrackDetailControls({
               </ActionButton>
             </div>
           )}
+        </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <Link href="/tracks" className="theme-button-link theme-button-link--ghost">

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ArtistDetailControls } from "@/app/artists/[artistSlug]/artist-detail-controls";
 import { listArtistsFromCloudflare, listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
 import { queryD1 } from "@/lib/cloudflare/d1";
+import { getPrimaryArtistImageSlug, imageApiHref } from "@/lib/cloudflare/images";
 import { listTracksFromCloudflare } from "@/lib/cloudflare/tracks";
 import { slugToTitle } from "@/lib/utils/slug-display";
 
@@ -22,7 +23,7 @@ export default async function ArtistBySlugPage({
   params: Promise<{ artistSlug: string }>;
 }) {
   const { artistSlug } = await params;
-  const [artists, projects, tracks, detailRows, externalLinkRows] = await Promise.all([
+  const [artists, projects, tracks, detailRows, externalLinkRows, imageSlug] = await Promise.all([
     listArtistsFromCloudflare(),
     listProjectsFromCloudflare(),
     listTracksFromCloudflare(),
@@ -47,7 +48,8 @@ export default async function ArtistBySlugPage({
       ORDER BY external_links.platform ASC, external_links.url ASC;
       `,
       [artistSlug]
-    )
+    ),
+    getPrimaryArtistImageSlug(artistSlug)
   ]);
   const artist = artists.find((item) => item.slug === artistSlug);
 
@@ -65,6 +67,7 @@ export default async function ArtistBySlugPage({
         initialProjectSlugs={artist.projectSlugs.map((project) => project.slug)}
         initialTrackSlugs={artist.trackSlugs}
         initialExternalLinks={externalLinkRows}
+        imageHref={imageSlug ? imageApiHref(imageSlug) : null}
         projectOptions={projects.map((project) => ({
           slug: project.slug,
           name: project.name || slugToTitle(project.slug),

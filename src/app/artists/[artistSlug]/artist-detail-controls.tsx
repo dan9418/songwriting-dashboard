@@ -40,6 +40,7 @@ export function ArtistDetailControls({
   initialProjectSlugs,
   initialTrackSlugs,
   initialExternalLinks,
+  imageHref,
   projectOptions,
   trackOptions
 }: {
@@ -49,6 +50,7 @@ export function ArtistDetailControls({
   initialProjectSlugs: string[];
   initialTrackSlugs: string[];
   initialExternalLinks: ExternalLink[];
+  imageHref: string | null;
   projectOptions: ProjectOption[];
   trackOptions: TrackOption[];
 }) {
@@ -177,7 +179,12 @@ export function ArtistDetailControls({
     <>
       <div className="panel flex flex-col gap-4 p-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
-          <EntityPlaceholderArtwork kind="artist" variant="detail-avatar" />
+          <EntityPlaceholderArtwork
+            kind="artist"
+            variant="detail-avatar"
+            imageHref={imageHref}
+            alt={`${name} artwork`}
+          />
           <div className="min-w-0 flex-1">
             {!editingName ? (
               <>

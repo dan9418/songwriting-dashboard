@@ -8,6 +8,7 @@ export interface TracksTableItem {
   name: string;
   projectSlugs: string[];
   artistSlugs: string[];
+  imageHref?: string | null;
   hasLyrics: boolean;
   hasChords: boolean;
   hasNotes: boolean;
@@ -30,6 +31,11 @@ export function TracksTable({
         id: item.slug,
         name: item.name,
         nameHref: `/tracks/${item.slug}`,
+        artwork: {
+          kind: "track",
+          imageHref: item.imageHref,
+          alt: `${item.name} artwork`
+        },
         cells: [
           item.projectSlugs.length > 0
             ? {

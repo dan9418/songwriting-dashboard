@@ -83,6 +83,7 @@ export function ProjectDetailControls({
   initialArtistSlugs,
   initialTrackSlugs,
   initialExternalLinks,
+  imageHref,
   artistOptions,
   trackOptions
 }: {
@@ -95,6 +96,7 @@ export function ProjectDetailControls({
   initialArtistSlugs: string[];
   initialTrackSlugs: string[];
   initialExternalLinks: ExternalLink[];
+  imageHref: string | null;
   artistOptions: SlugOption[];
   trackOptions: SlugOption[];
 }) {
@@ -344,7 +346,12 @@ export function ProjectDetailControls({
     <>
       <div className="panel flex flex-col gap-4 p-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
-          <EntityPlaceholderArtwork kind="project" variant="detail-cover" />
+          <EntityPlaceholderArtwork
+            kind="project"
+            variant="detail-cover"
+            imageHref={imageHref}
+            alt={`${name} artwork`}
+          />
           <div className="min-w-0 flex-1">
           {!editingName ? (
             <>
