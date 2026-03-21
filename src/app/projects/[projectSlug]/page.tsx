@@ -6,6 +6,7 @@ import {
 } from "@/lib/cloudflare/catalog";
 import { queryD1 } from "@/lib/cloudflare/d1";
 import { getPrimaryProjectImageSlug, imageApiHref } from "@/lib/cloudflare/images";
+import { getRequestOrigin } from "@/lib/request-origin";
 import { listTracksFromCloudflare } from "@/lib/cloudflare/tracks";
 import { slugToTitle } from "@/lib/utils/slug-display";
 export const dynamic = "force-dynamic";
@@ -27,37 +28,39 @@ export default async function ProjectBySlugPage({
   params: Promise<{ projectSlug: string }>;
 }) {
   const { projectSlug } = await params;
-  const [projects, artists, tracks, detailRows, externalLinkRows, imageSlug] = await Promise.all([
-    listProjectsFromCloudflare(),
-    listArtistsFromCloudflare(),
-    listTracksFromCloudflare(),
-    queryD1<ProjectDetailRow>(
-      `
-      SELECT
-        description,
-        release_date AS releaseDate,
-        remaster_date AS remasterDate
-      FROM projects
-      WHERE slug = ?
-      LIMIT 1;
-      `,
-      [projectSlug]
-    ),
-    queryD1<ProjectExternalLinkRow>(
-      `
-      SELECT
-        external_links.platform AS platform,
-        external_links.url AS url
-      FROM project_external_links
-      JOIN external_links
-        ON external_links.id = project_external_links.external_link_id
-      WHERE project_external_links.project_slug = ?
-      ORDER BY external_links.platform ASC, external_links.url ASC;
-      `,
-      [projectSlug]
-    ),
-    getPrimaryProjectImageSlug(projectSlug)
-  ]);
+  const [projects, artists, tracks, detailRows, externalLinkRows, imageSlug, requestOrigin] =
+    await Promise.all([
+      listProjectsFromCloudflare(),
+      listArtistsFromCloudflare(),
+      listTracksFromCloudflare(),
+      queryD1<ProjectDetailRow>(
+        `
+        SELECT
+          description,
+          release_date AS releaseDate,
+          remaster_date AS remasterDate
+        FROM projects
+        WHERE slug = ?
+        LIMIT 1;
+        `,
+        [projectSlug]
+      ),
+      queryD1<ProjectExternalLinkRow>(
+        `
+        SELECT
+          external_links.platform AS platform,
+          external_links.url AS url
+        FROM project_external_links
+        JOIN external_links
+          ON external_links.id = project_external_links.external_link_id
+        WHERE project_external_links.project_slug = ?
+        ORDER BY external_links.platform ASC, external_links.url ASC;
+        `,
+        [projectSlug]
+      ),
+      getPrimaryProjectImageSlug(projectSlug),
+      getRequestOrigin()
+    ]);
   const project = projects.find((item) => item.slug === projectSlug);
 
   if (!project) {
@@ -77,7 +80,7 @@ export default async function ProjectBySlugPage({
         initialArtistSlugs={project.artistSlugs.map((artist) => artist.slug)}
         initialTrackSlugs={project.trackSlugs}
         initialExternalLinks={externalLinkRows}
-        imageHref={imageSlug ? imageApiHref(imageSlug) : null}
+        imageHref={imageSlug ? imageApiHref(imageSlug, requestOrigin) : null}
         artistOptions={artists.map((artist) => ({
           slug: artist.slug,
           name: artist.name || slugToTitle(artist.slug)

@@ -8,8 +8,13 @@ interface EntityImageRow extends ImageSlugRow {
   entitySlug: string;
 }
 
-export function imageApiHref(imageSlug: string): string {
-  return `/api/images/${encodeURIComponent(imageSlug)}`;
+export function imageApiHref(imageSlug: string, origin?: string): string {
+  const pathname = `/api/images/${encodeURIComponent(imageSlug)}`;
+  if (!origin) {
+    return pathname;
+  }
+
+  return new URL(pathname, origin).toString();
 }
 
 function toSlugMap(rows: EntityImageRow[]): Map<string, string> {

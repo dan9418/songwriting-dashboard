@@ -4,6 +4,7 @@ import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
 import { TrackDetailControls } from "@/app/tracks/[trackSlug]/track-detail-controls";
 import { listArtistsFromCloudflare, listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
 import { getTrackDisplayImageSlug, imageApiHref } from "@/lib/cloudflare/images";
+import { getRequestOrigin } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -27,11 +28,12 @@ export default async function TrackByIdPage({
   params: Promise<{ trackSlug: string }>;
 }) {
   const { trackSlug } = await params;
-  const [track, artists, projects, imageSlug] = await Promise.all([
+  const [track, artists, projects, imageSlug, requestOrigin] = await Promise.all([
     getTrackMetadataFromCloudflare(trackSlug),
     listArtistsFromCloudflare(),
     listProjectsFromCloudflare(),
-    getTrackDisplayImageSlug(trackSlug)
+    getTrackDisplayImageSlug(trackSlug),
+    getRequestOrigin()
   ]);
 
   if (!track) {
@@ -45,7 +47,7 @@ export default async function TrackByIdPage({
         initialName={track.name}
         initialArtistSlugs={track.artistSlugs}
         initialProjectSlugs={track.projectSlugs}
-        imageHref={imageSlug ? imageApiHref(imageSlug) : null}
+        imageHref={imageSlug ? imageApiHref(imageSlug, requestOrigin) : null}
         artistOptions={artists.map((artist) => ({
           slug: artist.slug,
           name: artist.name

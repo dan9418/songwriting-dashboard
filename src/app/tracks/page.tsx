@@ -2,14 +2,16 @@ import { EntityIndexLayout } from "@/components/entities/entity-index-layout";
 import { imageApiHref, listTrackDisplayImageSlugs } from "@/lib/cloudflare/images";
 import { listTracksFromCloudflare } from "@/lib/cloudflare/tracks";
 import { TracksTable, type TracksTableItem } from "@/app/tracks/tracks-table";
+import { getRequestOrigin } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
 
 export default async function TracksPage() {
   try {
-    const [sourceItems, imageSlugsByTrack] = await Promise.all([
+    const [sourceItems, imageSlugsByTrack, requestOrigin] = await Promise.all([
       listTracksFromCloudflare(),
-      listTrackDisplayImageSlugs()
+      listTrackDisplayImageSlugs(),
+      getRequestOrigin()
     ]);
     const items: TracksTableItem[] = sourceItems.map((item) => ({
       slug: item.slug,
@@ -21,7 +23,7 @@ export default async function TracksPage() {
       hasNotes: item.hasNotes,
       audioCount: item.audioCount,
       imageHref: imageSlugsByTrack.get(item.slug)
-        ? imageApiHref(imageSlugsByTrack.get(item.slug) ?? "")
+        ? imageApiHref(imageSlugsByTrack.get(item.slug) ?? "", requestOrigin)
         : null
     }));
 

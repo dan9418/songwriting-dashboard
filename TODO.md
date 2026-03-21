@@ -1,5 +1,4 @@
-- Social Media Links
-- Image support
+- Serve images from CDN
 - Complete back catalog
 - Improve theme
 - Search
@@ -8,3 +7,5 @@
 - Covers
 - Enforce slug updates when renaming
 - Audit delete/unlink
+- Replace audio note filename convention
+- Adjust markdown newline logic

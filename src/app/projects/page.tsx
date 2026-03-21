@@ -3,6 +3,7 @@ import { EntityPlaceholderArtwork } from "@/components/entities/entity-placehold
 import { EntityIndexLayout } from "@/components/entities/entity-index-layout";
 import { listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
 import { imageApiHref, listPrimaryProjectImageSlugs } from "@/lib/cloudflare/images";
+import { getRequestOrigin } from "@/lib/request-origin";
 import { slugToTitle } from "@/lib/utils/slug-display";
 
 export const dynamic = "force-dynamic";
@@ -74,9 +75,10 @@ function compareProjects(
 
 export default async function ProjectsPage() {
   try {
-    const [sourceItems, imageSlugsByProject] = await Promise.all([
+    const [sourceItems, imageSlugsByProject, requestOrigin] = await Promise.all([
       listProjectsFromCloudflare(),
-      listPrimaryProjectImageSlugs()
+      listPrimaryProjectImageSlugs(),
+      getRequestOrigin()
     ]);
     const artistGroups = Array.from(
       sourceItems.reduce<
@@ -150,7 +152,7 @@ export default async function ProjectsPage() {
                           variant="list-cover"
                           imageHref={
                             imageSlugsByProject.get(project.slug)
-                              ? imageApiHref(imageSlugsByProject.get(project.slug) ?? "")
+                              ? imageApiHref(imageSlugsByProject.get(project.slug) ?? "", requestOrigin)
                               : null
                           }
                           alt={`${project.name || slugToTitle(project.slug)} artwork`}
