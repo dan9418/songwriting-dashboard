@@ -349,6 +349,4 @@ I would agree with you, but then we'd both be wrong.
 People complain too much. I realize the irony in this.
 Sometimes I let the momentum of my impulse carry the weight of my decisions
 I woke up on the wrong side of the history books
-I have a lot of money but cash money I have none
-I prefer to use plastic to get my spending done
 Underwear without pants is just wear

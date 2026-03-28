@@ -80,7 +80,6 @@ Greasy Delicious
 Hashtag Swag
 Hipster Haircut
 Hubba Hubba
-Merris-Go-Wheel
 Miserable Fun
 Nothing Special
 Plunder For Booty
@@ -102,7 +101,7 @@ The Playthings
 The Pocket Protectors
 There Goes The Neighborhood
 The Skamatics
-The Time Traveller
+The Time Traveler
 Tickled To Death
 Totes McGoats
 Turtle Rockets
@@ -118,7 +117,7 @@ poll();
 pop();
 peek();
 fooBar
-The Travelling Salesman
+The Traveling Salesman
 Divide by Zero
 Atomicity
 Bitmask
