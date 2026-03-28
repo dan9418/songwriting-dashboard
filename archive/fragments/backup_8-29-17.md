@@ -339,3 +339,16 @@ You're allowed to think that. You're wrong, but you're allowed.
 Underwear without pants is just wear
 Leave no turn unstoned
 Someone get that frontier a pioneer
+
+And I guarantee you music is more powerful than guns, Just get a crowd to sing Hey Jude at the top of their lungs
+I'll learn to love to live without you. I'm seeing so clearly without you.
+Keep your friends close and your enemies in captivity. 
+Shake hands and call themselves friends, make a deal and buy a Benz. 
+Life just isn't the same if you know how it ends.
+I would agree with you, but then we'd both be wrong.
+People complain too much. I realize the irony in this.
+Sometimes I let the momentum of my impulse carry the weight of my decisions
+I woke up on the wrong side of the history books
+I have a lot of money but cash money I have none
+I prefer to use plastic to get my spending done
+Underwear without pants is just wear
