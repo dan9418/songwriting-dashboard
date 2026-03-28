@@ -240,8 +240,6 @@ And then our future is right here
 The capacity to dream
 And the resources to create
 I see the trees on your street wilt in the evening heat and they all sway
-Speak to me my love, won't you please say my name? 
-Hanging out that window won't do you no good I'm afraid
 Born not to rust, not to trust, not to love, not to lust
 Never flinch never falter, never leave me at the altar
 A new sun on my horizon, I’m counting down the days
@@ -254,7 +252,6 @@ I can't get it right, but Lord knows that I'm trying
 		
 You can see it in my face, I know better than that
 But my lies cover my tracks, learn to adapt		
-It's raining on that hill, both sides of dawn
 And the flood comes pouring down, no matter which side you're on
 
 And no one even notices how spurious the thread
@@ -339,14 +336,4 @@ You're allowed to think that. You're wrong, but you're allowed.
 Underwear without pants is just wear
 Leave no turn unstoned
 Someone get that frontier a pioneer
-
 And I guarantee you music is more powerful than guns, Just get a crowd to sing Hey Jude at the top of their lungs
-I'll learn to love to live without you. I'm seeing so clearly without you.
-Keep your friends close and your enemies in captivity. 
-Shake hands and call themselves friends, make a deal and buy a Benz. 
-Life just isn't the same if you know how it ends.
-I would agree with you, but then we'd both be wrong.
-People complain too much. I realize the irony in this.
-Sometimes I let the momentum of my impulse carry the weight of my decisions
-I woke up on the wrong side of the history books
-Underwear without pants is just wear
