@@ -1,22 +1,5 @@
 # The Vectors
 
-## Angel in Distress
-
-She leans close, I can smell her breath
-Cheap liquor and cigarettes
-She had all her wishes granted
-But she them all for granted
-
-Facts put the rumors to rest
-Like an angel in distress
-Your disease so contagious
-Your memory can't contain us
-
-America know her name
-The kids got all her posters framed
-America sings her praise
-The kids wait in line for days
-
 ## When Your Mind's Made Up
 
 You know you've got me tied up in your chains
@@ -76,19 +59,6 @@ Pretty soon we had a crowd, this is the best day of my life
 
 But what’s this? I have a plan. We climb onto the roof and there we jam
 What a day at the laundromat. Washing clothes and rocking rolls. 
-
-## Bob The Chicken Trucker
-
-Bob drove a big old truck, ‘cross the United States
-He hauled a bunch of chickens, locked up in a cage
-Feathers flying all around
-
-## The Time Traveler
-
-I need someone to travel time with me to test out my new time machine
-It’s got plenty of cupholders and comfy leather seats
-Set controls for the heart of the sun
-We’re going back to year one
 
 ## The Curse Of The Floss
 
