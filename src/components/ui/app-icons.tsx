@@ -1,6 +1,16 @@
 import type { SVGProps } from "react";
 
-export type AppIconName = "home" | "artist" | "project" | "track" | "admin" | "plus" | "note";
+export type AppIconName =
+  | "home"
+  | "artist"
+  | "project"
+  | "track"
+  | "admin"
+  | "plus"
+  | "note"
+  | "notebook"
+  | "pencil"
+  | "trash";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -95,11 +105,44 @@ export function AppIcon({ name, className, ...props }: { name: AppIconName } & I
     );
   }
 
+  if (name === "notebook") {
+    return (
+      <BaseIcon className={className} {...props}>
+        <path d="M6.5 4.75h9.75a2.5 2.5 0 0 1 2.5 2.5v11.5H9.25a2.75 2.75 0 0 0-2.75 2.75V7.25a2.5 2.5 0 0 1 2.5-2.5Z" />
+        <path d="M6.5 7.25H4.75v11.5H15" />
+        <path d="M9.5 9h6" />
+        <path d="M9.5 12.25h6" />
+        <path d="M9.5 15.5h4.25" />
+      </BaseIcon>
+    );
+  }
+
   if (name === "plus") {
     return (
       <BaseIcon className={className} {...props}>
         <path d="M12 5v14" />
         <path d="M5 12h14" />
+      </BaseIcon>
+    );
+  }
+
+  if (name === "pencil") {
+    return (
+      <BaseIcon className={className} {...props}>
+        <path d="m4.75 19.25 3.35-.55 9.3-9.3-2.8-2.8-9.3 9.3-.55 3.35Z" />
+        <path d="m13.9 5.9 2.8 2.8" />
+      </BaseIcon>
+    );
+  }
+
+  if (name === "trash") {
+    return (
+      <BaseIcon className={className} {...props}>
+        <path d="M4.75 7.5h14.5" />
+        <path d="M9.5 3.75h5" />
+        <path d="M7 7.5V18a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7.5" />
+        <path d="M10 10.5v5" />
+        <path d="M14 10.5v5" />
       </BaseIcon>
     );
   }

@@ -94,7 +94,7 @@ export function ActionButton({
   return (
     <button
       {...props}
-      className={`rounded-lg border border-transparent px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${toneClass} ${props.className ?? ""}`}
+      className={`inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-transparent px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${toneClass} ${props.className ?? ""}`}
     >
       {children}
     </button>

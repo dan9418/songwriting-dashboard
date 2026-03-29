@@ -7,6 +7,7 @@ import { AppIcon, type AppIconName } from "@/components/ui/app-icons";
 
 const PRIMARY_NAV_ITEMS = [
   { href: "/", label: "Home", icon: "home" },
+  { href: "/notebook", label: "Notebook", icon: "notebook" },
   { href: "/artists", label: "Artists", icon: "artist" },
   { href: "/projects", label: "Projects", icon: "project" },
   { href: "/tracks", label: "Tracks", icon: "track" },
