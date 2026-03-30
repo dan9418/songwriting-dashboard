@@ -1,124 +1,265 @@
-# Song Titles
-
-## Serious
-
+Abyssimal
+A Favorite Among The Masochists
+Allekiski
+Always Everythingness
+Amanda Eve
+American Beatboxer
 Anachronism
+Anachronism
+Anchor Crush
+Ango
+Angry Parents Unite
 Antidote
+Antidote
+Antifuturist
+Anti-Information
 Army Of Idiots
+Artless Fate
+Askew
+As Seen On TV
 Astronauts in Love
+Astronauts in Love
+Atomicity
+Badgers
+Bad Intuition
+Bamboozled
+Barely Human
+Batteries Not Included
+Bed of Aluminum
 Beneath the Weeping Willow
+Big Cringe
+Bigfoot Is Real
+Bitmask
+Blue Dummy
+Boneless
+Born to Vibe
 Brand New Blues
+Bringing Back The Fanny Pack
+Broder Grande
+built to heal
+Buttwink
+Buying Science
+Casual Gravity
+Casual Gravity
+Cerebral Black
+Chimera
+Coast Alamo
+Collision Path
+Consensus Dead
+Cooler Than Cool
+Cooler Than Plaid Shorts
+Cooper
+Cosmic Debris
+Country Rose
+Crooked Squash
+Cruetly Division
+Cured Instinct
+Dan Zachary
+dczyk
+Dear Algorithm
+Death Lives
+Dig For Worms
+Disadvantaged
+Disappear Me
 Disaster Natural
+Distractica Maximus
+Divide by Zero
+Dogmatic Affliction
+Domoro
+Don’t Bother Listening
+Ear Pollution
+Earth Maggots
+Elemental Faith
 Emergency Room
 Entertaining The Notions
 Enter the Adversary
+Enter the Adversary
+Erasure Point
+Erasure (State)
+Escape Goat
+Escapist Bait
+Esoterica
+Everyone I've Been
+Exceptionally Expendable
+Excuses Anonymous
+Exuberant Interjections
+Failing of the Self
 Fatal Flaw
+First Steps on Planet Nowhere
+Flow North
+fooBar
 From Here to Manhattan
 Futurecast
+Futurecast
+Gas Station Slant
+Gateway
+Giramondo
+Greasy Delicious
+Hashtag Swag
+Haunted Monkey Lamp
+Head Empty
+Hey Jasmine
+Hipster Haircut
+Hubba Hubba
+Human Team
 If And Only If
 Inbred Colors
+Inbred Colors
+Interobang!?
+Interra Frontiera
+Invariant
 Invariant
 It's A Trap
 Jesus Of The Machines
+Join The Future
+Joyous
+Junior Comma Robert
 Kids These Days
+King of the Cul-de-sac
+Landmines Ahoy
+Leafhouse
 Lifespan
+Little Fear
+Lonely Universe
+Lose touch
 Love Letters Of The 21st Century
+Lucky Shorts
+Lunar Instincts
 Mankind vs Kind Man
+Mechanism
 Midwest Mountains
 Millennium Shift
+Miserable Fun
+Model Eyes
+Moonshine Sonata
+Moral Abduction
+Mutex
+Naked Capitalism
+New Working Theory
+No Element
+No more walls
 No Reflection
+No Reflection
+Nostalgia Bait
+Nothing Special
+Nowhere On Earth
+Numb Over
+Odd Frontier
+One Piece Puzzle
+Outlook
 Palindrome
 Pantomime
+Pantomime
+Pawnbroker
+Phantom Frontier
+PIECES
+Pink Pubes
 Planet B
-Predictable Prophet
-Pulling On The Casket
-Robot Ego
-Science Will Save Us
-Smile For No Reason
-Something About Us
-Synthetic Love
-Tangible Imagination
-Television Morals
-The Atom Smashers
-The Just for Fun Theory
-The Plague
-The Shoemaker
-Unfollowed
-Uniquity
-Valladroid
-Visible
-We As Humans
-Whiskey Rose
-White Bikes
-White Lighters
-Social exhaustion
-Gateway
-Outlook
-Lose touch
-
-## Funny
-
-A Favorite Among The Masochists
-Amanda Eve
-American Beatboxer
-Angry Parents Unite
-As Seen On TV
-Bamboozled
-Batteries Not Included
-Bigfoot Is Real
-Bringing Back The Fanny Pack
-Cooler Than Cool
-Cooler Than Plaid Shorts
-Crooked Squash
-Distractica Maximus
-Don’t Bother Listening
-Ear Pollution
-Escape Goat
-Exceptionally Expendable
-Exuberant Interjections
-Greasy Delicious
-Hashtag Swag
-Hipster Haircut
-Hubba Hubba
-Miserable Fun
-Nothing Special
 Plunder For Booty
+Post-Natural Apocalypse
+Predictable Prophet
+Predictable Prophet
+Preoccupied
+Preprocessor directive
 Priceless Crisis
+Proven Threat
+Pulling On The Casket
+Race To Extinction
 Rats! Foiled again!
 Remarkably Unremarkable
+Resonant Awakening
+Retribution Coil
+Retrovertigo
+Rewilder
+Rift
 Roadside Relics
+Robot Ego
+Robot Ego
+Robotogo
 Roller Disco
 Running Rampant
+Science Will Save Us
+Science Will Save Us
+Secret Menu
+Seems So Human
 Send In The Clowns
+Shallow Bay
+Short Stilts / Tiny Stilts
+Sick soul
+Smile For No Reason
 Smile Stupid
+Social exhaustion
+Something About Us
+Song of fury
 Spaghetti For Breakfast
 Spitting Image Of The Village Idiot
 Stick It To The Man
 Strange & Delicious
+Sucker For Sadgirls
+Suspense & Disbelief
+Synthetic Love
+Tangible imagination
+Tangible Imagination
+Television Morals
+Terra Frontiera
+Texas Blood
+The American Nuclear
+The Atom Smashers
 The Cat’s Pajamas
+The Deadlifts
 The Dysfunctional Family’s Family Function
+The Escapist Room
+The Far Side of Forever
+The Just for Fun Theory
+The Plague
 The Playthings
 The Pocket Protectors
 There Goes The Neighborhood
+The Shoemaker
+The Shoemaker
 The Skamatics
+The Slanted
+The Slants
 The Time Traveler
+The Vertigo of Imagination
+Thinkpeace
 Tickled To Death
 Totes McGoats
+Toxic Optimism
+Trauma Responsibly 
+Treebones
+Trigger Cut
+Trustbreaker
 Turtle Rockets
+Unfollowed
+Unfollowed
+Uninviting
+Uniquity
+Uniquity
+Urban Fabric
+Utterly Disposable
+Valladroid
+Vanishing
+Vessel
+Viper Breath
+Visible
+Weasel Returns
+We As Humans
+We As Humans
 Welcome To Clown School
 Western Spaghetti
+Westward Wind
+Whiskey Rose
+White Bikes
+White Bikes
+White Lighters
+White Lighters
 Whoa There Cowboy
-
-## Binary Love
-
-Preprocessor directive
-//do something
-poll();
-pop();
-peek();
-fooBar
-The Traveling Salesman
-Divide by Zero
-Atomicity
-Bitmask
-Mutex
+Wickhaven
+With a little luck
+Wither
+Zeke
+Zera
+Zero Dollars
+Zick
+Zuck Fuckerberg
