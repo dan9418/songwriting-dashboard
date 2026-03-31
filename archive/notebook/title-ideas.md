@@ -1,5 +1,5 @@
 - Abyssimal
-- A Favorite Among The Masochists
+- A Favorite Among the Masochists
 - Allekiski
 - Always Everythingness
 - Amanda Eve
@@ -8,7 +8,7 @@
 - Ango
 - Antidote
 - Antifuturist
-- Army Of Idiots
+- Army of Idiots
 - Artless Fate
 - Askew
 - Astronauts in Love
@@ -22,9 +22,9 @@
 - Boneless
 - Born to Vibe
 - Brand New Blues
-- Bringing Back The Fanny Pack
+- Bringing Back the Fanny Pack
 - Broder Grande
-- built to heal
+- Built to Heal
 - Buttwink
 - Buying Science
 - Casual Gravity
@@ -39,10 +39,10 @@
 - Crooked Squash
 - Cruelty Division
 - Cured Instincts
-- dczyk
+- Dczyk
 - Dear Algorithm
 - Death Lives
-- Dig For Worms
+- Dig for Worms
 - Disadvantaged
 - Disappear Me
 - Disaster Natural
@@ -50,12 +50,12 @@
 - Divide by Zero
 - Dogmatic Affliction
 - Domoro
-- Don’t Bother
+- Don't Bother
 - Ear Pollution
 - Earth Maggots
 - Elemental Faith
 - Emergency Room
-- Entertaining The Notions
+- Entertaining the Notions
 - Enter the Adversary
 - Erasure Point
 - Escape Goat
@@ -80,24 +80,24 @@
 - Hey Jasmine
 - Hipster Haircut
 - Human Team
-- If And Only If
+- If and Only If
 - Inbred Colors
 - Interobang!?
 - Interra Frontiera
 - Invariant
-- It's A Trap
-- Jesus Of The Machines
-- Join The Future
+- It's a Trap
+- Jesus of the Machines
+- Join the Future
 - Joyous
 - Junior Comma Robert
 - Kids These Days
-- King of the Cul-de-sac
+- King of the Cul-De-Sac
 - Landmines, Ahoy!
 - Leafhouse
 - Lifespan
 - Little Fear
 - Lonely Universe
-- Lose touch
+- Lose Touch
 - Lucky Shorts
 - Lunar Instincts
 - Mankind vs Kind Man
@@ -112,11 +112,11 @@
 - Naked Capitalism
 - New Working Theory
 - No Element
-- No more walls
+- No More Walls
 - No Reflection
 - Nostalgia Bait
 - Nothing Special
-- Nowhere On Earth
+- Nowhere on Earth
 - Numb Over
 - Odd Frontier
 - One Piece Puzzle
@@ -124,18 +124,18 @@
 - Pantomime
 - Pawnbroker
 - Phantom Frontier
-- PIECES
+- Pieces
 - Pink Pubes
 - Planet B
-- Plunder For Booty
+- Plunder for Booty
 - Post-Natural Apocalypse
 - Predictable Prophet
 - Preoccupied
-- Preprocessor directive
+- Preprocessor Directive
 - Priceless Crisis
 - Proven Threat
-- Pulling On The Casket
-- Race To Extinction
+- Pulling on the Casket
+- Race to Extinction
 - Remarkably Unremarkable
 - Resonant Awakening
 - Retribution Coil
@@ -149,37 +149,37 @@
 - Running Rampant
 - Science Will Save Us
 - Secret Menu
-- Seems So Human
-- Send In The Clowns
+- Seems so Human
+- Send in the Clowns
 - Shallow Bay
 - Short Stilts / Tiny Stilts
-- Sick soul
-- Smile For No Reason
+- Sick Soul
+- Smile for No Reason
 - Smile Stupid
-- Social exhaustion
+- Social Exhaustion
 - Something About Us
-- Song of fury
-- Spaghetti For Breakfast
-- Spitting Image Of The Village Idiot
-- Stick It To The Man
+- Song of Fury
+- Spaghetti for Breakfast
+- Spitting Image of the Village Idiot
+- Stick It to the Man
 - Strange & Delicious
-- Sucker For Sadgirls
+- Sucker for Sadgirls
 - Suspense & Disbelief
-- Tangible imagination
+- Tangible Imagination
 - Television Morals
 - Terra Frontiera
 - Texas Blood
 - The American Nuclear
-- The Cat’s Pajamas
+- The Cat's Pajamas
 - The Deadlifts
-- The Dysfunctional Family’s Family Function
+- The Dysfunctional Family's Family Function
 - The Escapist Room
 - The Far Side of Forever
 - The Just for Fun Theory
 - The Plague
 - The Playthings
 - The Pocket Protectors
-- There Goes The Neighborhood
+- There Goes the Neighborhood
 - The Shoemaker
 - The Skamatics
 - The Slanted
@@ -187,10 +187,10 @@
 - The Time Traveler
 - The Vertigo of Imagination
 - Thinkpeace
-- Tickled To Death
+- Tickled to Death
 - Totes McGoats
 - Toxic Optimism
-- Trauma Responsibly 
+- Trauma Responsibly
 - Treebones
 - Trigger Cut
 - Trustbreaker
@@ -206,8 +206,8 @@
 - Viper Breath
 - Visible
 - Weasel Returns
-- We As Humans
-- Welcome To Clown School
+- We as Humans
+- Welcome to Clown School
 - Western Spaghetti
 - Westward Wind
 - Whiskey Rose
@@ -215,7 +215,7 @@
 - White Lighters
 - Whoa There Cowboy
 - Wickhaven
-- With a little luck
+- With a Little Luck
 - Wither
 - Zeke
 - Zera
