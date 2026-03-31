@@ -3,29 +3,20 @@
 - Allekiski
 - Always Everythingness
 - Amanda Eve
-- American Beatboxer
 - Anachronism
 - Anchor Crush
 - Ango
-- Angry Parents Unite
 - Antidote
 - Antifuturist
-- Anti-Information
 - Army Of Idiots
 - Artless Fate
 - Askew
-- As Seen On TV
 - Astronauts in Love
 - Atomicity
 - Badgers
 - Bad Intuition
 - Bamboozled
 - Barely Human
-- Batteries Not Included
-- Bed of Aluminum
-- Beneath the Weeping Willow
-- Big Cringe
-- Bigfoot Is Real
 - Bitmask
 - Blue Dummy
 - Boneless
@@ -42,15 +33,12 @@
 - Coast Alamo
 - Collision Path
 - Consensus Dead
-- Cooler Than Cool
-- Cooler Than Plaid Shorts
 - Cooper
 - Cosmic Debris
 - Country Rose
 - Crooked Squash
-- Cruetly Division
-- Cured Instinct
-- Dan Zachary
+- Cruelty Division
+- Cured Instincts
 - dczyk
 - Dear Algorithm
 - Death Lives
@@ -62,7 +50,7 @@
 - Divide by Zero
 - Dogmatic Affliction
 - Domoro
-- Don’t Bother Listening
+- Don’t Bother
 - Ear Pollution
 - Earth Maggots
 - Elemental Faith
@@ -70,7 +58,6 @@
 - Entertaining The Notions
 - Enter the Adversary
 - Erasure Point
-- Erasure (State)
 - Escape Goat
 - Escapist Bait
 - Esoterica
@@ -85,8 +72,6 @@
 - fooBar
 - From Here to Manhattan
 - Futurecast
-- Gas Station Slant
-- Gateway
 - Giramondo
 - Greasy Delicious
 - Hashtag Swag
@@ -94,7 +79,6 @@
 - Head Empty
 - Hey Jasmine
 - Hipster Haircut
-- Hubba Hubba
 - Human Team
 - If And Only If
 - Inbred Colors
@@ -108,13 +92,12 @@
 - Junior Comma Robert
 - Kids These Days
 - King of the Cul-de-sac
-- Landmines Ahoy
+- Landmines, Ahoy!
 - Leafhouse
 - Lifespan
 - Little Fear
 - Lonely Universe
 - Lose touch
-- Love Letters Of The 21st Century
 - Lucky Shorts
 - Lunar Instincts
 - Mankind vs Kind Man
@@ -137,7 +120,6 @@
 - Numb Over
 - Odd Frontier
 - One Piece Puzzle
-- Outlook
 - Palindrome
 - Pantomime
 - Pawnbroker
@@ -154,7 +136,6 @@
 - Proven Threat
 - Pulling On The Casket
 - Race To Extinction
-- Rats! Foiled again!
 - Remarkably Unremarkable
 - Resonant Awakening
 - Retribution Coil
@@ -184,13 +165,11 @@
 - Strange & Delicious
 - Sucker For Sadgirls
 - Suspense & Disbelief
-- Synthetic Love
 - Tangible imagination
 - Television Morals
 - Terra Frontiera
 - Texas Blood
 - The American Nuclear
-- The Atom Smashers
 - The Cat’s Pajamas
 - The Deadlifts
 - The Dysfunctional Family’s Family Function
