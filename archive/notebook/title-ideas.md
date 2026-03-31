@@ -5,11 +5,9 @@ Always Everythingness
 Amanda Eve
 American Beatboxer
 Anachronism
-Anachronism
 Anchor Crush
 Ango
 Angry Parents Unite
-Antidote
 Antidote
 Antifuturist
 Anti-Information
@@ -17,7 +15,6 @@ Army Of Idiots
 Artless Fate
 Askew
 As Seen On TV
-Astronauts in Love
 Astronauts in Love
 Atomicity
 Badgers
@@ -39,7 +36,6 @@ Broder Grande
 built to heal
 Buttwink
 Buying Science
-Casual Gravity
 Casual Gravity
 Cerebral Black
 Chimera
@@ -73,7 +69,6 @@ Elemental Faith
 Emergency Room
 Entertaining The Notions
 Enter the Adversary
-Enter the Adversary
 Erasure Point
 Erasure (State)
 Escape Goat
@@ -90,7 +85,6 @@ Flow North
 fooBar
 From Here to Manhattan
 Futurecast
-Futurecast
 Gas Station Slant
 Gateway
 Giramondo
@@ -104,10 +98,8 @@ Hubba Hubba
 Human Team
 If And Only If
 Inbred Colors
-Inbred Colors
 Interobang!?
 Interra Frontiera
-Invariant
 Invariant
 It's A Trap
 Jesus Of The Machines
@@ -139,7 +131,6 @@ New Working Theory
 No Element
 No more walls
 No Reflection
-No Reflection
 Nostalgia Bait
 Nothing Special
 Nowhere On Earth
@@ -149,7 +140,6 @@ One Piece Puzzle
 Outlook
 Palindrome
 Pantomime
-Pantomime
 Pawnbroker
 Phantom Frontier
 PIECES
@@ -157,7 +147,6 @@ Pink Pubes
 Planet B
 Plunder For Booty
 Post-Natural Apocalypse
-Predictable Prophet
 Predictable Prophet
 Preoccupied
 Preprocessor directive
@@ -174,11 +163,9 @@ Rewilder
 Rift
 Roadside Relics
 Robot Ego
-Robot Ego
 Robotogo
 Roller Disco
 Running Rampant
-Science Will Save Us
 Science Will Save Us
 Secret Menu
 Seems So Human
@@ -199,7 +186,6 @@ Sucker For Sadgirls
 Suspense & Disbelief
 Synthetic Love
 Tangible imagination
-Tangible Imagination
 Television Morals
 Terra Frontiera
 Texas Blood
@@ -216,7 +202,6 @@ The Playthings
 The Pocket Protectors
 There Goes The Neighborhood
 The Shoemaker
-The Shoemaker
 The Skamatics
 The Slanted
 The Slants
@@ -232,9 +217,7 @@ Trigger Cut
 Trustbreaker
 Turtle Rockets
 Unfollowed
-Unfollowed
 Uninviting
-Uniquity
 Uniquity
 Urban Fabric
 Utterly Disposable
@@ -245,14 +228,11 @@ Viper Breath
 Visible
 Weasel Returns
 We As Humans
-We As Humans
 Welcome To Clown School
 Western Spaghetti
 Westward Wind
 Whiskey Rose
 White Bikes
-White Bikes
-White Lighters
 White Lighters
 Whoa There Cowboy
 Wickhaven
