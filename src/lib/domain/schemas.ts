@@ -12,6 +12,8 @@ export const isoDateSchema = z
 
 export const nameSchema = z.string().trim().min(1);
 export const descriptionSchema = z.string();
+export const notebookPageTypeSchema = z.string().trim().min(1);
+export const notebookTimestampSchema = z.string().trim().min(1);
 
 function uniqueSlugListSchema(fieldName: string) {
   return z
@@ -95,7 +97,29 @@ export const updateTrackBodySchema = z.object({
   projectSlugs: uniqueSlugListSchema("projectSlugs").optional()
 });
 
+export const notebookFrontmatterSchema = z.object({
+  name: nameSchema,
+  description: descriptionSchema.default(""),
+  page_type: notebookPageTypeSchema,
+  created: notebookTimestampSchema,
+  last_modified: notebookTimestampSchema
+});
+
+export const createNotebookPageBodySchema = z.object({
+  name: nameSchema,
+  description: descriptionSchema.default(""),
+  pageType: notebookPageTypeSchema,
+  content: z.string().optional()
+});
+
+export const updateNotebookPageBodySchema = z.object({
+  content: z.string()
+});
+
 export type ArtistEntityRecord = z.infer<typeof artistEntitySchema>;
 export type ProjectEntityRecord = z.infer<typeof projectEntitySchema>;
 export type TrackAudioRecord = z.infer<typeof trackAudioSchema>;
 export type TrackEntityRecord = z.infer<typeof trackEntitySchema>;
+export type NotebookFrontmatterRecord = z.infer<typeof notebookFrontmatterSchema>;
+export type CreateNotebookPageBody = z.infer<typeof createNotebookPageBodySchema>;
+export type UpdateNotebookPageBody = z.infer<typeof updateNotebookPageBodySchema>;

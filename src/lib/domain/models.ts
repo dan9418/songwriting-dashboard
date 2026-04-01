@@ -39,3 +39,30 @@ export interface TrackEntity {
   projectSlugs: string[];
   audio: TrackAudioEntity[];
 }
+
+export interface NotebookPageFrontmatter {
+  name: string;
+  description: string;
+  pageType: string;
+  created: string;
+  lastModified: string;
+}
+
+export interface NotebookPageListItem {
+  slug: string;
+  name: string;
+  description: string;
+  pageType: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotebookPageRecord extends NotebookPageListItem {
+  storagePath: string;
+  content: string;
+  etag: string | null;
+  parsed: {
+    data: Record<string, unknown>;
+    content: string;
+  };
+}

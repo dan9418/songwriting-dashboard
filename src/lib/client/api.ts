@@ -3,6 +3,8 @@ interface CreatedEntityResponse {
   name: string;
 }
 
+import type { NotebookPageListItem, NotebookPageRecord } from "@/lib/domain/models";
+
 export interface ArtistCreatePayload {
   name: string;
   description?: string;
@@ -54,6 +56,17 @@ export interface TrackUpdatePayload {
   name?: string;
   artistSlugs?: string[];
   projectSlugs?: string[];
+}
+
+export interface NotebookPageCreatePayload {
+  name: string;
+  description?: string;
+  pageType: string;
+  content?: string;
+}
+
+export interface NotebookPageUpdatePayload {
+  content: string;
 }
 
 async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
@@ -125,6 +138,28 @@ export const api = {
 
   deleteTrack: (trackSlug: string) =>
     apiRequest<{ deleted: boolean }>(`/api/tracks/${encodeURIComponent(trackSlug)}`, {
+      method: "DELETE"
+    }),
+
+  listNotebookPages: () => apiRequest<NotebookPageListItem[]>(`/api/notebook/pages`),
+
+  getNotebookPage: (pageSlug: string) =>
+    apiRequest<NotebookPageRecord>(`/api/notebook/pages/${encodeURIComponent(pageSlug)}`),
+
+  createNotebookPage: (payload: NotebookPageCreatePayload) =>
+    apiRequest<NotebookPageRecord>(`/api/notebook/pages`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+
+  updateNotebookPage: (pageSlug: string, payload: NotebookPageUpdatePayload) =>
+    apiRequest<NotebookPageRecord>(`/api/notebook/pages/${encodeURIComponent(pageSlug)}`, {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    }),
+
+  deleteNotebookPage: (pageSlug: string) =>
+    apiRequest<{ deleted: boolean }>(`/api/notebook/pages/${encodeURIComponent(pageSlug)}`, {
       method: "DELETE"
     })
 };

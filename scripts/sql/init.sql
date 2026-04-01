@@ -23,6 +23,18 @@ CREATE TABLE IF NOT EXISTS tracks (
   PRIMARY KEY (slug)
 );
 
+CREATE TABLE IF NOT EXISTS notebook_pages (
+  slug TEXT NOT NULL CHECK (length(trim(slug)) > 0),
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  description TEXT NOT NULL DEFAULT '',
+  page_type TEXT NOT NULL CHECK (length(trim(page_type)) > 0),
+  storage_path TEXT NOT NULL CHECK (length(trim(storage_path)) > 0),
+  created_at TEXT NOT NULL CHECK (length(trim(created_at)) > 0),
+  updated_at TEXT NOT NULL CHECK (length(trim(updated_at)) > 0),
+  PRIMARY KEY (slug),
+  UNIQUE (storage_path)
+);
+
 CREATE TABLE IF NOT EXISTS images (
   slug TEXT NOT NULL CHECK (length(trim(slug)) > 0),
   path TEXT NOT NULL CHECK (length(trim(path)) > 0),
@@ -125,6 +137,9 @@ CREATE TABLE IF NOT EXISTS track_images (
 );
 
 CREATE INDEX IF NOT EXISTS idx_audio_track ON audio(track_slug);
+CREATE INDEX IF NOT EXISTS idx_notebook_pages_name ON notebook_pages(name);
+CREATE INDEX IF NOT EXISTS idx_notebook_pages_page_type ON notebook_pages(page_type);
+CREATE INDEX IF NOT EXISTS idx_notebook_pages_updated_at ON notebook_pages(updated_at);
 
 CREATE INDEX IF NOT EXISTS idx_artist_images_by_image ON artist_images(image_slug);
 CREATE INDEX IF NOT EXISTS idx_artist_external_links_by_link ON artist_external_links(external_link_id);
