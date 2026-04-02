@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { ActionButton } from "./form-controls";
+import { ActionButton } from "./action-button";
 import { useToast } from "./toast";
 
 const meta = {

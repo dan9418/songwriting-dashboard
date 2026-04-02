@@ -4,13 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useProgressRouter } from "@/components/navigation/route-progress";
 import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
-import {
-  ActionButton,
-  Field,
-  SelectInput,
-  TextArea,
-  TextInput
-} from "@/components/ui/form-controls";
+import { ActionButton } from "@/components/ui/action-button";
+import { Field } from "@/components/ui/field";
+import { SelectInput } from "@/components/ui/select-input";
+import { TextArea } from "@/components/ui/text-area";
+import { TextInput } from "@/components/ui/text-input";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import { slugToTitle } from "@/lib/utils/slug-display";

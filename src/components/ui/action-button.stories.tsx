@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { AppIcon } from "./app-icons";
-import { ActionButton } from "./form-controls";
+import { ActionButton } from "./action-button";
 
 const meta = {
   title: "UI/Action Button",

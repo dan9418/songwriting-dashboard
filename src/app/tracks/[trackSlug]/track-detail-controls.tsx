@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
 import { useProgressRouter } from "@/components/navigation/route-progress";
-import { ActionButton, TextInput } from "@/components/ui/form-controls";
+import { ActionButton } from "@/components/ui/action-button";
+import { TextInput } from "@/components/ui/text-input";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 

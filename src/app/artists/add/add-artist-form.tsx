@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useProgressRouter } from "@/components/navigation/route-progress";
-import { ActionButton, Field, TextArea, TextInput } from "@/components/ui/form-controls";
+import { ActionButton } from "@/components/ui/action-button";
+import { Field } from "@/components/ui/field";
+import { TextArea } from "@/components/ui/text-area";
+import { TextInput } from "@/components/ui/text-input";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import { ensureNonEmptySlug } from "@/lib/utils/slug";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ActionButton } from "@/components/ui/form-controls";
+import { ActionButton } from "@/components/ui/action-button";
 import type { D1TableShape, R2BucketShape } from "@/lib/cloudflare/admin";
 import type { R2ObjectSummary } from "@/lib/cloudflare/r2";
 

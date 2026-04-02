@@ -2,7 +2,7 @@
 
 import MDEditor from "@uiw/react-md-editor";
 import { useEffect, useMemo, useState } from "react";
-import { ActionButton } from "@/components/ui/form-controls";
+import { ActionButton } from "@/components/ui/action-button";
 
 type DocType = "lyrics" | "chords" | "notes";
 

@@ -2,7 +2,10 @@
 
 import MDEditor from "@uiw/react-md-editor";
 import { useEffect, useMemo, useState } from "react";
-import { ActionButton, Field, TextArea, TextInput } from "@/components/ui/form-controls";
+import { ActionButton } from "@/components/ui/action-button";
+import { Field } from "@/components/ui/field";
+import { TextArea } from "@/components/ui/text-area";
+import { TextInput } from "@/components/ui/text-input";
 import { useToast } from "@/components/ui/toast";
 import { AppIcon } from "@/components/ui/app-icons";
 import { api } from "@/lib/client/api";

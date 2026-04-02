@@ -1,7 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icons";
-import { ActionButton } from "@/components/ui/form-controls";
+import { ActionButton } from "@/components/ui/action-button";
 import { THEME_ELEMENT_SUMMARY } from "@/lib/theme/design-system";
 import { useTheme } from "@/components/theme/theme-provider";
 
