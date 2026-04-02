@@ -1,11 +1,12 @@
-- Serve images from CDN
+- Tags
 - Complete back catalog
 - Improve theme
+- Playback
+- Upload flows
 - Search
-- Fragments
-- Tags
+- Adjust markdown newline logic
+- Serve images from CDN
 - Covers
 - Enforce slug updates when renaming
 - Audit delete/unlink
 - Replace audio note filename convention
-- Adjust markdown newline logic
