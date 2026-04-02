@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/components/navigation/route-progress";
 import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
 import { ActionButton, Field, TextArea, TextInput } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
@@ -54,7 +54,7 @@ export function ArtistDetailControls({
   projectOptions: ProjectOption[];
   trackOptions: TrackOption[];
 }) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const { showToast } = useToast();
 
   const [name, setName] = useState(initialName);

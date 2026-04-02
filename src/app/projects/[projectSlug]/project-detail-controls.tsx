@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/components/navigation/route-progress";
 import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
 import {
   ActionButton,
@@ -100,7 +100,7 @@ export function ProjectDetailControls({
   artistOptions: SlugOption[];
   trackOptions: SlugOption[];
 }) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const { showToast } = useToast();
 
   const [name, setName] = useState(initialName);

@@ -171,6 +171,36 @@ h4 {
   animation: fade-up 320ms ease-out;
 }
 
+.route-progress {
+  pointer-events: none;
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  height: 3px;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.route-progress[data-visible="true"] {
+  opacity: 1;
+}
+
+.route-progress__bar {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 72%, white 28%) 0%,
+    var(--accent) 55%,
+    color-mix(in srgb, var(--accent) 82%, #87b2ff 18%) 100%
+  );
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 35%, transparent);
+  transition: transform 180ms ease-out;
+  will-change: transform;
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;

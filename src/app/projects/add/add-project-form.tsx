@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/components/navigation/route-progress";
 import { ActionButton, Field, SelectInput, TextArea, TextInput } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
@@ -28,7 +28,7 @@ export function AddProjectForm({
   artistOptions: SlugOption[];
   trackOptions: SlugOption[];
 }) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const { showToast } = useToast();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/components/navigation/route-progress";
 import { ActionButton, Field, TextInput } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import { ensureNonEmptySlug } from "@/lib/utils/slug";
@@ -23,7 +23,7 @@ export function CreateEntityForm({
   createEntity,
   getSuccessHref
 }: CreateEntityFormProps) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const { showToast } = useToast();
   const [name, setName] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

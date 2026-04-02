@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/components/navigation/route-progress";
 import { ActionButton, TextInput } from "@/components/ui/form-controls";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
@@ -39,7 +39,7 @@ export function TrackDetailControls({
   artistOptions: SlugOption[];
   projectOptions: SlugOption[];
 }) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const { showToast } = useToast();
 
   const [name, setName] = useState(initialName);
