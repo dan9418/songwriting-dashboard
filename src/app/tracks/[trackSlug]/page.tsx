@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
+import { listTagsFromCloudflare } from "@/lib/cloudflare/tags";
 import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
 import { TrackDetailControls } from "@/app/tracks/[trackSlug]/track-detail-controls";
 import { listArtistsFromCloudflare, listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
@@ -28,10 +29,11 @@ export default async function TrackByIdPage({
   params: Promise<{ trackSlug: string }>;
 }) {
   const { trackSlug } = await params;
-  const [track, artists, projects, imageSlug, requestOrigin] = await Promise.all([
+  const [track, artists, projects, tags, imageSlug, requestOrigin] = await Promise.all([
     getTrackMetadataFromCloudflare(trackSlug),
     listArtistsFromCloudflare(),
     listProjectsFromCloudflare(),
+    listTagsFromCloudflare(),
     getTrackDisplayImageSlug(trackSlug),
     getRequestOrigin()
   ]);
@@ -47,6 +49,7 @@ export default async function TrackByIdPage({
         initialName={track.name}
         initialArtistSlugs={track.artistSlugs}
         initialProjectSlugs={track.projectSlugs}
+        initialTagSlugs={track.tagSlugs}
         imageHref={imageSlug ? imageApiHref(imageSlug, requestOrigin) : null}
         artistOptions={artists.map((artist) => ({
           slug: artist.slug,
@@ -55,6 +58,10 @@ export default async function TrackByIdPage({
         projectOptions={projects.map((project) => ({
           slug: project.slug,
           name: project.name
+        }))}
+        tagOptions={tags.map((tag) => ({
+          slug: tag.slug,
+          name: tag.name
         }))}
       />
 

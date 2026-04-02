@@ -13,8 +13,8 @@ export function EntityIndexLayout({
   icon: AppIconName;
   title: string;
   subtitle: string;
-  actionHref: string;
-  actionLabel: string;
+  actionHref?: string;
+  actionLabel?: string;
   children?: ReactNode;
 }) {
   return (
@@ -29,10 +29,12 @@ export function EntityIndexLayout({
             <p className="text-sm text-[color:var(--muted)]">{subtitle}</p>
           </div>
         </div>
-        <Link href={actionHref} className="theme-button-link theme-button-link--primary">
-          <AppIcon name="plus" className="h-4 w-4" />
-          {actionLabel}
-        </Link>
+        {actionHref && actionLabel ? (
+          <Link href={actionHref} className="theme-button-link theme-button-link--primary">
+            <AppIcon name="plus" className="h-4 w-4" />
+            {actionLabel}
+          </Link>
+        ) : null}
       </div>
 
       {children ? <div className="border-t border-[color:var(--border-soft)] p-4">{children}</div> : null}

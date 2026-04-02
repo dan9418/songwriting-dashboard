@@ -28,17 +28,21 @@ export function TrackDetailControls({
   initialName,
   initialArtistSlugs,
   initialProjectSlugs,
+  initialTagSlugs,
   imageHref,
   artistOptions,
-  projectOptions
+  projectOptions,
+  tagOptions
 }: {
   trackSlug: string;
   initialName: string;
   initialArtistSlugs: string[];
   initialProjectSlugs: string[];
+  initialTagSlugs: string[];
   imageHref: string | null;
   artistOptions: SlugOption[];
   projectOptions: SlugOption[];
+  tagOptions: SlugOption[];
 }) {
   const router = useProgressRouter();
   const { showToast } = useToast();
@@ -46,13 +50,19 @@ export function TrackDetailControls({
   const [name, setName] = useState(initialName);
   const [artistSlugs, setArtistSlugs] = useState(initialArtistSlugs);
   const [projectSlugs, setProjectSlugs] = useState(initialProjectSlugs);
+  const [tagSlugs, setTagSlugs] = useState(initialTagSlugs);
+  const [allTagOptions, setAllTagOptions] = useState(tagOptions);
   const [editingName, setEditingName] = useState(false);
   const [savingHeader, setSavingHeader] = useState(false);
   const [savingArtists, setSavingArtists] = useState(false);
   const [savingProjects, setSavingProjects] = useState(false);
+  const [savingTags, setSavingTags] = useState(false);
+  const [creatingTag, setCreatingTag] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [addArtistSlug, setAddArtistSlug] = useState("");
   const [addProjectSlug, setAddProjectSlug] = useState("");
+  const [addTagSlug, setAddTagSlug] = useState("");
+  const [newTagName, setNewTagName] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const artistNameBySlug = useMemo(
@@ -62,6 +72,10 @@ export function TrackDetailControls({
   const projectNameBySlug = useMemo(
     () => Object.fromEntries(projectOptions.map((project) => [project.slug, project.name])),
     [projectOptions]
+  );
+  const tagNameBySlug = useMemo(
+    () => Object.fromEntries(allTagOptions.map((tag) => [tag.slug, tag.name])),
+    [allTagOptions]
   );
   const availableArtists = useMemo(
     () =>
@@ -76,6 +90,13 @@ export function TrackDetailControls({
         .filter((project) => !projectSlugs.includes(project.slug))
         .sort((left, right) => left.name.localeCompare(right.name)),
     [projectOptions, projectSlugs]
+  );
+  const availableTags = useMemo(
+    () =>
+      allTagOptions
+        .filter((tag) => !tagSlugs.includes(tag.slug))
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [allTagOptions, tagSlugs]
   );
 
   async function saveHeader() {
@@ -137,6 +158,50 @@ export function TrackDetailControls({
     }
   }
 
+  async function saveTagLinks(nextTagSlugs: string[]) {
+    setSavingTags(true);
+    setErrorMessage(null);
+    try {
+      await api.updateTrack(trackSlug, {
+        slug: trackSlug,
+        tagSlugs: nextTagSlugs
+      });
+      setTagSlugs(nextTagSlugs);
+      showToast("Tag links updated.");
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update tag links.");
+      showToast("Failed to update tag links.", "error");
+    } finally {
+      setSavingTags(false);
+    }
+  }
+
+  async function createAndLinkTag() {
+    setCreatingTag(true);
+    setErrorMessage(null);
+    try {
+      const created = await api.createTag({
+        name: newTagName,
+        trackSlugs: [trackSlug]
+      });
+      setAllTagOptions((current) =>
+        [...current, { slug: created.slug, name: created.name }].sort((left, right) =>
+          left.name.localeCompare(right.name)
+        )
+      );
+      setTagSlugs((current) => [...current, created.slug]);
+      setNewTagName("");
+      showToast("Tag created and linked.");
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to create tag.");
+      showToast("Failed to create tag.", "error");
+    } finally {
+      setCreatingTag(false);
+    }
+  }
+
   async function onDelete() {
     const confirmed = window.confirm(
       `Delete track "${name || trackSlug}"? This cannot be undone and linked rows will be removed.`
@@ -170,44 +235,44 @@ export function TrackDetailControls({
             alt={`${name} artwork`}
           />
           <div className="min-w-0 flex-1">
-          {!editingName ? (
-            <>
-              <div className="flex items-center gap-2">
-                <h1 className="truncate text-2xl font-semibold">{name}</h1>
-                <button
-                  type="button"
-                  className="rounded-lg bg-[color:var(--button-ghost-bg)] px-2 py-1 text-sm text-[color:var(--button-ghost-text)] transition hover:bg-[color:var(--button-ghost-hover)]"
-                  aria-label="Edit track name"
-                  onClick={() => setEditingName(true)}
+            {!editingName ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <h1 className="truncate text-2xl font-semibold">{name}</h1>
+                  <button
+                    type="button"
+                    className="rounded-lg bg-[color:var(--button-ghost-bg)] px-2 py-1 text-sm text-[color:var(--button-ghost-text)] transition hover:bg-[color:var(--button-ghost-hover)]"
+                    aria-label="Edit track name"
+                    onClick={() => setEditingName(true)}
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="text-sm text-[color:var(--muted)]">{trackSlug}</p>
+              </>
+            ) : (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <TextInput
+                  className="w-full sm:max-w-md"
+                  value={name}
+                  onChange={(event) => setName(event.currentTarget.value)}
+                />
+                <ActionButton disabled={savingHeader || name.trim().length === 0} onClick={saveHeader}>
+                  {savingHeader ? "Saving..." : "Save"}
+                </ActionButton>
+                <ActionButton
+                  tone="ghost"
+                  disabled={savingHeader}
+                  onClick={() => {
+                    setEditingName(false);
+                    setName(initialName);
+                  }}
                 >
-                  <PencilIcon className="h-4 w-4" />
-                </button>
+                  Cancel
+                </ActionButton>
               </div>
-              <p className="text-sm text-[color:var(--muted)]">{trackSlug}</p>
-            </>
-          ) : (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <TextInput
-                className="w-full sm:max-w-md"
-                value={name}
-                onChange={(event) => setName(event.currentTarget.value)}
-              />
-              <ActionButton disabled={savingHeader || name.trim().length === 0} onClick={saveHeader}>
-                {savingHeader ? "Saving..." : "Save"}
-              </ActionButton>
-              <ActionButton
-                tone="ghost"
-                disabled={savingHeader}
-                onClick={() => {
-                  setEditingName(false);
-                  setName(initialName);
-                }}
-              >
-                Cancel
-              </ActionButton>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <Link href="/tracks" className="theme-button-link theme-button-link--ghost">
@@ -219,7 +284,7 @@ export function TrackDetailControls({
         </div>
       </div>
 
-      <div className="grid items-start gap-4 md:grid-cols-2">
+      <div className="grid items-start gap-4 xl:grid-cols-3">
         <div className="panel grid self-start gap-3 p-4">
           <h2 className="text-lg font-semibold">Artists</h2>
           {artistSlugs.length === 0 ? (
@@ -311,6 +376,70 @@ export function TrackDetailControls({
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+
+        <div className="panel grid self-start gap-3 p-4">
+          <h2 className="text-lg font-semibold">Tags</h2>
+          {tagSlugs.length === 0 ? (
+            <p className="text-sm text-[color:var(--muted)]">No tags linked.</p>
+          ) : (
+            <ul className="grid gap-2 text-sm">
+              {tagSlugs.map((tagSlug) => (
+                <li key={tagSlug} className="flex items-center justify-between gap-2">
+                  <Link href={`/tags/${tagSlug}`} className="underline-offset-4 hover:underline">
+                    {tagNameBySlug[tagSlug] ?? tagSlug}
+                  </Link>
+                  <ActionButton
+                    tone="ghost"
+                    disabled={savingTags || creatingTag}
+                    onClick={() => saveTagLinks(tagSlugs.filter((slug) => slug !== tagSlug))}
+                  >
+                    Remove
+                  </ActionButton>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="flex items-center gap-2">
+            <select
+              className="theme-input"
+              value={addTagSlug}
+              disabled={savingTags || creatingTag || availableTags.length === 0}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setAddTagSlug(value);
+                if (!value) {
+                  return;
+                }
+                setAddTagSlug("");
+                void saveTagLinks([...tagSlugs, value]);
+              }}
+            >
+              <option value="">Add tag...</option>
+              {availableTags.map((tag) => (
+                <option key={tag.slug} value={tag.slug}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2 border-t border-[color:var(--border-soft)] pt-3">
+            <p className="text-sm font-medium text-[color:var(--muted)]">Create new tag</p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <TextInput
+                value={newTagName}
+                placeholder="New tag name"
+                disabled={creatingTag || savingTags}
+                onChange={(event) => setNewTagName(event.currentTarget.value)}
+              />
+              <ActionButton
+                disabled={creatingTag || savingTags || newTagName.trim().length === 0}
+                onClick={createAndLinkTag}
+              >
+                {creatingTag ? "Creating..." : "Create"}
+              </ActionButton>
+            </div>
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@ const PRIMARY_NAV_ITEMS = [
   { href: "/artists", label: "Artists", icon: "artist" },
   { href: "/projects", label: "Projects", icon: "project" },
   { href: "/tracks", label: "Tracks", icon: "track" },
+  { href: "/tags", label: "Tags", icon: "tag" },
   { href: "/admin", label: "Admin", icon: "admin" }
 ] satisfies Array<{ href: string; label: string; icon: AppIconName }>;
 

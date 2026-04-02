@@ -1,9 +1,9 @@
+import type { NotebookPageListItem, NotebookPageRecord } from "@/lib/domain/models";
+
 interface CreatedEntityResponse {
   slug: string;
   name: string;
 }
-
-import type { NotebookPageListItem, NotebookPageRecord } from "@/lib/domain/models";
 
 export interface ArtistCreatePayload {
   name: string;
@@ -49,6 +49,7 @@ export interface TrackCreatePayload {
   name: string;
   artistSlugs?: string[];
   projectSlugs?: string[];
+  tagSlugs?: string[];
 }
 
 export interface TrackUpdatePayload {
@@ -56,6 +57,18 @@ export interface TrackUpdatePayload {
   name?: string;
   artistSlugs?: string[];
   projectSlugs?: string[];
+  tagSlugs?: string[];
+}
+
+export interface TagCreatePayload {
+  name: string;
+  trackSlugs?: string[];
+}
+
+export interface TagUpdatePayload {
+  slug: string;
+  name?: string;
+  trackSlugs?: string[];
 }
 
 export interface NotebookPageCreatePayload {
@@ -138,6 +151,23 @@ export const api = {
 
   deleteTrack: (trackSlug: string) =>
     apiRequest<{ deleted: boolean }>(`/api/tracks/${encodeURIComponent(trackSlug)}`, {
+      method: "DELETE"
+    }),
+
+  createTag: (payload: TagCreatePayload) =>
+    apiRequest<CreatedEntityResponse>(`/api/tags`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+
+  updateTag: (tagSlug: string, payload: TagUpdatePayload) =>
+    apiRequest(`/api/tags/${encodeURIComponent(tagSlug)}`, {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    }),
+
+  deleteTag: (tagSlug: string) =>
+    apiRequest<{ deleted: boolean }>(`/api/tags/${encodeURIComponent(tagSlug)}`, {
       method: "DELETE"
     }),
 

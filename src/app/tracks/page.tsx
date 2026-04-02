@@ -1,5 +1,6 @@
 import { EntityIndexLayout } from "@/components/entities/entity-index-layout";
 import { imageApiHref, listTrackDisplayImageSlugs } from "@/lib/cloudflare/images";
+import { listTagsFromCloudflare } from "@/lib/cloudflare/tags";
 import { listTracksFromCloudflare } from "@/lib/cloudflare/tracks";
 import { TracksTable, type TracksTableItem } from "@/app/tracks/tracks-table";
 import { getRequestOrigin } from "@/lib/request-origin";
@@ -8,8 +9,9 @@ export const dynamic = "force-dynamic";
 
 export default async function TracksPage() {
   try {
-    const [sourceItems, imageSlugsByTrack, requestOrigin] = await Promise.all([
+    const [sourceItems, tagItems, imageSlugsByTrack, requestOrigin] = await Promise.all([
       listTracksFromCloudflare(),
+      listTagsFromCloudflare(),
       listTrackDisplayImageSlugs(),
       getRequestOrigin()
     ]);
@@ -18,6 +20,7 @@ export default async function TracksPage() {
       name: item.name,
       projectSlugs: item.projectSlugs,
       artistSlugs: item.artistSlugs,
+      tagSlugs: item.tagSlugs,
       hasLyrics: item.hasLyrics,
       hasChords: item.hasChords,
       hasNotes: item.hasNotes,
@@ -35,7 +38,14 @@ export default async function TracksPage() {
         actionHref="/tracks/add"
         actionLabel="Add Track"
       >
-        <TracksTable items={items} withPanel={false} />
+        <TracksTable
+          items={items}
+          tagOptions={tagItems.map((tag) => ({
+            slug: tag.slug,
+            name: tag.name
+          }))}
+          withPanel={false}
+        />
       </EntityIndexLayout>
     );
   } catch (error) {

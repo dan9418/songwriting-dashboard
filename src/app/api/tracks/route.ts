@@ -35,6 +35,7 @@ export async function POST(request: Request) {
     const name = requireTrimmedString(body.name, "name");
     const artistSlugs = optionalSlugList(body.artistSlugs, "artistSlugs");
     const projectSlugs = optionalSlugList(body.projectSlugs, "projectSlugs");
+    const tagSlugs = optionalSlugList(body.tagSlugs, "tagSlugs");
 
     const entity = await createTrackInCloudflare(name);
 
@@ -69,6 +70,19 @@ export async function POST(request: Request) {
           ON CONFLICT(project_slug, track_slug) DO UPDATE SET position = excluded.position;
           `,
           [projectSlug, entity.slug, nextPosition]
+        );
+      }
+    }
+
+    if (tagSlugs) {
+      for (const tagSlug of tagSlugs) {
+        await queryD1(
+          `
+          INSERT INTO track_tags (track_slug, tag_slug)
+          VALUES (?, ?)
+          ON CONFLICT(track_slug, tag_slug) DO NOTHING;
+          `,
+          [entity.slug, tagSlug]
         );
       }
     }

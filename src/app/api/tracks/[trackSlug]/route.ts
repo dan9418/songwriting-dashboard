@@ -80,6 +80,7 @@ export async function PUT(
       payload.name === undefined ? current.name : requireTrimmedString(payload.name, "name");
     const nextArtistSlugs = optionalSlugList(payload.artistSlugs, "artistSlugs");
     const nextProjectSlugs = optionalSlugList(payload.projectSlugs, "projectSlugs");
+    const nextTagSlugs = optionalSlugList(payload.tagSlugs, "tagSlugs");
 
     await queryD1(
       `
@@ -123,6 +124,20 @@ export async function PUT(
           ON CONFLICT(project_slug, track_slug) DO UPDATE SET position = excluded.position;
           `,
           [projectSlug, trackSlug, nextPosition]
+        );
+      }
+    }
+
+    if (nextTagSlugs) {
+      await queryD1(`DELETE FROM track_tags WHERE track_slug = ?;`, [trackSlug]);
+      for (const tagSlug of nextTagSlugs) {
+        await queryD1(
+          `
+          INSERT INTO track_tags (track_slug, tag_slug)
+          VALUES (?, ?)
+          ON CONFLICT(track_slug, tag_slug) DO NOTHING;
+          `,
+          [trackSlug, tagSlug]
         );
       }
     }

@@ -9,6 +9,7 @@ export interface TracksTableItem {
   name: string;
   projectSlugs: string[];
   artistSlugs: string[];
+  tagSlugs: string[];
   imageHref?: string | null;
   hasLyrics: boolean;
   hasChords: boolean;
@@ -18,15 +19,19 @@ export interface TracksTableItem {
 
 const ALL_ARTISTS_FILTER = "__all_artists__";
 const UNASSIGNED_ARTIST_FILTER = "__unassigned_artist__";
+const ALL_TAGS_FILTER = "__all_tags__";
 
 export function TracksTable({
   items,
+  tagOptions,
   withPanel = true
 }: {
   items: TracksTableItem[];
+  tagOptions: Array<{ slug: string; name: string }>;
   withPanel?: boolean;
 }) {
   const [artistFilter, setArtistFilter] = useState(ALL_ARTISTS_FILTER);
+  const [tagFilter, setTagFilter] = useState(ALL_TAGS_FILTER);
 
   const artistOptions = useMemo(() => {
     const slugs = new Set<string>();
@@ -42,44 +47,80 @@ export function TracksTable({
     );
   }, [items]);
 
+  const tagNameBySlug = useMemo(
+    () => Object.fromEntries(tagOptions.map((tag) => [tag.slug, tag.name])),
+    [tagOptions]
+  );
+
   const filteredItems = useMemo(() => {
-    if (artistFilter === ALL_ARTISTS_FILTER) {
-      return items;
+    return items.filter((item) => {
+      const matchesArtist =
+        artistFilter === ALL_ARTISTS_FILTER
+          ? true
+          : artistFilter === UNASSIGNED_ARTIST_FILTER
+            ? item.artistSlugs.length === 0
+            : item.artistSlugs.includes(artistFilter);
+      const matchesTag = tagFilter === ALL_TAGS_FILTER ? true : item.tagSlugs.includes(tagFilter);
+      return matchesArtist && matchesTag;
+    });
+  }, [artistFilter, items, tagFilter]);
+
+  const emptyMessage = useMemo(() => {
+    if (artistFilter === ALL_ARTISTS_FILTER && tagFilter === ALL_TAGS_FILTER) {
+      return "No tracks found.";
     }
-
-    if (artistFilter === UNASSIGNED_ARTIST_FILTER) {
-      return items.filter((item) => item.artistSlugs.length === 0);
+    if (artistFilter === UNASSIGNED_ARTIST_FILTER && tagFilter === ALL_TAGS_FILTER) {
+      return "No tracks without an assigned artist.";
     }
-
-    return items.filter((item) => item.artistSlugs.includes(artistFilter));
-  }, [artistFilter, items]);
-
-  const emptyMessage =
-    artistFilter === UNASSIGNED_ARTIST_FILTER
-      ? "No tracks without an assigned artist."
-      : artistFilter === ALL_ARTISTS_FILTER
-        ? "No tracks found."
-        : `No tracks found for ${slugToTitle(artistFilter)}.`;
+    if (artistFilter === ALL_ARTISTS_FILTER && tagFilter !== ALL_TAGS_FILTER) {
+      return `No tracks found for tag ${tagNameBySlug[tagFilter] ?? tagFilter}.`;
+    }
+    if (artistFilter === UNASSIGNED_ARTIST_FILTER && tagFilter !== ALL_TAGS_FILTER) {
+      return `No unassigned-artist tracks found for tag ${tagNameBySlug[tagFilter] ?? tagFilter}.`;
+    }
+    if (artistFilter !== ALL_ARTISTS_FILTER && tagFilter === ALL_TAGS_FILTER) {
+      return `No tracks found for ${slugToTitle(artistFilter)}.`;
+    }
+    return `No tracks found for ${slugToTitle(artistFilter)} with tag ${tagNameBySlug[tagFilter] ?? tagFilter}.`;
+  }, [artistFilter, tagFilter, tagNameBySlug]);
 
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium text-[color:var(--muted)]">Artist filter</span>
-          <select
-            value={artistFilter}
-            onChange={(event) => setArtistFilter(event.currentTarget.value)}
-            className="theme-input min-w-64 ring-0"
-          >
-            <option value={ALL_ARTISTS_FILTER}>All artists</option>
-            <option value={UNASSIGNED_ARTIST_FILTER}>No artist assigned</option>
-            {artistOptions.map((artistSlug) => (
-              <option key={artistSlug} value={artistSlug}>
-                {slugToTitle(artistSlug)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="grid gap-1 text-sm">
+            <span className="font-medium text-[color:var(--muted)]">Artist filter</span>
+            <select
+              value={artistFilter}
+              onChange={(event) => setArtistFilter(event.currentTarget.value)}
+              className="theme-input min-w-64 ring-0"
+            >
+              <option value={ALL_ARTISTS_FILTER}>All artists</option>
+              <option value={UNASSIGNED_ARTIST_FILTER}>No artist assigned</option>
+              {artistOptions.map((artistSlug) => (
+                <option key={artistSlug} value={artistSlug}>
+                  {slugToTitle(artistSlug)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="grid gap-1 text-sm">
+            <span className="font-medium text-[color:var(--muted)]">Tag filter</span>
+            <select
+              value={tagFilter}
+              onChange={(event) => setTagFilter(event.currentTarget.value)}
+              className="theme-input min-w-64 ring-0"
+            >
+              <option value={ALL_TAGS_FILTER}>All tags</option>
+              {tagOptions.map((tag) => (
+                <option key={tag.slug} value={tag.slug}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <p className="text-sm text-[color:var(--muted)]">
           Showing {filteredItems.length.toLocaleString()} of {items.length.toLocaleString()} tracks
         </p>

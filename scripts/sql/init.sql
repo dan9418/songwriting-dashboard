@@ -23,6 +23,12 @@ CREATE TABLE IF NOT EXISTS tracks (
   PRIMARY KEY (slug)
 );
 
+CREATE TABLE IF NOT EXISTS tags (
+  slug TEXT NOT NULL CHECK (length(trim(slug)) > 0),
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  PRIMARY KEY (slug)
+);
+
 CREATE TABLE IF NOT EXISTS notebook_pages (
   slug TEXT NOT NULL CHECK (length(trim(slug)) > 0),
   name TEXT NOT NULL CHECK (length(trim(name)) > 0),
@@ -128,6 +134,14 @@ CREATE TABLE IF NOT EXISTS track_artists (
   FOREIGN KEY (artist_slug) REFERENCES artists(slug) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS track_tags (
+  track_slug TEXT NOT NULL,
+  tag_slug TEXT NOT NULL,
+  PRIMARY KEY (track_slug, tag_slug),
+  FOREIGN KEY (track_slug) REFERENCES tracks(slug) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (tag_slug) REFERENCES tags(slug) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS track_images (
   track_slug TEXT NOT NULL,
   image_slug TEXT NOT NULL,
@@ -148,5 +162,6 @@ CREATE INDEX IF NOT EXISTS idx_project_tracks_by_track ON project_tracks(track_s
 CREATE INDEX IF NOT EXISTS idx_project_images_by_image ON project_images(image_slug);
 CREATE INDEX IF NOT EXISTS idx_project_external_links_by_link ON project_external_links(external_link_id);
 CREATE INDEX IF NOT EXISTS idx_track_artists_by_artist ON track_artists(artist_slug);
+CREATE INDEX IF NOT EXISTS idx_track_tags_by_tag ON track_tags(tag_slug);
 CREATE INDEX IF NOT EXISTS idx_track_external_links_by_link ON track_external_links(external_link_id);
 CREATE INDEX IF NOT EXISTS idx_track_images_by_image ON track_images(image_slug);

@@ -20,6 +20,11 @@ erDiagram
     TEXT name
   }
 
+  TAGS {
+    TEXT slug PK
+    TEXT name
+  }
+
   %% Core relationship tables.
   PROJECT_ARTISTS {
     TEXT project_slug PK, FK
@@ -35,6 +40,11 @@ erDiagram
   TRACK_ARTISTS {
     TEXT track_slug PK, FK
     TEXT artist_slug PK, FK
+  }
+
+  TRACK_TAGS {
+    TEXT track_slug PK, FK
+    TEXT tag_slug PK, FK
   }
 
   %% Track media metadata.
@@ -96,6 +106,8 @@ erDiagram
   TRACKS ||--o{ PROJECT_TRACKS : links
   TRACKS ||--o{ TRACK_ARTISTS : links
   ARTISTS ||--o{ TRACK_ARTISTS : links
+  TRACKS ||--o{ TRACK_TAGS : links
+  TAGS ||--o{ TRACK_TAGS : links
   TRACKS ||--o{ AUDIO : has
   ARTISTS ||--o{ ARTIST_IMAGES : links
   IMAGES ||--o{ ARTIST_IMAGES : linked_to

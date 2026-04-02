@@ -62,7 +62,14 @@ export const trackEntitySchema = z.object({
   name: nameSchema,
   artistSlugs: uniqueSlugListSchema("artistSlugs"),
   projectSlugs: uniqueSlugListSchema("projectSlugs"),
+  tagSlugs: uniqueSlugListSchema("tagSlugs"),
   audio: z.array(trackAudioSchema).default([])
+});
+
+export const tagEntitySchema = z.object({
+  slug: slugSchema,
+  name: nameSchema,
+  trackSlugs: uniqueSlugListSchema("trackSlugs")
 });
 
 export const updateArtistBodySchema = z.object({
@@ -94,7 +101,14 @@ export const updateTrackBodySchema = z.object({
   slug: slugSchema.optional(),
   name: nameSchema.optional(),
   artistSlugs: uniqueSlugListSchema("artistSlugs").optional(),
-  projectSlugs: uniqueSlugListSchema("projectSlugs").optional()
+  projectSlugs: uniqueSlugListSchema("projectSlugs").optional(),
+  tagSlugs: uniqueSlugListSchema("tagSlugs").optional()
+});
+
+export const updateTagBodySchema = z.object({
+  slug: slugSchema.optional(),
+  name: nameSchema.optional(),
+  trackSlugs: uniqueSlugListSchema("trackSlugs").optional()
 });
 
 export const notebookFrontmatterSchema = z.object({
@@ -120,6 +134,7 @@ export type ArtistEntityRecord = z.infer<typeof artistEntitySchema>;
 export type ProjectEntityRecord = z.infer<typeof projectEntitySchema>;
 export type TrackAudioRecord = z.infer<typeof trackAudioSchema>;
 export type TrackEntityRecord = z.infer<typeof trackEntitySchema>;
+export type TagEntityRecord = z.infer<typeof tagEntitySchema>;
 export type NotebookFrontmatterRecord = z.infer<typeof notebookFrontmatterSchema>;
 export type CreateNotebookPageBody = z.infer<typeof createNotebookPageBodySchema>;
 export type UpdateNotebookPageBody = z.infer<typeof updateNotebookPageBodySchema>;

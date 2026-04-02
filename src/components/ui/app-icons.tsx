@@ -5,6 +5,7 @@ export type AppIconName =
   | "artist"
   | "project"
   | "track"
+  | "tag"
   | "admin"
   | "plus"
   | "note"
@@ -72,6 +73,15 @@ export function AppIcon({ name, className, ...props }: { name: AppIconName } & I
         <circle cx="4" cy="7.5" r=".75" fill="currentColor" stroke="none" />
         <circle cx="4" cy="12" r=".75" fill="currentColor" stroke="none" />
         <circle cx="4" cy="16.5" r=".75" fill="currentColor" stroke="none" />
+      </BaseIcon>
+    );
+  }
+
+  if (name === "tag") {
+    return (
+      <BaseIcon className={className} {...props}>
+        <path d="M11 4.5H5.75A1.75 1.75 0 0 0 4 6.25v5.1c0 .46.18.9.5 1.23l6.92 6.92a1.75 1.75 0 0 0 2.47 0l5.61-5.61a1.75 1.75 0 0 0 0-2.47l-6.92-6.92A1.73 1.73 0 0 0 11 4.5Z" />
+        <circle cx="7.75" cy="8.25" r="1.1" fill="currentColor" stroke="none" />
       </BaseIcon>
     );
   }

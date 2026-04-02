@@ -13,6 +13,7 @@ describe("slug and schema validation", () => {
       name: "Test",
       artistSlugs: [],
       projectSlugs: [],
+      tagSlugs: [],
       audio: []
     });
 

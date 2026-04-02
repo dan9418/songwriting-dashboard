@@ -22,11 +22,17 @@ interface TrackProjectRow {
   projectSlug: string;
 }
 
+interface TrackTagRow {
+  trackSlug: string;
+  tagSlug: string;
+}
+
 export interface CloudflareTrackListItem {
   slug: string;
   name: string;
   projectSlugs: string[];
   artistSlugs: string[];
+  tagSlugs: string[];
   hasLyrics: boolean;
   hasChords: boolean;
   hasNotes: boolean;
@@ -176,6 +182,14 @@ export async function listTracksFromCloudflare(): Promise<CloudflareTrackListIte
     FROM track_artists
     `
   );
+  const trackTagRows = await queryD1<TrackTagRow>(
+    `
+    SELECT
+      track_slug AS trackSlug,
+      tag_slug AS tagSlug
+    FROM track_tags
+    `
+  );
   const projectSlugsByTrack = new Map<string, string[]>();
   for (const row of trackProjectRows) {
     const existing = projectSlugsByTrack.get(row.trackSlug) ?? [];
@@ -188,6 +202,12 @@ export async function listTracksFromCloudflare(): Promise<CloudflareTrackListIte
     existing.push(row.artistSlug);
     artistSlugsByTrack.set(row.trackSlug, existing);
   }
+  const tagSlugsByTrack = new Map<string, string[]>();
+  for (const row of trackTagRows) {
+    const existing = tagSlugsByTrack.get(row.trackSlug) ?? [];
+    existing.push(row.tagSlug);
+    tagSlugsByTrack.set(row.trackSlug, existing);
+  }
 
   return rows.map((row) => ({
     ...(docFlagsByTrack.get(row.slug) ?? createEmptyTrackDocFlags()),
@@ -195,6 +215,7 @@ export async function listTracksFromCloudflare(): Promise<CloudflareTrackListIte
     name: row.name,
     projectSlugs: projectSlugsByTrack.get(row.slug) ?? [],
     artistSlugs: artistSlugsByTrack.get(row.slug) ?? [],
+    tagSlugs: tagSlugsByTrack.get(row.slug) ?? [],
     audioCount: toInt(row.audioCount),
     noteCount: toInt(row.noteCount),
     demoCount: toInt(row.demoCount),
@@ -269,6 +290,15 @@ export async function getTrackMetadataFromCloudflare(
     `,
     [trackSlug]
   );
+  const tagRows = await queryD1<{ tagSlug: string }>(
+    `
+    SELECT tag_slug AS tagSlug
+    FROM track_tags
+    WHERE track_slug = ?
+    ORDER BY tag_slug ASC;
+    `,
+    [trackSlug]
+  );
   const audioFiles = await listTrackAudioFilesFromR2(trackSlug);
   const audioFileBySlug = new Map(audioFiles.map((item) => [item.slug, item]));
   const noteCount = audioRows.filter((item) => item.type === "note").length;
@@ -282,6 +312,7 @@ export async function getTrackMetadataFromCloudflare(
     name: track.name,
     projectSlugs: projectRows.map((item) => item.projectSlug),
     artistSlugs: artistRows.map((item) => item.artistSlug),
+    tagSlugs: tagRows.map((item) => item.tagSlug),
     audioCount: audioRows.length,
     noteCount,
     demoCount,

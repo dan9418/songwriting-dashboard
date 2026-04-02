@@ -37,7 +37,14 @@ export interface TrackEntity {
   name: string;
   artistSlugs: string[];
   projectSlugs: string[];
+  tagSlugs: string[];
   audio: TrackAudioEntity[];
+}
+
+export interface TagEntity {
+  slug: string;
+  name: string;
+  trackSlugs: string[];
 }
 
 export interface NotebookPageFrontmatter {

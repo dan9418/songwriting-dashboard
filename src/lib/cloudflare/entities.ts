@@ -11,10 +11,19 @@ export interface CreatedEntityRecord {
   name: string;
 }
 
-async function assertSlugAvailable(table: "artists" | "projects" | "tracks", slug: string) {
+export type EntityTable = "artists" | "projects" | "tracks" | "tags";
+
+function entityLabel(table: EntityTable): string {
+  return table.slice(0, -1).replace(/^\w/, (char) => char.toUpperCase());
+}
+
+export async function assertSlugAvailable(table: EntityTable, slug: string, excludingSlug?: string) {
   const rows = await queryD1<SlugRow>(`SELECT slug FROM ${table} WHERE slug = ? LIMIT 1;`, [slug]);
   if (rows.length > 0) {
-    throw conflict(`${table.slice(0, -1).replace(/^\w/, (char) => char.toUpperCase())} "${slug}" already exists.`);
+    if (excludingSlug && rows[0]?.slug === excludingSlug) {
+      return;
+    }
+    throw conflict(`${entityLabel(table)} "${slug}" already exists.`);
   }
 }
 
@@ -42,5 +51,13 @@ export async function createTrackInCloudflare(name: string): Promise<CreatedEnti
   const slug = ensureNonEmptySlug(trimmedName);
   await assertSlugAvailable("tracks", slug);
   await queryD1(`INSERT INTO tracks (slug, name) VALUES (?, ?);`, [slug, trimmedName]);
+  return { slug, name: trimmedName };
+}
+
+export async function createTagInCloudflare(name: string): Promise<CreatedEntityRecord> {
+  const trimmedName = name.trim();
+  const slug = ensureNonEmptySlug(trimmedName);
+  await assertSlugAvailable("tags", slug);
+  await queryD1(`INSERT INTO tags (slug, name) VALUES (?, ?);`, [slug, trimmedName]);
   return { slug, name: trimmedName };
 }
