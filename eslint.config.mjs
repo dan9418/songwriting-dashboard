@@ -17,6 +17,7 @@ const config = [
       "archive/**",
       ".open-next/**",
       ".wrangler/**",
+      "storybook-static/**",
       "next-env.d.ts",
       "scripts/**/*.js"
     ]
