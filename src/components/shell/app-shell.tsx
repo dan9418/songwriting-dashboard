@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { RouteProgressProvider } from "@/components/navigation/route-progress";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icons";
 
@@ -27,7 +27,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <RouteProgressProvider>
+    <Suspense fallback={<AppShellFrame isActive={isActive}>{children}</AppShellFrame>}>
+      <RouteProgressProvider>
+        <AppShellFrame isActive={isActive}>{children}</AppShellFrame>
+      </RouteProgressProvider>
+    </Suspense>
+  );
+}
+
+function AppShellFrame({
+  children,
+  isActive
+}: {
+  children: ReactNode;
+  isActive: (href: string) => boolean | undefined;
+}) {
+  return (
       <div className="min-h-screen pb-8">
         <header className="fixed inset-x-0 top-0 z-40 border-b border-[color:var(--border-soft)] bg-[color:var(--bg-panel)]/95 backdrop-blur">
           <div className="mx-auto flex w-full max-w-7xl px-3 md:px-6">
@@ -55,6 +70,5 @@ export function AppShell({ children }: { children: ReactNode }) {
           <main className="fade-up">{children}</main>
         </div>
       </div>
-    </RouteProgressProvider>
   );
 }
