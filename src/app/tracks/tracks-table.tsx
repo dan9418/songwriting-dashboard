@@ -22,6 +22,7 @@ import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import {
   DEFAULT_TRACK_QUERY_STATE,
+  TRACK_QUERY_UNASSIGNED_VALUE,
   buildTrackQuerySearchParams,
   equalTrackQueryState,
   filterAndSortTracks,
@@ -80,6 +81,10 @@ function createNameMap(options: TrackMetadataOption[]): Record<string, string> {
   return Object.fromEntries(options.map((option) => [option.slug, option.name]));
 }
 
+function withUnassignedOption(options: TrackMetadataOption[]): TrackMetadataOption[] {
+  return [{ slug: TRACK_QUERY_UNASSIGNED_VALUE, name: "Unassigned" }, ...options];
+}
+
 function removeValue(values: string[], slug: string): string[] {
   return values.filter((value) => value !== slug);
 }
@@ -133,8 +138,6 @@ function DualSelectionField({
   onPositiveChange,
   onNegativeChange
 }: DualSelectionFieldProps) {
-  const [positiveSelection, setPositiveSelection] = useState("");
-  const [negativeSelection, setNegativeSelection] = useState("");
   const availablePositiveOptions = useMemo(
     () => sortOptions(options.filter((option) => !positiveValues.includes(option.slug))),
     [options, positiveValues]
@@ -143,18 +146,6 @@ function DualSelectionField({
     () => sortOptions(options.filter((option) => !negativeValues.includes(option.slug))),
     [options, negativeValues]
   );
-
-  useEffect(() => {
-    if (positiveSelection && !availablePositiveOptions.some((option) => option.slug === positiveSelection)) {
-      setPositiveSelection("");
-    }
-  }, [availablePositiveOptions, positiveSelection]);
-
-  useEffect(() => {
-    if (negativeSelection && !availableNegativeOptions.some((option) => option.slug === negativeSelection)) {
-      setNegativeSelection("");
-    }
-  }, [availableNegativeOptions, negativeSelection]);
 
   return (
     <div className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
@@ -172,37 +163,30 @@ function DualSelectionField({
             emptyLabel={`No ${positiveLabel.toLocaleLowerCase()} selections.`}
             onRemove={(slug) => onPositiveChange(removeValue(positiveValues, slug))}
           />
-          <div className="flex gap-2">
-            <select
-              className="theme-input ring-0"
-              value={positiveSelection}
-              disabled={disabled || availablePositiveOptions.length === 0}
-              onChange={(event) => setPositiveSelection(event.currentTarget.value)}
-            >
-              <option value="">
-                {availablePositiveOptions.length === 0
-                  ? "No more options"
-                  : `Choose ${positiveLabel.toLocaleLowerCase()}...`}
+          <select
+            className="theme-input ring-0"
+            value=""
+            disabled={disabled || availablePositiveOptions.length === 0}
+            onChange={(event) => {
+              const slug = event.currentTarget.value;
+              if (!slug) {
+                return;
+              }
+              onPositiveChange(addValue(positiveValues, slug));
+              onNegativeChange(removeValue(negativeValues, slug));
+            }}
+          >
+            <option value="">
+              {availablePositiveOptions.length === 0
+                ? "No more options"
+                : `Add ${positiveLabel.toLocaleLowerCase()}...`}
+            </option>
+            {availablePositiveOptions.map((option) => (
+              <option key={option.slug} value={option.slug}>
+                {option.name}
               </option>
-              {availablePositiveOptions.map((option) => (
-                <option key={option.slug} value={option.slug}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
-            <ActionButton
-              type="button"
-              tone="ghost"
-              disabled={disabled || !positiveSelection}
-              onClick={() => {
-                onPositiveChange(addValue(positiveValues, positiveSelection));
-                onNegativeChange(removeValue(negativeValues, positiveSelection));
-                setPositiveSelection("");
-              }}
-            >
-              {positiveLabel}
-            </ActionButton>
-          </div>
+            ))}
+          </select>
         </div>
 
         <div className="grid gap-2">
@@ -215,37 +199,30 @@ function DualSelectionField({
             emptyLabel={`No ${negativeLabel.toLocaleLowerCase()} selections.`}
             onRemove={(slug) => onNegativeChange(removeValue(negativeValues, slug))}
           />
-          <div className="flex gap-2">
-            <select
-              className="theme-input ring-0"
-              value={negativeSelection}
-              disabled={disabled || availableNegativeOptions.length === 0}
-              onChange={(event) => setNegativeSelection(event.currentTarget.value)}
-            >
-              <option value="">
-                {availableNegativeOptions.length === 0
-                  ? "No more options"
-                  : `Choose ${negativeLabel.toLocaleLowerCase()}...`}
+          <select
+            className="theme-input ring-0"
+            value=""
+            disabled={disabled || availableNegativeOptions.length === 0}
+            onChange={(event) => {
+              const slug = event.currentTarget.value;
+              if (!slug) {
+                return;
+              }
+              onNegativeChange(addValue(negativeValues, slug));
+              onPositiveChange(removeValue(positiveValues, slug));
+            }}
+          >
+            <option value="">
+              {availableNegativeOptions.length === 0
+                ? "No more options"
+                : `Add ${negativeLabel.toLocaleLowerCase()}...`}
+            </option>
+            {availableNegativeOptions.map((option) => (
+              <option key={option.slug} value={option.slug}>
+                {option.name}
               </option>
-              {availableNegativeOptions.map((option) => (
-                <option key={option.slug} value={option.slug}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
-            <ActionButton
-              type="button"
-              tone="ghost"
-              disabled={disabled || !negativeSelection}
-              onClick={() => {
-                onNegativeChange(addValue(negativeValues, negativeSelection));
-                onPositiveChange(removeValue(positiveValues, negativeSelection));
-                setNegativeSelection("");
-              }}
-            >
-              {negativeLabel}
-            </ActionButton>
-          </div>
+            ))}
+          </select>
         </div>
       </div>
     </div>
@@ -484,6 +461,9 @@ export function TracksTable({
   const draftQueryStateRef = useRef(draftQueryState);
 
   const filteredItems = useMemo(() => filterAndSortTracks(items, draftQueryState), [items, draftQueryState]);
+  const queryArtistOptions = useMemo(() => withUnassignedOption(artistOptions), [artistOptions]);
+  const queryProjectOptions = useMemo(() => withUnassignedOption(projectOptions), [projectOptions]);
+  const queryTagOptions = useMemo(() => withUnassignedOption(tagOptions), [tagOptions]);
   const filteredTrackSlugs = useMemo(() => filteredItems.map((item) => item.slug), [filteredItems]);
   const selectedSet = useMemo(() => new Set(selectedTrackSlugs), [selectedTrackSlugs]);
   const filteredSelectedCount = filteredTrackSlugs.filter((slug) => selectedSet.has(slug)).length;
@@ -655,7 +635,7 @@ export function TracksTable({
           <div className="grid gap-3 xl:grid-cols-3">
             <DualSelectionField
               label="Artists"
-              options={artistOptions}
+              options={queryArtistOptions}
               positiveLabel="Include"
               negativeLabel="Exclude"
               positiveValues={draftQueryState.artistInclude}
@@ -665,7 +645,7 @@ export function TracksTable({
             />
             <DualSelectionField
               label="Projects"
-              options={projectOptions}
+              options={queryProjectOptions}
               positiveLabel="Include"
               negativeLabel="Exclude"
               positiveValues={draftQueryState.projectInclude}
@@ -675,7 +655,7 @@ export function TracksTable({
             />
             <DualSelectionField
               label="Tags"
-              options={tagOptions}
+              options={queryTagOptions}
               positiveLabel="Include"
               negativeLabel="Exclude"
               positiveValues={draftQueryState.tagInclude}

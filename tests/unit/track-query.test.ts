@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  TRACK_QUERY_UNASSIGNED_VALUE,
   buildTrackQuerySearchParams,
   filterAndSortTracks,
   parseTrackQueryState,
@@ -43,6 +44,17 @@ const SAMPLE_ITEMS: TrackQueryItem[] = [
     hasChords: true,
     hasNotes: false,
     audioCount: 2
+  },
+  {
+    slug: "orphan-song",
+    name: "Orphan Song",
+    artists: [],
+    projects: [],
+    tags: [],
+    hasLyrics: false,
+    hasChords: false,
+    hasNotes: true,
+    audioCount: 0
   }
 ];
 
@@ -112,6 +124,40 @@ describe("track query utilities", () => {
     expect(anyMode.map((item) => item.slug)).toEqual(["night-signal", "sunrise-demo"]);
   });
 
+  it("supports include and exclude filters for unassigned relationships", () => {
+    const includeUnassigned = filterAndSortTracks(SAMPLE_ITEMS, {
+      title: "",
+      matchMode: "all",
+      artistInclude: [TRACK_QUERY_UNASSIGNED_VALUE],
+      artistExclude: [],
+      projectInclude: [],
+      projectExclude: [],
+      tagInclude: [],
+      tagExclude: [],
+      sortKey: "name",
+      sortDirection: "asc"
+    });
+    const excludeUnassigned = filterAndSortTracks(SAMPLE_ITEMS, {
+      title: "",
+      matchMode: "all",
+      artistInclude: [],
+      artistExclude: [TRACK_QUERY_UNASSIGNED_VALUE],
+      projectInclude: [],
+      projectExclude: [],
+      tagInclude: [],
+      tagExclude: [],
+      sortKey: "name",
+      sortDirection: "asc"
+    });
+
+    expect(includeUnassigned.map((item) => item.slug)).toEqual(["orphan-song"]);
+    expect(excludeUnassigned.map((item) => item.slug)).toEqual([
+      "midnight-drive",
+      "night-signal",
+      "sunrise-demo"
+    ]);
+  });
+
   it("sorts numeric and boolean columns", () => {
     const byAudio = filterAndSortTracks(SAMPLE_ITEMS, {
       title: "",
@@ -138,7 +184,17 @@ describe("track query utilities", () => {
       sortDirection: "desc"
     });
 
-    expect(byAudio.map((item) => item.slug)).toEqual(["midnight-drive", "night-signal", "sunrise-demo"]);
-    expect(byLyrics.map((item) => item.slug)).toEqual(["night-signal", "midnight-drive", "sunrise-demo"]);
+    expect(byAudio.map((item) => item.slug)).toEqual([
+      "midnight-drive",
+      "night-signal",
+      "sunrise-demo",
+      "orphan-song"
+    ]);
+    expect(byLyrics.map((item) => item.slug)).toEqual([
+      "night-signal",
+      "midnight-drive",
+      "sunrise-demo",
+      "orphan-song"
+    ]);
   });
 });

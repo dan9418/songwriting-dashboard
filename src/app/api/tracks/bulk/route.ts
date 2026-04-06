@@ -33,8 +33,35 @@ interface ProjectPositionRow {
   maxPosition: number | string | null;
 }
 
+const D1_IN_CLAUSE_BATCH_SIZE = 100;
+
 function createPlaceholders(count: number): string {
   return Array.from({ length: count }, () => "?").join(", ");
+}
+
+function chunkValues<T>(values: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
+async function queryTrackRowsByChunks<T>(
+  values: string[],
+  buildSql: (placeholders: string) => string
+): Promise<T[]> {
+  const results: T[] = [];
+
+  for (const chunk of chunkValues(values, D1_IN_CLAUSE_BATCH_SIZE)) {
+    const placeholders = createPlaceholders(chunk.length);
+    const rows = await queryD1<T>(buildSql(placeholders), chunk);
+    results.push(...rows);
+  }
+
+  return results;
 }
 
 function toInt(value: number | string | null): number {
@@ -69,14 +96,13 @@ export async function POST(request: Request) {
       throw badRequest("At least one bulk metadata change is required.");
     }
 
-    const trackPlaceholders = createPlaceholders(payload.trackSlugs.length);
-    const trackRows = await queryD1<TrackSlugRow>(
+    const trackRows = await queryTrackRowsByChunks<TrackSlugRow>(
+      payload.trackSlugs,
+      (placeholders) => `
+        SELECT slug
+        FROM tracks
+        WHERE slug IN (${placeholders});
       `
-      SELECT slug
-      FROM tracks
-      WHERE slug IN (${trackPlaceholders});
-      `,
-      payload.trackSlugs
     );
     const existingTrackSlugs = new Set(trackRows.map((row) => row.slug));
     const missingTrackSlugs = payload.trackSlugs.filter((trackSlug) => !existingTrackSlugs.has(trackSlug));
@@ -86,36 +112,36 @@ export async function POST(request: Request) {
     }
 
     const [artistRows, projectRows, tagRows] = await Promise.all([
-      queryD1<TrackArtistRow>(
+      queryTrackRowsByChunks<TrackArtistRow>(
+        payload.trackSlugs,
+        (placeholders) => `
+          SELECT
+            track_slug AS trackSlug,
+            artist_slug AS artistSlug
+          FROM track_artists
+          WHERE track_slug IN (${placeholders});
         `
-        SELECT
-          track_slug AS trackSlug,
-          artist_slug AS artistSlug
-        FROM track_artists
-        WHERE track_slug IN (${trackPlaceholders});
-        `,
-        payload.trackSlugs
       ),
-      queryD1<TrackProjectRow>(
+      queryTrackRowsByChunks<TrackProjectRow>(
+        payload.trackSlugs,
+        (placeholders) => `
+          SELECT
+            track_slug AS trackSlug,
+            project_slug AS projectSlug
+          FROM project_tracks
+          WHERE track_slug IN (${placeholders})
+          ORDER BY project_slug ASC, position ASC, track_slug ASC;
         `
-        SELECT
-          track_slug AS trackSlug,
-          project_slug AS projectSlug
-        FROM project_tracks
-        WHERE track_slug IN (${trackPlaceholders})
-        ORDER BY project_slug ASC, position ASC, track_slug ASC;
-        `,
-        payload.trackSlugs
       ),
-      queryD1<TrackTagRow>(
+      queryTrackRowsByChunks<TrackTagRow>(
+        payload.trackSlugs,
+        (placeholders) => `
+          SELECT
+            track_slug AS trackSlug,
+            tag_slug AS tagSlug
+          FROM track_tags
+          WHERE track_slug IN (${placeholders});
         `
-        SELECT
-          track_slug AS trackSlug,
-          tag_slug AS tagSlug
-        FROM track_tags
-        WHERE track_slug IN (${trackPlaceholders});
-        `,
-        payload.trackSlugs
       )
     ]);
 
@@ -213,17 +239,16 @@ export async function POST(request: Request) {
     const uniqueProjectsToAdd = Array.from(new Set(projectAdds.map((item) => item.projectSlug)));
     const nextPositionByProject = new Map<string, number>();
     if (uniqueProjectsToAdd.length > 0) {
-      const projectPlaceholders = createPlaceholders(uniqueProjectsToAdd.length);
-      const positionRows = await queryD1<ProjectPositionRow>(
+      const positionRows = await queryTrackRowsByChunks<ProjectPositionRow>(
+        uniqueProjectsToAdd,
+        (placeholders) => `
+          SELECT
+            project_slug AS projectSlug,
+            COALESCE(MAX(position), 0) AS maxPosition
+          FROM project_tracks
+          WHERE project_slug IN (${placeholders})
+          GROUP BY project_slug;
         `
-        SELECT
-          project_slug AS projectSlug,
-          COALESCE(MAX(position), 0) AS maxPosition
-        FROM project_tracks
-        WHERE project_slug IN (${projectPlaceholders})
-        GROUP BY project_slug;
-        `,
-        uniqueProjectsToAdd
       );
 
       for (const projectSlug of uniqueProjectsToAdd) {

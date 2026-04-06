@@ -9,6 +9,7 @@ export type TrackSortKey =
   | "notes"
   | "audio";
 export type TrackSortDirection = "asc" | "desc";
+export const TRACK_QUERY_UNASSIGNED_VALUE = "__unassigned__";
 
 export interface TrackQueryState {
   title: string;
@@ -160,14 +161,18 @@ function matchesIncludedValues(currentValues: string[], selectedValues: string[]
   if (selectedValues.length === 0) {
     return null;
   }
-  return selectedValues.some((value) => currentValues.includes(value));
+  return selectedValues.some((value) =>
+    value === TRACK_QUERY_UNASSIGNED_VALUE ? currentValues.length === 0 : currentValues.includes(value)
+  );
 }
 
 function matchesExcludedValues(currentValues: string[], selectedValues: string[]): boolean {
   if (selectedValues.length === 0) {
     return false;
   }
-  return selectedValues.some((value) => currentValues.includes(value));
+  return selectedValues.some((value) =>
+    value === TRACK_QUERY_UNASSIGNED_VALUE ? currentValues.length === 0 : currentValues.includes(value)
+  );
 }
 
 export function matchesTrackQuery(item: TrackQueryItem, state: TrackQueryState): boolean {
