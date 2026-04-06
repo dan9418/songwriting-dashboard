@@ -99,6 +99,27 @@ h4 {
   border-bottom: 1px solid var(--border-soft);
 }
 
+.tracks-table tbody tr {
+  border-bottom: none;
+}
+
+.tracks-table th,
+.tracks-table td {
+  vertical-align: middle;
+}
+
+.tracks-table tbody tr:nth-child(odd) {
+  background: color-mix(in srgb, var(--table-row) 28%, white 72%);
+}
+
+.tracks-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--table-row) 34%, var(--surface-muted) 66%);
+}
+
+.tracks-table tbody tr[data-selected="true"] {
+  background: color-mix(in srgb, var(--accent-soft) 72%, white 28%);
+}
+
 .theme-detail {
   border: 1px solid var(--border-soft);
   border-radius: 12px;

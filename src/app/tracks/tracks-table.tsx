@@ -49,6 +49,10 @@ export interface TracksTableItem {
   audioCount: number;
 }
 
+type TrackQueryStateUpdater =
+  | Partial<TrackQueryState>
+  | ((current: TrackQueryState) => TrackQueryState);
+
 interface DualSelectionFieldProps {
   label: string;
   options: TrackMetadataOption[];
@@ -59,6 +63,13 @@ interface DualSelectionFieldProps {
   disabled?: boolean;
   onPositiveChange: (nextValue: string[]) => void;
   onNegativeChange: (nextValue: string[]) => void;
+}
+
+function truncateLabel(value: string, limit: number): string {
+  if (value.length <= limit) {
+    return value;
+  }
+  return `${value.slice(0, Math.max(0, limit - 3)).trimEnd()}...`;
 }
 
 function sortOptions(options: TrackMetadataOption[]): TrackMetadataOption[] {
@@ -122,6 +133,8 @@ function DualSelectionField({
   onPositiveChange,
   onNegativeChange
 }: DualSelectionFieldProps) {
+  const [positiveSelection, setPositiveSelection] = useState("");
+  const [negativeSelection, setNegativeSelection] = useState("");
   const availablePositiveOptions = useMemo(
     () => sortOptions(options.filter((option) => !positiveValues.includes(option.slug))),
     [options, positiveValues]
@@ -130,6 +143,18 @@ function DualSelectionField({
     () => sortOptions(options.filter((option) => !negativeValues.includes(option.slug))),
     [options, negativeValues]
   );
+
+  useEffect(() => {
+    if (positiveSelection && !availablePositiveOptions.some((option) => option.slug === positiveSelection)) {
+      setPositiveSelection("");
+    }
+  }, [availablePositiveOptions, positiveSelection]);
+
+  useEffect(() => {
+    if (negativeSelection && !availableNegativeOptions.some((option) => option.slug === negativeSelection)) {
+      setNegativeSelection("");
+    }
+  }, [availableNegativeOptions, negativeSelection]);
 
   return (
     <div className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
@@ -147,30 +172,37 @@ function DualSelectionField({
             emptyLabel={`No ${positiveLabel.toLocaleLowerCase()} selections.`}
             onRemove={(slug) => onPositiveChange(removeValue(positiveValues, slug))}
           />
-          <select
-            className="theme-input ring-0"
-            value=""
-            disabled={disabled || availablePositiveOptions.length === 0}
-            onChange={(event) => {
-              const slug = event.currentTarget.value;
-              if (!slug) {
-                return;
-              }
-              onPositiveChange(addValue(positiveValues, slug));
-              onNegativeChange(removeValue(negativeValues, slug));
-            }}
-          >
-            <option value="">
-              {availablePositiveOptions.length === 0
-                ? "No more options"
-                : `Add ${positiveLabel.toLocaleLowerCase()}...`}
-            </option>
-            {availablePositiveOptions.map((option) => (
-              <option key={option.slug} value={option.slug}>
-                {option.name}
+          <div className="flex gap-2">
+            <select
+              className="theme-input ring-0"
+              value={positiveSelection}
+              disabled={disabled || availablePositiveOptions.length === 0}
+              onChange={(event) => setPositiveSelection(event.currentTarget.value)}
+            >
+              <option value="">
+                {availablePositiveOptions.length === 0
+                  ? "No more options"
+                  : `Choose ${positiveLabel.toLocaleLowerCase()}...`}
               </option>
-            ))}
-          </select>
+              {availablePositiveOptions.map((option) => (
+                <option key={option.slug} value={option.slug}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+            <ActionButton
+              type="button"
+              tone="ghost"
+              disabled={disabled || !positiveSelection}
+              onClick={() => {
+                onPositiveChange(addValue(positiveValues, positiveSelection));
+                onNegativeChange(removeValue(negativeValues, positiveSelection));
+                setPositiveSelection("");
+              }}
+            >
+              {positiveLabel}
+            </ActionButton>
+          </div>
         </div>
 
         <div className="grid gap-2">
@@ -183,30 +215,37 @@ function DualSelectionField({
             emptyLabel={`No ${negativeLabel.toLocaleLowerCase()} selections.`}
             onRemove={(slug) => onNegativeChange(removeValue(negativeValues, slug))}
           />
-          <select
-            className="theme-input ring-0"
-            value=""
-            disabled={disabled || availableNegativeOptions.length === 0}
-            onChange={(event) => {
-              const slug = event.currentTarget.value;
-              if (!slug) {
-                return;
-              }
-              onNegativeChange(addValue(negativeValues, slug));
-              onPositiveChange(removeValue(positiveValues, slug));
-            }}
-          >
-            <option value="">
-              {availableNegativeOptions.length === 0
-                ? "No more options"
-                : `Add ${negativeLabel.toLocaleLowerCase()}...`}
-            </option>
-            {availableNegativeOptions.map((option) => (
-              <option key={option.slug} value={option.slug}>
-                {option.name}
+          <div className="flex gap-2">
+            <select
+              className="theme-input ring-0"
+              value={negativeSelection}
+              disabled={disabled || availableNegativeOptions.length === 0}
+              onChange={(event) => setNegativeSelection(event.currentTarget.value)}
+            >
+              <option value="">
+                {availableNegativeOptions.length === 0
+                  ? "No more options"
+                  : `Choose ${negativeLabel.toLocaleLowerCase()}...`}
               </option>
-            ))}
-          </select>
+              {availableNegativeOptions.map((option) => (
+                <option key={option.slug} value={option.slug}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+            <ActionButton
+              type="button"
+              tone="ghost"
+              disabled={disabled || !negativeSelection}
+              onClick={() => {
+                onNegativeChange(addValue(negativeValues, negativeSelection));
+                onPositiveChange(removeValue(positiveValues, negativeSelection));
+                setNegativeSelection("");
+              }}
+            >
+              {negativeLabel}
+            </ActionButton>
+          </div>
         </div>
       </div>
     </div>
@@ -216,23 +255,31 @@ function DualSelectionField({
 function MetadataLinks({
   items,
   hrefBase,
-  emptyLabel = "-"
+  emptyLabel = "-",
+  charLimit = 24,
+  wrap = false
 }: {
   items: TrackMetadataOption[];
   hrefBase: string;
   emptyLabel?: string;
+  charLimit?: number;
+  wrap?: boolean;
 }) {
   if (items.length === 0) {
     return <span className="text-[color:var(--muted)]">{emptyLabel}</span>;
   }
 
   return (
-    <span className="inline-flex min-w-0 items-center gap-1 overflow-hidden whitespace-nowrap">
+    <span
+      className={`inline-flex min-w-0 items-center gap-1 ${
+        wrap ? "flex-wrap whitespace-normal" : "overflow-hidden whitespace-nowrap"
+      }`}
+    >
       {items.map((item, index) => (
         <span key={item.slug} className="shrink-0">
           {index > 0 ? <span className="text-[color:var(--muted)]">, </span> : null}
           <Link href={`${hrefBase}/${item.slug}`} className="underline-offset-4 hover:underline">
-            {item.name}
+            {truncateLabel(item.name, charLimit)}
           </Link>
         </span>
       ))}
@@ -434,6 +481,7 @@ export function TracksTable({
   const [bulkDraft, setBulkDraft] =
     useState<Pick<TrackBulkMetadataOperation, "artists" | "projects" | "tags">>(createEmptyBulkDraft);
   const selectAllRef = useRef<HTMLInputElement | null>(null);
+  const draftQueryStateRef = useRef(draftQueryState);
 
   const filteredItems = useMemo(() => filterAndSortTracks(items, draftQueryState), [items, draftQueryState]);
   const filteredTrackSlugs = useMemo(() => filteredItems.map((item) => item.slug), [filteredItems]);
@@ -460,6 +508,10 @@ export function TracksTable({
     setDraftQueryState((current) => (equalTrackQueryState(current, urlQueryState) ? current : urlQueryState));
   }, [urlQueryState]);
 
+  useEffect(() => {
+    draftQueryStateRef.current = draftQueryState;
+  }, [draftQueryState]);
+
   const updateUrlState = useCallback((nextState: TrackQueryState) => {
     const nextSearchParams = buildTrackQuerySearchParams(nextState);
     const nextSearch = nextSearchParams.toString();
@@ -469,8 +521,14 @@ export function TracksTable({
     });
   }, [pathname, router, startTransition]);
 
-  function patchQueryState(patch: Partial<TrackQueryState>, options?: { debounceTitle?: boolean }) {
-    const nextState = updateTrackQueryState(draftQueryState, patch);
+  function patchQueryState(
+    patch: TrackQueryStateUpdater,
+    options?: { debounceTitle?: boolean }
+  ) {
+    const currentState = draftQueryStateRef.current;
+    const nextState =
+      typeof patch === "function" ? patch(currentState) : updateTrackQueryState(currentState, patch);
+    draftQueryStateRef.current = nextState;
     setDraftQueryState(nextState);
 
     if (options?.debounceTitle) {
@@ -641,10 +699,10 @@ export function TracksTable({
 
       <div className="panel overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="theme-table text-xs">
+          <table className="theme-table tracks-table text-xs">
             <thead>
               <tr className="text-[11px] uppercase tracking-[0.12em]">
-                <th className="w-12 px-2 py-2.5 font-semibold">
+                <th className="w-12 px-2 py-1.5 font-semibold">
                   <div className="flex items-center justify-center">
                     <input
                       ref={selectAllRef}
@@ -655,7 +713,7 @@ export function TracksTable({
                     />
                   </div>
                 </th>
-                <th className="min-w-[22rem] px-2 py-2.5 font-semibold">
+                <th className="min-w-[16rem] px-2 py-1.5 font-semibold">
                   <SortableHeader
                     label="Name"
                     sortKey="name"
@@ -671,7 +729,7 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="min-w-[12rem] px-2 py-2.5 font-semibold">
+                <th className="min-w-[9rem] px-2 py-1.5 font-semibold">
                   <SortableHeader
                     label="Projects"
                     sortKey="projects"
@@ -687,7 +745,7 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="min-w-[12rem] px-2 py-2.5 font-semibold">
+                <th className="min-w-[9rem] px-2 py-1.5 font-semibold">
                   <SortableHeader
                     label="Artists"
                     sortKey="artists"
@@ -703,7 +761,7 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="min-w-[12rem] px-2 py-2.5 font-semibold">
+                <th className="min-w-[7rem] px-2 py-1.5 font-semibold">
                   <SortableHeader
                     label="Tags"
                     sortKey="tags"
@@ -719,7 +777,7 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="w-20 px-2 py-2.5 font-semibold">
+                <th className="w-16 px-2 py-1.5 font-semibold">
                   <SortableHeader
                     label="Lyrics"
                     sortKey="lyrics"
@@ -735,7 +793,7 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="w-20 px-2 py-2.5 font-semibold">
+                <th className="w-16 px-2 py-1.5 font-semibold">
                   <SortableHeader
                     label="Chords"
                     sortKey="chords"
@@ -751,7 +809,7 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="w-20 px-2 py-2.5 font-semibold">
+                <th className="w-16 px-2 py-1.5 font-semibold">
                   <SortableHeader
                     label="Notes"
                     sortKey="notes"
@@ -767,7 +825,7 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="w-20 px-2 py-2.5 font-semibold">
+                <th className="w-16 px-2 py-1.5 font-semibold">
                   <SortableHeader
                     label="Audio"
                     sortKey="audio"
@@ -783,10 +841,10 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="w-16 px-2 py-2.5 text-right font-semibold">
+                <th className="w-12 px-2 py-1.5 text-center font-semibold">
                   <button
                     type="button"
-                    className="inline-flex items-center justify-end text-[color:var(--muted)] transition hover:text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center text-[color:var(--ink)] transition hover:text-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
                     disabled={selectedTrackSlugs.length === 0}
                     aria-label="Bulk edit selected tracks"
                     onClick={() => {
@@ -804,8 +862,8 @@ export function TracksTable({
                 const isSelected = selectedSet.has(item.slug);
 
                 return (
-                  <tr key={item.slug} id={item.slug}>
-                    <td className="px-2 py-2 align-top">
+                  <tr key={item.slug} id={item.slug} data-selected={isSelected ? "true" : "false"}>
+                    <td className="px-2 py-1.5 align-middle text-center">
                       <div className="flex items-center justify-center">
                         <input
                           type="checkbox"
@@ -815,33 +873,33 @@ export function TracksTable({
                         />
                       </div>
                     </td>
-                    <td className="max-w-0 px-2 py-2 align-top">
+                    <td className="max-w-0 px-2 py-1.5 align-middle">
                       <div className="overflow-hidden">
                         <Link
                           href={`/tracks/${item.slug}`}
-                          className="truncate font-medium underline-offset-4 hover:underline"
+                          className="inline-block max-w-full truncate font-medium underline-offset-4 hover:underline"
                         >
-                          {item.name}
+                          {truncateLabel(item.name, 36)}
                         </Link>
                       </div>
                     </td>
-                    <td className="max-w-[12rem] px-2 py-2 align-top">
-                      <MetadataLinks items={item.projects} hrefBase="/projects" />
+                    <td className="max-w-[9rem] px-2 py-1.5 align-middle whitespace-nowrap">
+                      <MetadataLinks items={item.projects} hrefBase="/projects" charLimit={18} />
                     </td>
-                    <td className="max-w-[12rem] px-2 py-2 align-top">
-                      <MetadataLinks items={item.artists} hrefBase="/artists" />
+                    <td className="max-w-[9rem] px-2 py-1.5 align-middle whitespace-nowrap">
+                      <MetadataLinks items={item.artists} hrefBase="/artists" charLimit={18} />
                     </td>
-                    <td className="max-w-[12rem] px-2 py-2 align-top">
-                      <MetadataLinks items={item.tags} hrefBase="/tags" />
+                    <td className="max-w-[7rem] px-2 py-1.5 align-middle whitespace-normal">
+                      <MetadataLinks items={item.tags} hrefBase="/tags" charLimit={14} wrap />
                     </td>
-                    <td className="whitespace-nowrap px-2 py-2 align-top">{item.hasLyrics ? "✓" : "-"}</td>
-                    <td className="whitespace-nowrap px-2 py-2 align-top">{item.hasChords ? "✓" : "-"}</td>
-                    <td className="whitespace-nowrap px-2 py-2 align-top">{item.hasNotes ? "✓" : "-"}</td>
-                    <td className="whitespace-nowrap px-2 py-2 align-top">{item.audioCount}</td>
-                    <td className="px-2 py-2 align-top text-right">
+                    <td className="whitespace-nowrap px-2 py-1.5 align-middle">{item.hasLyrics ? "\u2713" : "-"}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 align-middle">{item.hasChords ? "\u2713" : "-"}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 align-middle">{item.hasNotes ? "\u2713" : "-"}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 align-middle">{truncateLabel(String(item.audioCount), 4)}</td>
+                    <td className="px-2 py-1.5 align-middle text-center">
                       <button
                         type="button"
-                        className="inline-flex items-center justify-end rounded-md p-1 text-[color:var(--muted)] transition hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--ink)]"
+                        className="inline-flex items-center justify-center rounded-md p-1 text-[color:var(--ink)] transition hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--accent)]"
                         aria-label={`Edit ${item.name}`}
                         onClick={() => setEditingTrackSlug(item.slug)}
                       >
