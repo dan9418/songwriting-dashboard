@@ -1,4 +1,5 @@
 import type { NotebookPageListItem, NotebookPageRecord } from "@/lib/domain/models";
+import type { TrackBulkMetadataOperation } from "@/lib/tracks/bulk";
 
 interface CreatedEntityResponse {
   slug: string;
@@ -58,6 +59,10 @@ export interface TrackUpdatePayload {
   artistSlugs?: string[];
   projectSlugs?: string[];
   tagSlugs?: string[];
+}
+
+export interface TrackBulkUpdateResponse {
+  updatedTrackSlugs: string[];
 }
 
 export interface TagCreatePayload {
@@ -146,6 +151,12 @@ export const api = {
   updateTrack: (trackSlug: string, payload: TrackUpdatePayload) =>
     apiRequest(`/api/tracks/${encodeURIComponent(trackSlug)}`, {
       method: "PUT",
+      body: JSON.stringify(payload)
+    }),
+
+  bulkUpdateTracks: (payload: TrackBulkMetadataOperation) =>
+    apiRequest<TrackBulkUpdateResponse>(`/api/tracks/bulk`, {
+      method: "POST",
       body: JSON.stringify(payload)
     }),
 

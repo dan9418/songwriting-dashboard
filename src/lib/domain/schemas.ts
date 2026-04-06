@@ -105,6 +105,26 @@ export const updateTrackBodySchema = z.object({
   tagSlugs: uniqueSlugListSchema("tagSlugs").optional()
 });
 
+const bulkSlugDeltaSchema = z
+  .object({
+    add: uniqueSlugListSchema("add").default([]),
+    remove: uniqueSlugListSchema("remove").default([])
+  })
+  .refine(
+    (value) => value.add.every((item) => !value.remove.includes(item)),
+    "add and remove must not contain the same slug"
+  );
+
+export const trackBulkMetadataBodySchema = z.object({
+  trackSlugs: z
+    .array(slugSchema)
+    .min(1, "trackSlugs must contain at least one track")
+    .refine((value) => new Set(value).size === value.length, "trackSlugs must not contain duplicates"),
+  artists: bulkSlugDeltaSchema.default({ add: [], remove: [] }),
+  projects: bulkSlugDeltaSchema.default({ add: [], remove: [] }),
+  tags: bulkSlugDeltaSchema.default({ add: [], remove: [] })
+});
+
 export const updateTagBodySchema = z.object({
   slug: slugSchema.optional(),
   name: nameSchema.optional(),
@@ -138,3 +158,4 @@ export type TagEntityRecord = z.infer<typeof tagEntitySchema>;
 export type NotebookFrontmatterRecord = z.infer<typeof notebookFrontmatterSchema>;
 export type CreateNotebookPageBody = z.infer<typeof createNotebookPageBodySchema>;
 export type UpdateNotebookPageBody = z.infer<typeof updateNotebookPageBodySchema>;
+export type TrackBulkMetadataBody = z.infer<typeof trackBulkMetadataBodySchema>;

@@ -1,170 +1,901 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { SortableNameTable } from "@/components/entities/sortable-name-table";
-import { slugToTitle } from "@/lib/utils/slug-display";
+import Link from "next/link";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type Dispatch,
+  type SetStateAction
+} from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { TrackMetadataEditor } from "@/components/tracks/track-metadata-editor";
+import { ModalShell } from "@/components/ui/modal-shell";
+import { ActionButton } from "@/components/ui/action-button";
+import { AppIcon } from "@/components/ui/app-icons";
+import { Field } from "@/components/ui/field";
+import { TextInput } from "@/components/ui/text-input";
+import { useToast } from "@/components/ui/toast";
+import { api } from "@/lib/client/api";
+import {
+  DEFAULT_TRACK_QUERY_STATE,
+  buildTrackQuerySearchParams,
+  equalTrackQueryState,
+  filterAndSortTracks,
+  parseTrackQueryState,
+  updateTrackQueryState,
+  type TrackQueryState,
+  type TrackSortKey
+} from "@/lib/tracks/query";
+import {
+  EMPTY_SLUG_DELTA,
+  hasBulkMetadataChanges,
+  type TrackBulkMetadataOperation
+} from "@/lib/tracks/bulk";
+import type { TrackMetadataOption } from "@/lib/tracks/types";
 
 export interface TracksTableItem {
   slug: string;
   name: string;
-  projectSlugs: string[];
-  artistSlugs: string[];
-  tagSlugs: string[];
-  imageHref?: string | null;
+  projects: TrackMetadataOption[];
+  artists: TrackMetadataOption[];
+  tags: TrackMetadataOption[];
   hasLyrics: boolean;
   hasChords: boolean;
   hasNotes: boolean;
   audioCount: number;
 }
 
-const ALL_ARTISTS_FILTER = "__all_artists__";
-const UNASSIGNED_ARTIST_FILTER = "__unassigned_artist__";
-const ALL_TAGS_FILTER = "__all_tags__";
+interface DualSelectionFieldProps {
+  label: string;
+  options: TrackMetadataOption[];
+  positiveLabel: string;
+  negativeLabel: string;
+  positiveValues: string[];
+  negativeValues: string[];
+  disabled?: boolean;
+  onPositiveChange: (nextValue: string[]) => void;
+  onNegativeChange: (nextValue: string[]) => void;
+}
+
+function sortOptions(options: TrackMetadataOption[]): TrackMetadataOption[] {
+  return [...options].sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: "base" }));
+}
+
+function createNameMap(options: TrackMetadataOption[]): Record<string, string> {
+  return Object.fromEntries(options.map((option) => [option.slug, option.name]));
+}
+
+function removeValue(values: string[], slug: string): string[] {
+  return values.filter((value) => value !== slug);
+}
+
+function addValue(values: string[], slug: string): string[] {
+  return values.includes(slug) ? values : [...values, slug];
+}
+
+function SlugChipList({
+  values,
+  options,
+  emptyLabel,
+  onRemove
+}: {
+  values: string[];
+  options: TrackMetadataOption[];
+  emptyLabel: string;
+  onRemove: (slug: string) => void;
+}) {
+  const nameBySlug = useMemo(() => createNameMap(options), [options]);
+
+  if (values.length === 0) {
+    return <p className="text-xs text-[color:var(--muted)]">{emptyLabel}</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {values.map((slug) => (
+        <button
+          key={slug}
+          type="button"
+          onClick={() => onRemove(slug)}
+          className="inline-flex max-w-full items-center gap-2 rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] px-2.5 py-1 text-xs transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]"
+        >
+          <span className="truncate">{nameBySlug[slug] ?? slug}</span>
+          <span aria-hidden>x</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function DualSelectionField({
+  label,
+  options,
+  positiveLabel,
+  negativeLabel,
+  positiveValues,
+  negativeValues,
+  disabled,
+  onPositiveChange,
+  onNegativeChange
+}: DualSelectionFieldProps) {
+  const availablePositiveOptions = useMemo(
+    () => sortOptions(options.filter((option) => !positiveValues.includes(option.slug))),
+    [options, positiveValues]
+  );
+  const availableNegativeOptions = useMemo(
+    () => sortOptions(options.filter((option) => !negativeValues.includes(option.slug))),
+    [options, negativeValues]
+  );
+
+  return (
+    <div className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold">{label}</h3>
+      </div>
+      <div className="grid gap-3">
+        <div className="grid gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+            {positiveLabel}
+          </p>
+          <SlugChipList
+            values={positiveValues}
+            options={options}
+            emptyLabel={`No ${positiveLabel.toLocaleLowerCase()} selections.`}
+            onRemove={(slug) => onPositiveChange(removeValue(positiveValues, slug))}
+          />
+          <select
+            className="theme-input ring-0"
+            value=""
+            disabled={disabled || availablePositiveOptions.length === 0}
+            onChange={(event) => {
+              const slug = event.currentTarget.value;
+              if (!slug) {
+                return;
+              }
+              onPositiveChange(addValue(positiveValues, slug));
+              onNegativeChange(removeValue(negativeValues, slug));
+            }}
+          >
+            <option value="">
+              {availablePositiveOptions.length === 0
+                ? "No more options"
+                : `Add ${positiveLabel.toLocaleLowerCase()}...`}
+            </option>
+            {availablePositiveOptions.map((option) => (
+              <option key={option.slug} value={option.slug}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+            {negativeLabel}
+          </p>
+          <SlugChipList
+            values={negativeValues}
+            options={options}
+            emptyLabel={`No ${negativeLabel.toLocaleLowerCase()} selections.`}
+            onRemove={(slug) => onNegativeChange(removeValue(negativeValues, slug))}
+          />
+          <select
+            className="theme-input ring-0"
+            value=""
+            disabled={disabled || availableNegativeOptions.length === 0}
+            onChange={(event) => {
+              const slug = event.currentTarget.value;
+              if (!slug) {
+                return;
+              }
+              onNegativeChange(addValue(negativeValues, slug));
+              onPositiveChange(removeValue(positiveValues, slug));
+            }}
+          >
+            <option value="">
+              {availableNegativeOptions.length === 0
+                ? "No more options"
+                : `Add ${negativeLabel.toLocaleLowerCase()}...`}
+            </option>
+            {availableNegativeOptions.map((option) => (
+              <option key={option.slug} value={option.slug}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MetadataLinks({
+  items,
+  hrefBase,
+  emptyLabel = "-"
+}: {
+  items: TrackMetadataOption[];
+  hrefBase: string;
+  emptyLabel?: string;
+}) {
+  if (items.length === 0) {
+    return <span className="text-[color:var(--muted)]">{emptyLabel}</span>;
+  }
+
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1 overflow-hidden whitespace-nowrap">
+      {items.map((item, index) => (
+        <span key={item.slug} className="shrink-0">
+          {index > 0 ? <span className="text-[color:var(--muted)]">, </span> : null}
+          <Link href={`${hrefBase}/${item.slug}`} className="underline-offset-4 hover:underline">
+            {item.name}
+          </Link>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function SortableHeader({
+  label,
+  sortKey,
+  queryState,
+  onSort
+}: {
+  label: string;
+  sortKey: TrackSortKey;
+  queryState: TrackQueryState;
+  onSort: (sortKey: TrackSortKey) => void;
+}) {
+  const isActive = queryState.sortKey === sortKey;
+  const indicator = !isActive ? "-" : queryState.sortDirection === "asc" ? "^" : "v";
+
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1 text-left transition hover:text-[color:var(--ink)]"
+      onClick={() => onSort(sortKey)}
+    >
+      {label}
+      <span aria-hidden className="text-[10px]">
+        {indicator}
+      </span>
+    </button>
+  );
+}
+
+function createEmptyBulkDraft(): Pick<TrackBulkMetadataOperation, "artists" | "projects" | "tags"> {
+  return {
+    artists: { ...EMPTY_SLUG_DELTA },
+    projects: { ...EMPTY_SLUG_DELTA },
+    tags: { ...EMPTY_SLUG_DELTA }
+  };
+}
+
+function BulkEditDialog({
+  selectedCount,
+  draft,
+  artistOptions,
+  projectOptions,
+  tagOptions,
+  saving,
+  onClose,
+  onSubmit,
+  onChange
+}: {
+  selectedCount: number;
+  draft: Pick<TrackBulkMetadataOperation, "artists" | "projects" | "tags">;
+  artistOptions: TrackMetadataOption[];
+  projectOptions: TrackMetadataOption[];
+  tagOptions: TrackMetadataOption[];
+  saving: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+  onChange: Dispatch<SetStateAction<Pick<TrackBulkMetadataOperation, "artists" | "projects" | "tags">>>;
+}) {
+  const hasChanges = hasBulkMetadataChanges({
+    trackSlugs: ["placeholder"],
+    ...draft
+  });
+
+  return (
+    <ModalShell
+      title="Bulk Track Metadata"
+      description={`Apply add/remove changes to ${selectedCount.toLocaleString()} selected tracks.`}
+      onClose={onClose}
+      footer={
+        <div className="flex justify-end gap-2">
+          <ActionButton tone="ghost" disabled={saving} onClick={onClose}>
+            Cancel
+          </ActionButton>
+          <ActionButton disabled={saving || !hasChanges} onClick={onSubmit}>
+            {saving ? "Applying..." : "Apply Changes"}
+          </ActionButton>
+        </div>
+      }
+    >
+      <div className="grid gap-4">
+        <DualSelectionField
+          label="Artists"
+          options={artistOptions}
+          positiveLabel="Add"
+          negativeLabel="Remove"
+          positiveValues={draft.artists.add}
+          negativeValues={draft.artists.remove}
+          disabled={saving}
+          onPositiveChange={(nextValue) =>
+            onChange((current) => ({
+              ...current,
+              artists: {
+                ...current.artists,
+                add: nextValue
+              }
+            }))
+          }
+          onNegativeChange={(nextValue) =>
+            onChange((current) => ({
+              ...current,
+              artists: {
+                ...current.artists,
+                remove: nextValue
+              }
+            }))
+          }
+        />
+        <DualSelectionField
+          label="Projects"
+          options={projectOptions}
+          positiveLabel="Add"
+          negativeLabel="Remove"
+          positiveValues={draft.projects.add}
+          negativeValues={draft.projects.remove}
+          disabled={saving}
+          onPositiveChange={(nextValue) =>
+            onChange((current) => ({
+              ...current,
+              projects: {
+                ...current.projects,
+                add: nextValue
+              }
+            }))
+          }
+          onNegativeChange={(nextValue) =>
+            onChange((current) => ({
+              ...current,
+              projects: {
+                ...current.projects,
+                remove: nextValue
+              }
+            }))
+          }
+        />
+        <DualSelectionField
+          label="Tags"
+          options={tagOptions}
+          positiveLabel="Add"
+          negativeLabel="Remove"
+          positiveValues={draft.tags.add}
+          negativeValues={draft.tags.remove}
+          disabled={saving}
+          onPositiveChange={(nextValue) =>
+            onChange((current) => ({
+              ...current,
+              tags: {
+                ...current.tags,
+                add: nextValue
+              }
+            }))
+          }
+          onNegativeChange={(nextValue) =>
+            onChange((current) => ({
+              ...current,
+              tags: {
+                ...current.tags,
+                remove: nextValue
+              }
+            }))
+          }
+        />
+      </div>
+    </ModalShell>
+  );
+}
 
 export function TracksTable({
   items,
-  tagOptions,
-  withPanel = true
+  artistOptions,
+  projectOptions,
+  tagOptions
 }: {
   items: TracksTableItem[];
-  tagOptions: Array<{ slug: string; name: string }>;
-  withPanel?: boolean;
+  artistOptions: TrackMetadataOption[];
+  projectOptions: TrackMetadataOption[];
+  tagOptions: TrackMetadataOption[];
 }) {
-  const [artistFilter, setArtistFilter] = useState(ALL_ARTISTS_FILTER);
-  const [tagFilter, setTagFilter] = useState(ALL_TAGS_FILTER);
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
+  const { showToast } = useToast();
+  const [, startTransition] = useTransition();
+  const urlQueryState = useMemo(
+    () => parseTrackQueryState(new URLSearchParams(searchParamsString)),
+    [searchParamsString]
+  );
+  const [draftQueryState, setDraftQueryState] = useState<TrackQueryState>(urlQueryState);
+  const [selectedTrackSlugs, setSelectedTrackSlugs] = useState<string[]>([]);
+  const [editingTrackSlug, setEditingTrackSlug] = useState<string | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkDraft, setBulkDraft] =
+    useState<Pick<TrackBulkMetadataOperation, "artists" | "projects" | "tags">>(createEmptyBulkDraft);
+  const selectAllRef = useRef<HTMLInputElement | null>(null);
 
-  const artistOptions = useMemo(() => {
-    const slugs = new Set<string>();
+  const filteredItems = useMemo(() => filterAndSortTracks(items, draftQueryState), [items, draftQueryState]);
+  const filteredTrackSlugs = useMemo(() => filteredItems.map((item) => item.slug), [filteredItems]);
+  const selectedSet = useMemo(() => new Set(selectedTrackSlugs), [selectedTrackSlugs]);
+  const filteredSelectedCount = filteredTrackSlugs.filter((slug) => selectedSet.has(slug)).length;
+  const isAllFilteredSelected = filteredItems.length > 0 && filteredSelectedCount === filteredItems.length;
+  const isPartiallySelected =
+    filteredSelectedCount > 0 && filteredSelectedCount < filteredItems.length;
+  const editingItem = editingTrackSlug ? items.find((item) => item.slug === editingTrackSlug) ?? null : null;
 
-    for (const item of items) {
-      for (const artistSlug of item.artistSlugs) {
-        slugs.add(artistSlug);
-      }
+  useEffect(() => {
+    if (!selectAllRef.current) {
+      return;
     }
+    selectAllRef.current.indeterminate = isPartiallySelected;
+  }, [isPartiallySelected]);
 
-    return Array.from(slugs).sort((left, right) =>
-      slugToTitle(left).localeCompare(slugToTitle(right))
-    );
+  useEffect(() => {
+    const availableTrackSlugs = new Set(items.map((item) => item.slug));
+    setSelectedTrackSlugs((current) => current.filter((trackSlug) => availableTrackSlugs.has(trackSlug)));
   }, [items]);
 
-  const tagNameBySlug = useMemo(
-    () => Object.fromEntries(tagOptions.map((tag) => [tag.slug, tag.name])),
-    [tagOptions]
-  );
+  useEffect(() => {
+    setDraftQueryState((current) => (equalTrackQueryState(current, urlQueryState) ? current : urlQueryState));
+  }, [urlQueryState]);
 
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const matchesArtist =
-        artistFilter === ALL_ARTISTS_FILTER
-          ? true
-          : artistFilter === UNASSIGNED_ARTIST_FILTER
-            ? item.artistSlugs.length === 0
-            : item.artistSlugs.includes(artistFilter);
-      const matchesTag = tagFilter === ALL_TAGS_FILTER ? true : item.tagSlugs.includes(tagFilter);
-      return matchesArtist && matchesTag;
+  const updateUrlState = useCallback((nextState: TrackQueryState) => {
+    const nextSearchParams = buildTrackQuerySearchParams(nextState);
+    const nextSearch = nextSearchParams.toString();
+
+    startTransition(() => {
+      router.replace(nextSearch ? `${pathname}?${nextSearch}` : pathname, { scroll: false });
     });
-  }, [artistFilter, items, tagFilter]);
+  }, [pathname, router, startTransition]);
 
-  const emptyMessage = useMemo(() => {
-    if (artistFilter === ALL_ARTISTS_FILTER && tagFilter === ALL_TAGS_FILTER) {
-      return "No tracks found.";
+  function patchQueryState(patch: Partial<TrackQueryState>, options?: { debounceTitle?: boolean }) {
+    const nextState = updateTrackQueryState(draftQueryState, patch);
+    setDraftQueryState(nextState);
+
+    if (options?.debounceTitle) {
+      return;
     }
-    if (artistFilter === UNASSIGNED_ARTIST_FILTER && tagFilter === ALL_TAGS_FILTER) {
-      return "No tracks without an assigned artist.";
+
+    updateUrlState(nextState);
+  }
+
+  useEffect(() => {
+    if (draftQueryState.title === urlQueryState.title) {
+      return;
     }
-    if (artistFilter === ALL_ARTISTS_FILTER && tagFilter !== ALL_TAGS_FILTER) {
-      return `No tracks found for tag ${tagNameBySlug[tagFilter] ?? tagFilter}.`;
+
+    const timer = window.setTimeout(() => {
+      updateUrlState(draftQueryState);
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [draftQueryState, updateUrlState, urlQueryState]);
+
+  function toggleTrackSelection(trackSlug: string) {
+    setSelectedTrackSlugs((current) =>
+      current.includes(trackSlug) ? current.filter((value) => value !== trackSlug) : [...current, trackSlug]
+    );
+  }
+
+  function toggleSelectAll() {
+    setSelectedTrackSlugs((current) => {
+      if (isAllFilteredSelected) {
+        return current.filter((slug) => !filteredTrackSlugs.includes(slug));
+      }
+      const next = new Set(current);
+      for (const slug of filteredTrackSlugs) {
+        next.add(slug);
+      }
+      return Array.from(next);
+    });
+  }
+
+  async function applyBulkChanges() {
+    const payload: TrackBulkMetadataOperation = {
+      trackSlugs: selectedTrackSlugs,
+      ...bulkDraft
+    };
+
+    if (!hasBulkMetadataChanges(payload)) {
+      return;
     }
-    if (artistFilter === UNASSIGNED_ARTIST_FILTER && tagFilter !== ALL_TAGS_FILTER) {
-      return `No unassigned-artist tracks found for tag ${tagNameBySlug[tagFilter] ?? tagFilter}.`;
+
+    setBulkSaving(true);
+
+    try {
+      await api.bulkUpdateTracks(payload);
+      showToast(`Updated ${selectedTrackSlugs.length.toLocaleString()} tracks.`);
+      setBulkOpen(false);
+      setBulkDraft(createEmptyBulkDraft());
+      setSelectedTrackSlugs([]);
+      router.refresh();
+    } catch {
+      showToast("Failed to apply bulk metadata changes.", "error");
+    } finally {
+      setBulkSaving(false);
     }
-    if (artistFilter !== ALL_ARTISTS_FILTER && tagFilter === ALL_TAGS_FILTER) {
-      return `No tracks found for ${slugToTitle(artistFilter)}.`;
-    }
-    return `No tracks found for ${slugToTitle(artistFilter)} with tag ${tagNameBySlug[tagFilter] ?? tagFilter}.`;
-  }, [artistFilter, tagFilter, tagNameBySlug]);
+  }
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="grid gap-1 text-sm">
-            <span className="font-medium text-[color:var(--muted)]">Artist filter</span>
-            <select
-              value={artistFilter}
-              onChange={(event) => setArtistFilter(event.currentTarget.value)}
-              className="theme-input min-w-64 ring-0"
-            >
-              <option value={ALL_ARTISTS_FILTER}>All artists</option>
-              <option value={UNASSIGNED_ARTIST_FILTER}>No artist assigned</option>
-              {artistOptions.map((artistSlug) => (
-                <option key={artistSlug} value={artistSlug}>
-                  {slugToTitle(artistSlug)}
-                </option>
-              ))}
-            </select>
-          </label>
+      <div className="panel p-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="grid gap-3 lg:min-w-[22rem] lg:flex-1">
+              <Field label="Title Search">
+                <TextInput
+                  value={draftQueryState.title}
+                  placeholder="Filter by track title"
+                  onChange={(event) =>
+                    patchQueryState({ title: event.currentTarget.value }, { debounceTitle: true })
+                  }
+                />
+              </Field>
+            </div>
 
-          <label className="grid gap-1 text-sm">
-            <span className="font-medium text-[color:var(--muted)]">Tag filter</span>
-            <select
-              value={tagFilter}
-              onChange={(event) => setTagFilter(event.currentTarget.value)}
-              className="theme-input min-w-64 ring-0"
-            >
-              <option value={ALL_TAGS_FILTER}>All tags</option>
-              {tagOptions.map((tag) => (
-                <option key={tag.slug} value={tag.slug}>
-                  {tag.name}
-                </option>
-              ))}
-            </select>
-          </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="inline-flex overflow-hidden rounded-lg border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] p-1">
+                <button
+                  type="button"
+                  className={`rounded-md px-3 py-2 text-sm transition ${
+                    draftQueryState.matchMode === "all"
+                      ? "bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
+                      : "text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--ink)]"
+                  }`}
+                  onClick={() => patchQueryState({ matchMode: "all" })}
+                >
+                  Match All
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-md px-3 py-2 text-sm transition ${
+                    draftQueryState.matchMode === "any"
+                      ? "bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
+                      : "text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--ink)]"
+                  }`}
+                  onClick={() => patchQueryState({ matchMode: "any" })}
+                >
+                  Match Any
+                </button>
+              </div>
+
+              <ActionButton
+                tone="ghost"
+                onClick={() => {
+                  setDraftQueryState(DEFAULT_TRACK_QUERY_STATE);
+                  updateUrlState(DEFAULT_TRACK_QUERY_STATE);
+                }}
+              >
+                Clear Filters
+              </ActionButton>
+            </div>
+          </div>
+
+          <div className="grid gap-3 xl:grid-cols-3">
+            <DualSelectionField
+              label="Artists"
+              options={artistOptions}
+              positiveLabel="Include"
+              negativeLabel="Exclude"
+              positiveValues={draftQueryState.artistInclude}
+              negativeValues={draftQueryState.artistExclude}
+              onPositiveChange={(nextValue) => patchQueryState({ artistInclude: nextValue })}
+              onNegativeChange={(nextValue) => patchQueryState({ artistExclude: nextValue })}
+            />
+            <DualSelectionField
+              label="Projects"
+              options={projectOptions}
+              positiveLabel="Include"
+              negativeLabel="Exclude"
+              positiveValues={draftQueryState.projectInclude}
+              negativeValues={draftQueryState.projectExclude}
+              onPositiveChange={(nextValue) => patchQueryState({ projectInclude: nextValue })}
+              onNegativeChange={(nextValue) => patchQueryState({ projectExclude: nextValue })}
+            />
+            <DualSelectionField
+              label="Tags"
+              options={tagOptions}
+              positiveLabel="Include"
+              negativeLabel="Exclude"
+              positiveValues={draftQueryState.tagInclude}
+              negativeValues={draftQueryState.tagExclude}
+              onPositiveChange={(nextValue) => patchQueryState({ tagInclude: nextValue })}
+              onNegativeChange={(nextValue) => patchQueryState({ tagExclude: nextValue })}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
+            <p>
+              Showing {filteredItems.length.toLocaleString()} of {items.length.toLocaleString()} tracks
+            </p>
+            <p>
+              Selected {selectedTrackSlugs.length.toLocaleString()}
+              {filteredSelectedCount > 0 ? ` (${filteredSelectedCount.toLocaleString()} visible)` : ""}
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-[color:var(--muted)]">
-          Showing {filteredItems.length.toLocaleString()} of {items.length.toLocaleString()} tracks
-        </p>
       </div>
 
-      <SortableNameTable
-        columnHeaders={["Projects", "Artists", "Lyrics", "Chords", "Notes", "Audio"]}
-        emptyMessage={emptyMessage}
-        withPanel={withPanel}
-        items={filteredItems.map((item) => ({
-          id: item.slug,
-          name: item.name,
-          nameHref: `/tracks/${item.slug}`,
-          artwork: {
-            kind: "track",
-            imageHref: item.imageHref,
-            alt: `${item.name} artwork`
-          },
-          cells: [
-            item.projectSlugs.length > 0
-              ? {
-                  links: item.projectSlugs.map((projectSlug) => ({
-                    label: slugToTitle(projectSlug),
-                    href: `/projects/${projectSlug}`
-                  }))
-                }
-              : { text: "-" },
-            item.artistSlugs.length > 0
-              ? {
-                  links: item.artistSlugs.map((artistSlug) => ({
-                    label: slugToTitle(artistSlug),
-                    href: `/artists/${artistSlug}`
-                  }))
-                }
-              : { text: "-" },
-            { text: item.hasLyrics ? "Yes" : "-" },
-            { text: item.hasChords ? "Yes" : "-" },
-            { text: item.hasNotes ? "Yes" : "-" },
-            {
-              text: `${item.audioCount}`
-            }
-          ]
-        }))}
-      />
+      <div className="panel overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="theme-table text-xs">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-[0.12em]">
+                <th className="w-12 px-2 py-2.5 font-semibold">
+                  <div className="flex items-center justify-center">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      checked={isAllFilteredSelected}
+                      disabled={filteredItems.length === 0}
+                      onChange={toggleSelectAll}
+                    />
+                  </div>
+                </th>
+                <th className="min-w-[22rem] px-2 py-2.5 font-semibold">
+                  <SortableHeader
+                    label="Name"
+                    sortKey="name"
+                    queryState={draftQueryState}
+                    onSort={(sortKey) =>
+                      patchQueryState({
+                        sortKey,
+                        sortDirection:
+                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
+                            ? "desc"
+                            : "asc"
+                      })
+                    }
+                  />
+                </th>
+                <th className="min-w-[12rem] px-2 py-2.5 font-semibold">
+                  <SortableHeader
+                    label="Projects"
+                    sortKey="projects"
+                    queryState={draftQueryState}
+                    onSort={(sortKey) =>
+                      patchQueryState({
+                        sortKey,
+                        sortDirection:
+                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
+                            ? "desc"
+                            : "asc"
+                      })
+                    }
+                  />
+                </th>
+                <th className="min-w-[12rem] px-2 py-2.5 font-semibold">
+                  <SortableHeader
+                    label="Artists"
+                    sortKey="artists"
+                    queryState={draftQueryState}
+                    onSort={(sortKey) =>
+                      patchQueryState({
+                        sortKey,
+                        sortDirection:
+                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
+                            ? "desc"
+                            : "asc"
+                      })
+                    }
+                  />
+                </th>
+                <th className="min-w-[12rem] px-2 py-2.5 font-semibold">
+                  <SortableHeader
+                    label="Tags"
+                    sortKey="tags"
+                    queryState={draftQueryState}
+                    onSort={(sortKey) =>
+                      patchQueryState({
+                        sortKey,
+                        sortDirection:
+                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
+                            ? "desc"
+                            : "asc"
+                      })
+                    }
+                  />
+                </th>
+                <th className="w-20 px-2 py-2.5 font-semibold">
+                  <SortableHeader
+                    label="Lyrics"
+                    sortKey="lyrics"
+                    queryState={draftQueryState}
+                    onSort={(sortKey) =>
+                      patchQueryState({
+                        sortKey,
+                        sortDirection:
+                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
+                            ? "desc"
+                            : "asc"
+                      })
+                    }
+                  />
+                </th>
+                <th className="w-20 px-2 py-2.5 font-semibold">
+                  <SortableHeader
+                    label="Chords"
+                    sortKey="chords"
+                    queryState={draftQueryState}
+                    onSort={(sortKey) =>
+                      patchQueryState({
+                        sortKey,
+                        sortDirection:
+                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
+                            ? "desc"
+                            : "asc"
+                      })
+                    }
+                  />
+                </th>
+                <th className="w-20 px-2 py-2.5 font-semibold">
+                  <SortableHeader
+                    label="Notes"
+                    sortKey="notes"
+                    queryState={draftQueryState}
+                    onSort={(sortKey) =>
+                      patchQueryState({
+                        sortKey,
+                        sortDirection:
+                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
+                            ? "desc"
+                            : "asc"
+                      })
+                    }
+                  />
+                </th>
+                <th className="w-20 px-2 py-2.5 font-semibold">
+                  <SortableHeader
+                    label="Audio"
+                    sortKey="audio"
+                    queryState={draftQueryState}
+                    onSort={(sortKey) =>
+                      patchQueryState({
+                        sortKey,
+                        sortDirection:
+                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
+                            ? "desc"
+                            : "asc"
+                      })
+                    }
+                  />
+                </th>
+                <th className="w-16 px-2 py-2.5 text-right font-semibold">
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-end text-[color:var(--muted)] transition hover:text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={selectedTrackSlugs.length === 0}
+                    aria-label="Bulk edit selected tracks"
+                    onClick={() => {
+                      setBulkDraft(createEmptyBulkDraft());
+                      setBulkOpen(true);
+                    }}
+                  >
+                    <AppIcon name="pencil" className="h-4 w-4" />
+                  </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((item) => {
+                const isSelected = selectedSet.has(item.slug);
+
+                return (
+                  <tr key={item.slug} id={item.slug}>
+                    <td className="px-2 py-2 align-top">
+                      <div className="flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleTrackSelection(item.slug)}
+                          aria-label={`Select ${item.name}`}
+                        />
+                      </div>
+                    </td>
+                    <td className="max-w-0 px-2 py-2 align-top">
+                      <div className="overflow-hidden">
+                        <Link
+                          href={`/tracks/${item.slug}`}
+                          className="truncate font-medium underline-offset-4 hover:underline"
+                        >
+                          {item.name}
+                        </Link>
+                      </div>
+                    </td>
+                    <td className="max-w-[12rem] px-2 py-2 align-top">
+                      <MetadataLinks items={item.projects} hrefBase="/projects" />
+                    </td>
+                    <td className="max-w-[12rem] px-2 py-2 align-top">
+                      <MetadataLinks items={item.artists} hrefBase="/artists" />
+                    </td>
+                    <td className="max-w-[12rem] px-2 py-2 align-top">
+                      <MetadataLinks items={item.tags} hrefBase="/tags" />
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-2 align-top">{item.hasLyrics ? "✓" : "-"}</td>
+                    <td className="whitespace-nowrap px-2 py-2 align-top">{item.hasChords ? "✓" : "-"}</td>
+                    <td className="whitespace-nowrap px-2 py-2 align-top">{item.hasNotes ? "✓" : "-"}</td>
+                    <td className="whitespace-nowrap px-2 py-2 align-top">{item.audioCount}</td>
+                    <td className="px-2 py-2 align-top text-right">
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-end rounded-md p-1 text-[color:var(--muted)] transition hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--ink)]"
+                        aria-label={`Edit ${item.name}`}
+                        onClick={() => setEditingTrackSlug(item.slug)}
+                      >
+                        <AppIcon name="pencil" className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredItems.length === 0 ? (
+          <p className="px-4 py-4 text-sm text-[color:var(--muted)]">No tracks match the current query.</p>
+        ) : null}
+      </div>
+
+      {editingItem ? (
+        <ModalShell
+          title={`Quick Edit: ${editingItem.name}`}
+          description="Update the track name and linked artists, projects, or tags."
+          onClose={() => setEditingTrackSlug(null)}
+        >
+          <TrackMetadataEditor
+            trackSlug={editingItem.slug}
+            initialName={editingItem.name}
+            initialArtistSlugs={editingItem.artists.map((artist) => artist.slug)}
+            initialProjectSlugs={editingItem.projects.map((project) => project.slug)}
+            initialTagSlugs={editingItem.tags.map((tag) => tag.slug)}
+            artistOptions={artistOptions}
+            projectOptions={projectOptions}
+            tagOptions={tagOptions}
+            withPanel={false}
+            submitLabel="Save Track"
+            onCancel={() => setEditingTrackSlug(null)}
+            onSaved={() => setEditingTrackSlug(null)}
+          />
+        </ModalShell>
+      ) : null}
+
+      {bulkOpen ? (
+        <BulkEditDialog
+          selectedCount={selectedTrackSlugs.length}
+          draft={bulkDraft}
+          artistOptions={artistOptions}
+          projectOptions={projectOptions}
+          tagOptions={tagOptions}
+          saving={bulkSaving}
+          onClose={() => setBulkOpen(false)}
+          onSubmit={() => void applyBulkChanges()}
+          onChange={setBulkDraft}
+        />
+      ) : null}
     </div>
   );
 }
