@@ -115,7 +115,7 @@ export function TagDetailControls({
     try {
       await api.deleteTag(currentSlug);
       showToast("Tag deleted.");
-      router.push("/tags");
+      router.push("/tracks");
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Failed to delete tag.");
@@ -167,8 +167,8 @@ export function TagDetailControls({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <Link href="/tags" className="theme-button-link theme-button-link--ghost">
-            Back To Tags
+          <Link href="/tracks" className="theme-button-link theme-button-link--ghost">
+            Back To Tracks
           </Link>
           <ActionButton tone="danger" disabled={deleting || savingHeader} onClick={onDelete}>
             {deleting ? "Deleting..." : "Delete"}
