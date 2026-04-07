@@ -1,13 +1,55 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
 import { useProgressRouter } from "@/components/navigation/route-progress";
 import { TrackMetadataEditor } from "@/components/tracks/track-metadata-editor";
 import { ActionButton } from "@/components/ui/action-button";
+import { AppIcon } from "@/components/ui/app-icons";
+import { ModalShell } from "@/components/ui/modal-shell";
 import { useToast } from "@/components/ui/toast";
 import type { TrackMetadataOption } from "@/lib/tracks/types";
 import { api } from "@/lib/client/api";
+
+function buildOptionMap(options: TrackMetadataOption[]): Record<string, string> {
+  return Object.fromEntries(options.map((option) => [option.slug, option.name]));
+}
+
+function MetadataLinkList({
+  label,
+  slugs,
+  nameBySlug,
+  hrefBase,
+  emptyLabel
+}: {
+  label: string;
+  slugs: string[];
+  nameBySlug: Record<string, string>;
+  hrefBase: string;
+  emptyLabel: string;
+}) {
+  return (
+    <div className="grid gap-2 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">{label}</p>
+      {slugs.length === 0 ? (
+        <p className="text-sm text-[color:var(--muted)]">{emptyLabel}</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {slugs.map((slug) => (
+            <Link
+              key={slug}
+              href={`${hrefBase}/${slug}`}
+              className="inline-flex max-w-full items-center rounded-full border border-[color:var(--border-strong)] bg-white px-3 py-1 text-sm underline-offset-4 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] hover:underline"
+            >
+              <span className="truncate">{nameBySlug[slug] ?? slug}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function TrackDetailControls({
   trackSlug,
@@ -32,6 +74,12 @@ export function TrackDetailControls({
 }) {
   const router = useProgressRouter();
   const { showToast } = useToast();
+  const [editingMetadata, setEditingMetadata] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const artistNameBySlug = useMemo(() => buildOptionMap(artistOptions), [artistOptions]);
+  const projectNameBySlug = useMemo(() => buildOptionMap(projectOptions), [projectOptions]);
+  const tagNameBySlug = useMemo(() => buildOptionMap(tagOptions), [tagOptions]);
 
   async function onDelete() {
     const confirmed = window.confirm(
@@ -42,57 +90,104 @@ export function TrackDetailControls({
     }
 
     try {
+      setDeleting(true);
       await api.deleteTrack(trackSlug);
       showToast("Track deleted.");
       router.push("/tracks");
       router.refresh();
     } catch {
       showToast("Failed to delete track.", "error");
+    } finally {
+      setDeleting(false);
     }
   }
 
   return (
     <div className="grid gap-4">
-      <div className="panel flex flex-col gap-4 p-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
-          <EntityPlaceholderArtwork
-            kind="track"
-            variant="detail-cover"
-            imageHref={imageHref}
-            alt={`${initialName} artwork`}
-          />
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-2xl font-semibold">{initialName}</h1>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">{trackSlug}</p>
-            <p className="mt-3 max-w-2xl text-sm text-[color:var(--muted)]">
-              Quick metadata updates for the track itself live here. Audio files, artwork, and markdown docs stay
-              below.
-            </p>
+      <div className="panel p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
+            <EntityPlaceholderArtwork
+              kind="track"
+              variant="detail-cover"
+              imageHref={imageHref}
+              alt={`${initialName} artwork`}
+            />
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-2xl font-semibold">{initialName}</h1>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">{trackSlug}</p>
+              <p className="mt-3 max-w-2xl text-sm text-[color:var(--muted)]">
+                Track metadata is read-only here. Use the edit button to update the name and linked artists,
+                projects, or tags.
+              </p>
+              <div className="mt-4 grid gap-3 lg:grid-cols-[repeat(3,minmax(0,1fr))]">
+                <MetadataLinkList
+                  label="Artists"
+                  slugs={initialArtistSlugs}
+                  nameBySlug={artistNameBySlug}
+                  hrefBase="/artists"
+                  emptyLabel="No artists linked."
+                />
+                <MetadataLinkList
+                  label="Projects"
+                  slugs={initialProjectSlugs}
+                  nameBySlug={projectNameBySlug}
+                  hrefBase="/projects"
+                  emptyLabel="No projects linked."
+                />
+                <MetadataLinkList
+                  label="Tags"
+                  slugs={initialTagSlugs}
+                  nameBySlug={tagNameBySlug}
+                  hrefBase="/tags"
+                  emptyLabel="No tags linked."
+                />
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <Link href="/tracks" className="theme-button-link theme-button-link--ghost">
-            Back To Tracks
-          </Link>
-          <ActionButton tone="danger" onClick={onDelete}>
-            Delete
-          </ActionButton>
+          <div className="flex flex-wrap items-start justify-end gap-2">
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+              aria-label={`Edit ${initialName}`}
+              onClick={() => setEditingMetadata(true)}
+            >
+              <AppIcon name="pencil" className="h-4 w-4" />
+            </button>
+            <Link href="/tracks" className="theme-button-link theme-button-link--ghost">
+              Back To Tracks
+            </Link>
+          </div>
         </div>
       </div>
 
-      <TrackMetadataEditor
-        trackSlug={trackSlug}
-        initialName={initialName}
-        initialArtistSlugs={initialArtistSlugs}
-        initialProjectSlugs={initialProjectSlugs}
-        initialTagSlugs={initialTagSlugs}
-        artistOptions={artistOptions}
-        projectOptions={projectOptions}
-        tagOptions={tagOptions}
-        title="Metadata"
-        description="Rename the track or update its linked artists, projects, and tags."
-        withPanel
-      />
+      {editingMetadata ? (
+        <ModalShell
+          title={`Quick Edit: ${initialName}`}
+          description="Update the track name and linked artists, projects, or tags."
+          onClose={() => setEditingMetadata(false)}
+        >
+          <TrackMetadataEditor
+            trackSlug={trackSlug}
+            initialName={initialName}
+            initialArtistSlugs={initialArtistSlugs}
+            initialProjectSlugs={initialProjectSlugs}
+            initialTagSlugs={initialTagSlugs}
+            artistOptions={artistOptions}
+            projectOptions={projectOptions}
+            tagOptions={tagOptions}
+            withPanel={false}
+            submitLabel="Save Track"
+            onCancel={() => setEditingMetadata(false)}
+            onSaved={() => setEditingMetadata(false)}
+          />
+          <div className="mt-4 flex justify-end border-t border-[color:var(--border-soft)] pt-4">
+            <ActionButton tone="danger" disabled={deleting} onClick={() => void onDelete()}>
+              {deleting ? "Deleting..." : "Delete Track"}
+            </ActionButton>
+          </div>
+        </ModalShell>
+      ) : null}
     </div>
   );
 }
