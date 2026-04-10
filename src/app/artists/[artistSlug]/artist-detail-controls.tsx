@@ -258,9 +258,6 @@ export function ArtistDetailControls({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <Link href="/artists" className="theme-button-link theme-button-link--ghost">
-            Back To Artists
-          </Link>
           <ActionButton tone="danger" disabled={deleting || savingHeader} onClick={onDelete}>
             {deleting ? "Deleting..." : "Delete"}
           </ActionButton>

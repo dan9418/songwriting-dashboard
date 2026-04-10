@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { Field } from "@/components/ui/field";
 import { TextInput } from "@/components/ui/text-input";
@@ -124,6 +124,7 @@ export function TrackMetadataEditor({
   description,
   withPanel = true,
   submitLabel = "Save Changes",
+  footerActions,
   onCancel,
   onSaved
 }: {
@@ -139,6 +140,7 @@ export function TrackMetadataEditor({
   description?: string;
   withPanel?: boolean;
   submitLabel?: string;
+  footerActions?: ReactNode;
   onCancel?: () => void;
   onSaved?: () => void;
 }) {
@@ -315,6 +317,7 @@ export function TrackMetadataEditor({
       ) : null}
 
       <div className="flex flex-wrap items-center justify-end gap-2">
+        {footerActions}
         {onCancel ? (
           <ActionButton tone="ghost" disabled={saving || creatingTag} onClick={onCancel}>
             Cancel

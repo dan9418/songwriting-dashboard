@@ -167,9 +167,6 @@ export function TagDetailControls({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <Link href="/tracks" className="theme-button-link theme-button-link--ghost">
-            Back To Tracks
-          </Link>
           <ActionButton tone="danger" disabled={deleting || savingHeader} onClick={onDelete}>
             {deleting ? "Deleting..." : "Delete"}
           </ActionButton>

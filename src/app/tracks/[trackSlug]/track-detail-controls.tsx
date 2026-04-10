@@ -16,7 +16,7 @@ function buildOptionMap(options: TrackMetadataOption[]): Record<string, string> 
   return Object.fromEntries(options.map((option) => [option.slug, option.name]));
 }
 
-function MetadataLinkList({
+function MetadataTextRow({
   label,
   slugs,
   nameBySlug,
@@ -29,24 +29,54 @@ function MetadataLinkList({
   hrefBase: string;
   emptyLabel: string;
 }) {
+  if (slugs.length === 0) {
+    return <p className="text-sm text-[color:var(--muted)]">{emptyLabel}</p>;
+  }
+
   return (
-    <div className="grid gap-2 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">{label}</p>
-      {slugs.length === 0 ? (
-        <p className="text-sm text-[color:var(--muted)]">{emptyLabel}</p>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {slugs.map((slug) => (
-            <Link
-              key={slug}
-              href={`${hrefBase}/${slug}`}
-              className="inline-flex max-w-full items-center rounded-full border border-[color:var(--border-strong)] bg-white px-3 py-1 text-sm underline-offset-4 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] hover:underline"
-            >
-              <span className="truncate">{nameBySlug[slug] ?? slug}</span>
-            </Link>
-          ))}
-        </div>
-      )}
+    <p className="text-sm text-[color:var(--muted)]">
+      <span className="font-medium text-[color:var(--ink)]">{label}: </span>
+      {slugs.map((slug, index) => (
+        <span key={slug}>
+          {index > 0 ? <span>, </span> : null}
+          <Link
+            href={`${hrefBase}/${slug}`}
+            className="underline-offset-4 transition hover:text-[color:var(--accent)] hover:underline"
+          >
+            {nameBySlug[slug] ?? slug}
+          </Link>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+function TagPillList({
+  slugs,
+  nameBySlug,
+  hrefBase,
+  emptyLabel
+}: {
+  slugs: string[];
+  nameBySlug: Record<string, string>;
+  hrefBase: string;
+  emptyLabel: string;
+}) {
+  if (slugs.length === 0) {
+    return <p className="text-sm text-[color:var(--muted)]">{emptyLabel}</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {slugs.map((slug) => (
+        <Link
+          key={slug}
+          href={`${hrefBase}/${slug}`}
+          className="inline-flex max-w-full items-center rounded-full border border-[color:var(--border-strong)] bg-white px-3 py-1 text-sm underline-offset-4 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] hover:underline"
+        >
+          <span className="truncate">{nameBySlug[slug] ?? slug}</span>
+        </Link>
+      ))}
     </div>
   );
 }
@@ -115,28 +145,24 @@ export function TrackDetailControls({
             />
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-2xl font-semibold">{initialName}</h1>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">{trackSlug}</p>
-              <p className="mt-3 max-w-2xl text-sm text-[color:var(--muted)]">
-                Track metadata is read-only here. Use the edit button to update the name and linked artists,
-                projects, or tags.
-              </p>
-              <div className="mt-4 grid gap-3 lg:grid-cols-[repeat(3,minmax(0,1fr))]">
-                <MetadataLinkList
-                  label="Artists"
+              <div className="mt-2 grid gap-1.5">
+                <MetadataTextRow
+                  label="Artist"
                   slugs={initialArtistSlugs}
                   nameBySlug={artistNameBySlug}
                   hrefBase="/artists"
                   emptyLabel="No artists linked."
                 />
-                <MetadataLinkList
-                  label="Projects"
+                <MetadataTextRow
+                  label="Project"
                   slugs={initialProjectSlugs}
                   nameBySlug={projectNameBySlug}
                   hrefBase="/projects"
                   emptyLabel="No projects linked."
                 />
-                <MetadataLinkList
-                  label="Tags"
+              </div>
+              <div className="mt-3">
+                <TagPillList
                   slugs={initialTagSlugs}
                   nameBySlug={tagNameBySlug}
                   hrefBase="/tags"
@@ -154,9 +180,6 @@ export function TrackDetailControls({
             >
               <AppIcon name="pencil" className="h-4 w-4" />
             </button>
-            <Link href="/tracks" className="theme-button-link theme-button-link--ghost">
-              Back To Tracks
-            </Link>
           </div>
         </div>
       </div>
@@ -178,14 +201,14 @@ export function TrackDetailControls({
             tagOptions={tagOptions}
             withPanel={false}
             submitLabel="Save Track"
+            footerActions={
+              <ActionButton tone="danger" disabled={deleting} onClick={() => void onDelete()}>
+                {deleting ? "Deleting..." : "Delete Track"}
+              </ActionButton>
+            }
             onCancel={() => setEditingMetadata(false)}
             onSaved={() => setEditingMetadata(false)}
           />
-          <div className="mt-4 flex justify-end border-t border-[color:var(--border-soft)] pt-4">
-            <ActionButton tone="danger" disabled={deleting} onClick={() => void onDelete()}>
-              {deleting ? "Deleting..." : "Delete Track"}
-            </ActionButton>
-          </div>
         </ModalShell>
       ) : null}
     </div>

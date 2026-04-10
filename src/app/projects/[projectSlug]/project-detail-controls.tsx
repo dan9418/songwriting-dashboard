@@ -449,9 +449,6 @@ export function ProjectDetailControls({
         </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-          <Link href="/projects" className="theme-button-link theme-button-link--ghost">
-            Back To Projects
-          </Link>
           <ActionButton tone="danger" disabled={deleting || savingHeader} onClick={onDelete}>
             {deleting ? "Deleting..." : "Delete"}
           </ActionButton>

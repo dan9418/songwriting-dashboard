@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { RouteProgressProvider } from "@/components/navigation/route-progress";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icons";
+import { slugToTitle } from "@/lib/utils/slug-display";
 
 const PRIMARY_NAV_ITEMS = [
   { href: "/", label: "Home", icon: "home" },
@@ -15,9 +16,32 @@ const PRIMARY_NAV_ITEMS = [
   { href: "/admin", label: "Admin", icon: "admin" }
 ] satisfies Array<{ href: string; label: string; icon: AppIconName }>;
 
+const BREADCRUMB_LABELS: Record<string, string> = {
+  notebook: "Notebook",
+  artists: "Artists",
+  projects: "Projects",
+  tracks: "Tracks",
+  tags: "Tags",
+  add: "Add"
+};
+
+function buildBreadcrumbItems(pathname: string | null): Array<{ href: string; label: string }> {
+  if (!pathname || pathname === "/" || pathname.startsWith("/admin")) {
+    return [];
+  }
+
+  const segments = pathname.split("/").filter(Boolean);
+
+  return segments.map((segment, index) => ({
+    href: `/${segments.slice(0, index + 1).join("/")}`,
+    label: BREADCRUMB_LABELS[segment] ?? slugToTitle(decodeURIComponent(segment))
+  }));
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isRoot = pathname === "/";
+  const breadcrumbItems = buildBreadcrumbItems(pathname);
 
   function isActive(href: string) {
     if (href === "/") {
@@ -27,9 +51,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Suspense fallback={<AppShellFrame isActive={isActive}>{children}</AppShellFrame>}>
+    <Suspense fallback={<AppShellFrame isActive={isActive} breadcrumbItems={breadcrumbItems}>{children}</AppShellFrame>}>
       <RouteProgressProvider>
-        <AppShellFrame isActive={isActive}>{children}</AppShellFrame>
+        <AppShellFrame isActive={isActive} breadcrumbItems={breadcrumbItems}>{children}</AppShellFrame>
       </RouteProgressProvider>
     </Suspense>
   );
@@ -37,11 +61,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function AppShellFrame({
   children,
-  isActive
+  isActive,
+  breadcrumbItems
 }: {
   children: ReactNode;
   isActive: (href: string) => boolean | undefined;
+  breadcrumbItems: Array<{ href: string; label: string }>;
 }) {
+  const showBreadcrumbs = breadcrumbItems.length > 0;
+
   return (
       <div className="min-h-screen pb-8">
         <header className="fixed inset-x-0 top-0 z-40 border-b border-[color:var(--border-soft)] bg-[color:var(--bg-panel)]/95 backdrop-blur">
@@ -67,6 +95,36 @@ function AppShellFrame({
           </div>
         </header>
         <div className="mx-auto grid w-full max-w-7xl gap-4 px-3 pt-20 md:px-6 md:pt-24">
+          {showBreadcrumbs ? (
+            <nav
+              aria-label="Breadcrumb"
+              className="flex min-w-0 items-center gap-2 overflow-x-auto py-1 text-sm text-[color:var(--muted)]"
+            >
+              <Link
+                href="/"
+                aria-label="Home"
+                className="shrink-0 transition hover:text-[color:var(--ink)]"
+              >
+                <AppIcon name="home" className="h-4 w-4" />
+              </Link>
+              {breadcrumbItems.map((item, index) => {
+                const isLast = index === breadcrumbItems.length - 1;
+
+                return (
+                  <div key={item.href} className="flex min-w-0 shrink-0 items-center gap-2">
+                    <span aria-hidden>/</span>
+                    {isLast ? (
+                      <span className="truncate font-medium text-[color:var(--ink)]">{item.label}</span>
+                    ) : (
+                      <Link href={item.href} className="truncate transition hover:text-[color:var(--ink)]">
+                        {item.label}
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+          ) : null}
           <main className="fade-up">{children}</main>
         </div>
       </div>
