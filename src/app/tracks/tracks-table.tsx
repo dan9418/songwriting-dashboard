@@ -9,6 +9,7 @@ import {
   useState,
   useTransition,
   type Dispatch,
+  type ReactNode,
   type SetStateAction
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -62,6 +63,8 @@ interface DualSelectionFieldProps {
   positiveValues: string[];
   negativeValues: string[];
   disabled?: boolean;
+  leadingContent?: ReactNode;
+  footerContent?: ReactNode;
   onPositiveChange: (nextValue: string[]) => void;
   onNegativeChange: (nextValue: string[]) => void;
 }
@@ -91,6 +94,14 @@ function removeValue(values: string[], slug: string): string[] {
 
 function addValue(values: string[], slug: string): string[] {
   return values.includes(slug) ? values : [...values, slug];
+}
+
+function buildSelectionPrompt(actionLabel: string, itemLabel: string, hasOptions: boolean) {
+  if (!hasOptions) {
+    return "No more options";
+  }
+
+  return `Select ${itemLabel.toLocaleLowerCase()} to ${actionLabel.toLocaleLowerCase()}...`;
 }
 
 function SlugChipList({
@@ -135,6 +146,8 @@ function DualSelectionField({
   positiveValues,
   negativeValues,
   disabled,
+  leadingContent,
+  footerContent,
   onPositiveChange,
   onNegativeChange
 }: DualSelectionFieldProps) {
@@ -153,6 +166,7 @@ function DualSelectionField({
         <h3 className="text-sm font-semibold">{label}</h3>
       </div>
       <div className="grid gap-3">
+        {leadingContent}
         <div className="grid gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
             {positiveLabel}
@@ -176,11 +190,7 @@ function DualSelectionField({
               onNegativeChange(removeValue(negativeValues, slug));
             }}
           >
-            <option value="">
-              {availablePositiveOptions.length === 0
-                ? "No more options"
-                : `Add ${positiveLabel.toLocaleLowerCase()}...`}
-            </option>
+            <option value="">{buildSelectionPrompt(positiveLabel, label, availablePositiveOptions.length > 0)}</option>
             {availablePositiveOptions.map((option) => (
               <option key={option.slug} value={option.slug}>
                 {option.name}
@@ -212,11 +222,7 @@ function DualSelectionField({
               onPositiveChange(removeValue(positiveValues, slug));
             }}
           >
-            <option value="">
-              {availableNegativeOptions.length === 0
-                ? "No more options"
-                : `Add ${negativeLabel.toLocaleLowerCase()}...`}
-            </option>
+            <option value="">{buildSelectionPrompt(negativeLabel, label, availableNegativeOptions.length > 0)}</option>
             {availableNegativeOptions.map((option) => (
               <option key={option.slug} value={option.slug}>
                 {option.name}
@@ -224,6 +230,7 @@ function DualSelectionField({
             ))}
           </select>
         </div>
+        {footerContent}
       </div>
     </div>
   );
@@ -248,7 +255,7 @@ function MetadataLinks({
 
   return (
     <span
-      className={`inline-flex min-w-0 items-center gap-1 ${
+      className={`inline-flex min-w-0 items-center ${
         wrap ? "flex-wrap whitespace-normal" : "overflow-hidden whitespace-nowrap"
       }`}
     >
@@ -309,6 +316,7 @@ function BulkEditDialog({
   saving,
   onClose,
   onSubmit,
+  onTagCreated,
   onChange
 }: {
   selectedCount: number;
@@ -319,12 +327,45 @@ function BulkEditDialog({
   saving: boolean;
   onClose: () => void;
   onSubmit: () => void;
+  onTagCreated: (tag: TrackMetadataOption) => void;
   onChange: Dispatch<SetStateAction<Pick<TrackBulkMetadataOperation, "artists" | "projects" | "tags">>>;
 }) {
+  const { showToast } = useToast();
   const hasChanges = hasBulkMetadataChanges({
     trackSlugs: ["placeholder"],
     ...draft
   });
+  const [newTagName, setNewTagName] = useState("");
+  const [creatingTag, setCreatingTag] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  async function handleCreateTag() {
+    setCreatingTag(true);
+    setErrorMessage(null);
+
+    try {
+      const created = await api.createTag({
+        name: newTagName
+      });
+      const nextTag = { slug: created.slug, name: created.name };
+      onTagCreated(nextTag);
+      onChange((current) => ({
+        ...current,
+        tags: {
+          add: addValue(current.tags.add, created.slug),
+          remove: removeValue(current.tags.remove, created.slug)
+        }
+      }));
+      setNewTagName("");
+      showToast("Tag created and added to the bulk update.");
+    } catch (error) {
+      const nextMessage = error instanceof Error ? error.message : "Failed to create tag.";
+      setErrorMessage(nextMessage);
+      showToast("Failed to create tag.", "error");
+    } finally {
+      setCreatingTag(false);
+    }
+  }
 
   return (
     <ModalShell
@@ -333,10 +374,10 @@ function BulkEditDialog({
       onClose={onClose}
       footer={
         <div className="flex justify-end gap-2">
-          <ActionButton tone="ghost" disabled={saving} onClick={onClose}>
+          <ActionButton tone="ghost" disabled={saving || creatingTag} onClick={onClose}>
             Cancel
           </ActionButton>
-          <ActionButton disabled={saving || !hasChanges} onClick={onSubmit}>
+          <ActionButton disabled={saving || creatingTag || !hasChanges} onClick={onSubmit}>
             {saving ? "Applying..." : "Apply Changes"}
           </ActionButton>
         </div>
@@ -400,8 +441,8 @@ function BulkEditDialog({
         <DualSelectionField
           label="Tags"
           options={tagOptions}
-          positiveLabel="Add"
-          negativeLabel="Remove"
+          positiveLabel="ADD"
+          negativeLabel="REMOVE"
           positiveValues={draft.tags.add}
           negativeValues={draft.tags.remove}
           disabled={saving}
@@ -423,7 +464,32 @@ function BulkEditDialog({
               }
             }))
           }
+          leadingContent={
+            <div className="grid gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                CREATE
+              </p>
+              <div className="grid gap-2">
+                <TextInput
+                  value={newTagName}
+                  disabled={saving || creatingTag}
+                  placeholder="New tag name"
+                  onChange={(event) => setNewTagName(event.currentTarget.value)}
+                />
+                <ActionButton
+                  className="justify-center sm:self-start"
+                  disabled={saving || creatingTag || newTagName.trim().length === 0}
+                  onClick={() => void handleCreateTag()}
+                >
+                  {creatingTag ? "Creating..." : "Create Tag"}
+                </ActionButton>
+              </div>
+            </div>
+          }
         />
+        {errorMessage ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{errorMessage}</p>
+        ) : null}
       </div>
     </ModalShell>
   );
@@ -457,13 +523,14 @@ export function TracksTable({
   const [bulkSaving, setBulkSaving] = useState(false);
   const [bulkDraft, setBulkDraft] =
     useState<Pick<TrackBulkMetadataOperation, "artists" | "projects" | "tags">>(createEmptyBulkDraft);
+  const [allTagOptions, setAllTagOptions] = useState(tagOptions);
   const selectAllRef = useRef<HTMLInputElement | null>(null);
   const draftQueryStateRef = useRef(draftQueryState);
 
   const filteredItems = useMemo(() => filterAndSortTracks(items, draftQueryState), [items, draftQueryState]);
   const queryArtistOptions = useMemo(() => withUnassignedOption(artistOptions), [artistOptions]);
   const queryProjectOptions = useMemo(() => withUnassignedOption(projectOptions), [projectOptions]);
-  const queryTagOptions = useMemo(() => withUnassignedOption(tagOptions), [tagOptions]);
+  const queryTagOptions = useMemo(() => withUnassignedOption(allTagOptions), [allTagOptions]);
   const filteredTrackSlugs = useMemo(() => filteredItems.map((item) => item.slug), [filteredItems]);
   const selectedSet = useMemo(() => new Set(selectedTrackSlugs), [selectedTrackSlugs]);
   const filteredSelectedCount = filteredTrackSlugs.filter((slug) => selectedSet.has(slug)).length;
@@ -483,6 +550,10 @@ export function TracksTable({
     const availableTrackSlugs = new Set(items.map((item) => item.slug));
     setSelectedTrackSlugs((current) => current.filter((trackSlug) => availableTrackSlugs.has(trackSlug)));
   }, [items]);
+
+  useEffect(() => {
+    setAllTagOptions(tagOptions);
+  }, [tagOptions]);
 
   useEffect(() => {
     setDraftQueryState((current) => (equalTrackQueryState(current, urlQueryState) ? current : urlQueryState));
@@ -912,7 +983,7 @@ export function TracksTable({
             initialTagSlugs={editingItem.tags.map((tag) => tag.slug)}
             artistOptions={artistOptions}
             projectOptions={projectOptions}
-            tagOptions={tagOptions}
+            tagOptions={allTagOptions}
             withPanel={false}
             submitLabel="Save Track"
             onCancel={() => setEditingTrackSlug(null)}
@@ -927,10 +998,15 @@ export function TracksTable({
           draft={bulkDraft}
           artistOptions={artistOptions}
           projectOptions={projectOptions}
-          tagOptions={tagOptions}
+          tagOptions={allTagOptions}
           saving={bulkSaving}
           onClose={() => setBulkOpen(false)}
           onSubmit={() => void applyBulkChanges()}
+          onTagCreated={(tag) =>
+            setAllTagOptions((current) =>
+              sortOptions(current.some((option) => option.slug === tag.slug) ? current : [...current, tag])
+            )
+          }
           onChange={setBulkDraft}
         />
       ) : null}
