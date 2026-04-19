@@ -36,6 +36,8 @@ export interface AppTheme {
   tokens: ThemeTokens;
 }
 
+export const THEME_STORAGE_KEY = "songwriting-dashboard.theme";
+
 export const THEME_ELEMENT_SUMMARY = [
   {
     element: "Backgrounds",

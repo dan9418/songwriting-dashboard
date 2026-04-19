@@ -7,11 +7,10 @@ import {
   getRandomThemeId,
   getThemeById,
   isThemeId,
+  THEME_STORAGE_KEY,
   themeToCssVariables,
   type AppTheme
 } from "@/lib/theme/design-system";
-
-const THEME_STORAGE_KEY = "songwriting-dashboard.theme";
 
 interface ThemeContextValue {
   theme: AppTheme;
