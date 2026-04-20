@@ -71,7 +71,7 @@ function TagPillList({
         <Link
           key={slug}
           href={`${hrefBase}/${slug}`}
-          className="inline-flex max-w-full items-center rounded-full border border-[color:var(--border-strong)] bg-white px-3 py-1 text-sm underline-offset-4 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] hover:underline"
+          className="inline-flex max-w-full items-center rounded-[4px] border border-[color:var(--border-strong)] bg-white px-2 py-[2px] text-sm underline-offset-4 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] hover:underline"
         >
           <span className="truncate">{nameBySlug[slug] ?? slug}</span>
         </Link>
@@ -197,6 +197,7 @@ export function TrackDetailControls({
             audio: initialAudio
           }}
           showAudio={false}
+          showNotes={false}
           artistOptions={artistOptions}
           projectOptions={projectOptions}
           tagOptions={tagOptions}

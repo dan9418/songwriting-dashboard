@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { TrackAudioTable } from "@/components/tracks/track-audio-table";
 import { TrackMarkdownDocCard } from "@/components/tracks/track-markdown-doc-card";
 import { TrackMetadataEditor } from "@/components/tracks/track-metadata-editor";
 import { AppIcon } from "@/components/ui/app-icons";
@@ -8,10 +9,50 @@ import { ModalShell } from "@/components/ui/modal-shell";
 import { api } from "@/lib/client/api";
 import type { TrackMetadataOption, TrackQuickEditRecord } from "@/lib/tracks/types";
 
+function TrackQuickEditSection({
+  title,
+  ready,
+  loadingLabel,
+  errorMessage,
+  children
+}: {
+  title?: string;
+  ready: boolean;
+  loadingLabel: string;
+  errorMessage?: string | null;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-4">
+      {title ? <h3 className="text-lg font-semibold">{title}</h3> : null}
+
+      <div className={title ? "mt-4" : ""}>
+        {errorMessage ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {errorMessage}
+          </p>
+        ) : !ready ? (
+          <div className="grid gap-3">
+            <p className="text-sm text-[color:var(--muted)]">{loadingLabel}</p>
+            <div className="h-10 rounded-xl bg-white/70" />
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="h-28 rounded-xl bg-white/70" />
+              <div className="h-28 rounded-xl bg-white/70" />
+            </div>
+          </div>
+        ) : (
+          children
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function TrackQuickEditModal({
   trackSlug,
   initialTrack,
-  showAudio = false,
+  showAudio = true,
+  showNotes = true,
   artistOptions,
   projectOptions,
   tagOptions,
@@ -22,6 +63,7 @@ export function TrackQuickEditModal({
   trackSlug: string;
   initialTrack?: TrackQuickEditRecord;
   showAudio?: boolean;
+  showNotes?: boolean;
   artistOptions: TrackMetadataOption[];
   projectOptions: TrackMetadataOption[];
   tagOptions: TrackMetadataOption[];
@@ -65,8 +107,13 @@ export function TrackQuickEditModal({
     };
   }, [initialTrack, trackSlug]);
 
-  const modalTitle = `Edit: ${(track ?? initialTrack)?.name ?? trackSlug}`;
+  const modalTitle = `${(track ?? initialTrack)?.name ?? trackSlug}`;
   const modalDescription = (track ?? initialTrack)?.slug ?? trackSlug;
+  const sectionLoadError = loading ? null : errorMessage;
+  const showAudioSection = showAudio;
+  const showNotesSection = showNotes;
+  const metadataSectionReady = track !== null;
+  const audioSectionReady = track !== null;
 
   return (
     <ModalShell
@@ -75,34 +122,53 @@ export function TrackQuickEditModal({
       headerLeading={<AppIcon name="pencil" className="h-6 w-6" />}
       onClose={onClose}
     >
-      {track ? (
-        <div className="grid gap-4">
-          <TrackMetadataEditor
-            trackSlug={track.slug}
-            initialName={track.name}
-            initialArtistSlugs={track.artistSlugs}
-            initialProjectSlugs={track.projectSlugs}
-            initialTagSlugs={track.tagSlugs}
-            initialAudio={track.audio}
-            showAudio={showAudio}
-            artistOptions={artistOptions}
-            projectOptions={projectOptions}
-            tagOptions={tagOptions}
-            withPanel={false}
-            submitLabel="Save Track"
-            footerActions={footerActions}
-            onCancel={onClose}
-            onSaved={onSaved}
-          />
-          <TrackMarkdownDocCard trackSlug={track.slug} type="notes" />
-        </div>
-      ) : null}
-      {loading && !track ? <p className="text-sm text-[color:var(--muted)]">Loading track metadata...</p> : null}
-      {errorMessage ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-          {errorMessage}
-        </p>
-      ) : null}
+      <div className="grid gap-4">
+        <TrackQuickEditSection
+          title="Metadata"
+          ready={metadataSectionReady}
+          loadingLabel="Loading metadata..."
+          errorMessage={sectionLoadError}
+        >
+          {track ? (
+            <TrackMetadataEditor
+              trackSlug={track.slug}
+              initialName={track.name}
+              initialArtistSlugs={track.artistSlugs}
+              initialProjectSlugs={track.projectSlugs}
+              initialTagSlugs={track.tagSlugs}
+              artistOptions={artistOptions}
+              projectOptions={projectOptions}
+              tagOptions={tagOptions}
+              withPanel={false}
+              submitLabel="Save Track"
+              footerActions={footerActions}
+              onCancel={onClose}
+              onSaved={onSaved}
+            />
+          ) : null}
+        </TrackQuickEditSection>
+
+        {showAudioSection ? (
+          <TrackQuickEditSection
+            title="Audio"
+            ready={audioSectionReady}
+            loadingLabel="Loading audio..."
+            errorMessage={sectionLoadError}
+          >
+            {track ? <TrackAudioTable trackSlug={track.slug} audio={track.audio} showTitle={false} /> : null}
+          </TrackQuickEditSection>
+        ) : null}
+
+        {showNotesSection ? (
+          <TrackQuickEditSection
+            title={undefined}
+            ready
+            loadingLabel="Loading notes..."
+          >
+            <TrackMarkdownDocCard trackSlug={trackSlug} type="notes" withPanel={false} showTitle />
+          </TrackQuickEditSection>
+        ) : null}
+      </div>
     </ModalShell>
   );
 }

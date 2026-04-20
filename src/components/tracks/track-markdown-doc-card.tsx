@@ -26,7 +26,17 @@ function buildStarterText(): string {
   return "# Notes\n\n";
 }
 
-export function TrackMarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: DocType }) {
+export function TrackMarkdownDocCard({
+  trackSlug,
+  type,
+  withPanel = true,
+  showTitle = true
+}: {
+  trackSlug: string;
+  type: DocType;
+  withPanel?: boolean;
+  showTitle?: boolean;
+}) {
   const [mode, setMode] = useState<"published" | "edit">("published");
   const label = toLabel(type);
   const endpoint = `/api/tracks/${encodeURIComponent(trackSlug)}/docs/${type}`;
@@ -38,6 +48,10 @@ export function TrackMarkdownDocCard({ trackSlug, type }: { trackSlug: string; t
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const hasHeader = showTitle || record?.exists;
+  const containerClassName = withPanel ? "panel p-4" : "grid gap-3";
+  const statusClassName = hasHeader ? "mt-2 text-sm" : "text-sm";
+  const bodyClassName = hasHeader ? "mt-3 grid gap-3" : "grid gap-3";
 
   useEffect(() => {
     let ignore = false;
@@ -155,45 +169,47 @@ export function TrackMarkdownDocCard({ trackSlug, type }: { trackSlug: string; t
   }
 
   return (
-    <div className="panel p-4">
-      <div className="flex items-start justify-between gap-2">
-        <h2 className="text-lg font-semibold">{label}</h2>
+    <div className={containerClassName}>
+      {hasHeader ? (
+        <div className={`flex items-start gap-2 ${showTitle ? "justify-between" : "justify-end"}`}>
+          {showTitle ? <h2 className="text-lg font-semibold">{label}</h2> : null}
 
-        {record?.exists ? (
-          <div className="flex items-center gap-2">
-            {mode === "edit" ? (
-              <>
-                <ActionButton tone="danger" disabled={saving || deleting} onClick={removeDoc}>
-                  {deleting ? "Deleting..." : "Delete"}
+          {record?.exists ? (
+            <div className="flex items-center gap-2">
+              {mode === "edit" ? (
+                <>
+                  <ActionButton tone="danger" disabled={saving || deleting} onClick={removeDoc}>
+                    {deleting ? "Deleting..." : "Delete"}
+                  </ActionButton>
+                  <ActionButton disabled={saving || deleting} onClick={saveDoc}>
+                    {saving ? "Saving..." : "Save"}
+                  </ActionButton>
+                </>
+              ) : (
+                <ActionButton disabled={saving || deleting} onClick={() => setMode("edit")}>
+                  Edit
                 </ActionButton>
-                <ActionButton disabled={saving || deleting} onClick={saveDoc}>
-                  {saving ? "Saving..." : "Save"}
-                </ActionButton>
-              </>
-            ) : (
-              <ActionButton disabled={saving || deleting} onClick={() => setMode("edit")}>
-                Edit
-              </ActionButton>
-            )}
-          </div>
-        ) : null}
-      </div>
+              )}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
-      {loading ? <p className="mt-2 text-sm text-[color:var(--muted)]">Loading...</p> : null}
-      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
-      {message ? <p className="mt-2 text-sm text-[color:var(--muted)]">{message}</p> : null}
+      {loading ? <p className={`${statusClassName} text-[color:var(--muted)]`}>Loading...</p> : null}
+      {error ? <p className={`${statusClassName} text-red-700`}>{error}</p> : null}
+      {message ? <p className={`${statusClassName} text-[color:var(--muted)]`}>{message}</p> : null}
 
       {!loading && record && !record.exists ? (
         <>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">No {type} markdown file exists yet.</p>
-          <ActionButton className="mt-3" disabled={saving} onClick={createDoc}>
+          <p className={`${statusClassName} text-[color:var(--muted)]`}>No {type} markdown file exists yet.</p>
+          <ActionButton className={hasHeader ? "mt-1" : ""} disabled={saving} onClick={createDoc}>
             {saving ? "Creating..." : `Add ${label} File`}
           </ActionButton>
         </>
       ) : null}
 
       {!loading && record && record.exists ? (
-        <div data-color-mode="light" className="mt-3 grid gap-3">
+        <div data-color-mode="light" className={bodyClassName}>
           {mode === "published" ? (
             <MDEditor.Markdown
               source={

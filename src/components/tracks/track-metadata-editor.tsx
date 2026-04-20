@@ -44,7 +44,7 @@ function SelectionChips({
           key={slug}
           type="button"
           onClick={() => onRemove(slug)}
-          className="inline-flex h-10 max-w-full items-center rounded-full border border-[color:var(--border-strong)] bg-white px-3 text-xs underline-offset-4 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+          className="inline-flex max-w-full items-center rounded-full border border-[color:var(--border-strong)] bg-white px-[6px] py-[6px] text-xs underline-offset-4 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
         >
           <span className="truncate">{nameBySlug[slug] ?? slug}</span>
           <span aria-hidden className="ml-1 text-[10px]">
@@ -278,7 +278,7 @@ export function TrackMetadataEditor({
           onChange={setArtistSlugs}
         />
         <Field label="Create New Tag">
-          <div className="grid gap-3">
+          <div className="flex items-start gap-2">
             <TextInput
               value={newTagName}
               disabled={saving || creatingTag}
@@ -288,7 +288,7 @@ export function TrackMetadataEditor({
             />
             <ActionButton
               tone="ghost"
-              className="h-10 justify-center"
+              className="h-9 shrink-0 px-3 text-xs"
               disabled={saving || creatingTag || newTagName.trim().length === 0}
               onClick={handleCreateTag}
             >

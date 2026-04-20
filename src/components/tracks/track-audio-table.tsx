@@ -27,11 +27,13 @@ function formatDateForTable(value: string): string {
 export function TrackAudioTable({
   trackSlug,
   audio,
-  title = "Audio"
+  title = "Audio",
+  showTitle = true
 }: {
   trackSlug: string;
   audio: TrackAudioTableItem[];
   title?: string;
+  showTitle?: boolean;
 }) {
   const router = useProgressRouter();
   const { showToast } = useToast();
@@ -76,8 +78,8 @@ export function TrackAudioTable({
 
   return (
     <div className="overflow-x-auto">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <table className="theme-table mt-3 text-sm">
+      {showTitle ? <h2 className="text-lg font-semibold">{title}</h2> : null}
+      <table className={`theme-table text-sm ${showTitle ? "mt-3" : ""}`}>
         <thead>
           <tr className="text-xs uppercase tracking-wide">
             <th className="px-2 py-2 font-semibold">Filename</th>
@@ -143,26 +145,26 @@ export function TrackAudioTable({
         <p className="mt-3 text-sm text-[color:var(--muted)]">No audio metadata rows found.</p>
       ) : null}
 
-      <div className="mt-6 grid gap-3 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-4">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
-            Upload Audio
-          </h3>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">
-            <code>{`{track-slug}_{category}_v{version}_{date}_{optionalDescription}.{mp3|m4a|mp4}`}</code>
-          </p>
-        </div>
+      <div className="mt-6 grid gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".mp3,.m4a,.mp4,audio/mpeg,audio/mp4,audio/x-m4a"
+          disabled={uploading}
+          className="sr-only"
+          onChange={(event) => {
+            setSelectedFile(event.currentTarget.files?.[0] ?? null);
+          }}
+        />
         <div className="flex flex-col gap-2 md:flex-row md:items-center">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".mp3,.m4a,.mp4,audio/mpeg,audio/mp4,audio/x-m4a"
+          <ActionButton
+            tone="ghost"
+            className="h-10 justify-center md:self-stretch"
             disabled={uploading}
-            className="theme-input h-10 flex-1 file:mr-3 file:rounded-md file:border-0 file:bg-[color:var(--button-ghost-bg)] file:px-3 file:py-2 file:text-sm file:text-[color:var(--button-ghost-text)]"
-            onChange={(event) => {
-              setSelectedFile(event.currentTarget.files?.[0] ?? null);
-            }}
-          />
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Choose File
+          </ActionButton>
           <ActionButton
             tone="ghost"
             className="h-10 justify-center md:self-stretch"
@@ -172,6 +174,11 @@ export function TrackAudioTable({
             {uploading ? "Uploading..." : "Upload Audio"}
           </ActionButton>
         </div>
+        <p className="text-xs text-[color:var(--muted)]">
+          {selectedFile
+            ? selectedFile.name
+            : "{track-slug}_{category}_v{version}_{date}_{optionalDescription}.{mp3|m4a|mp4}"}
+        </p>
       </div>
     </div>
   );
