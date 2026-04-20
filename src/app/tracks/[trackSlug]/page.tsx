@@ -53,9 +53,7 @@ export default async function TrackByIdPage({
         }))}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <MarkdownDocCard trackSlug={track.slug} type="lyrics" />
-        <MarkdownDocCard trackSlug={track.slug} type="chords" />
+      <div className="grid gap-4">
         <MarkdownDocCard trackSlug={track.slug} type="notes" />
       </div>
 

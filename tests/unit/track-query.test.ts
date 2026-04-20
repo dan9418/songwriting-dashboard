@@ -15,8 +15,6 @@ const SAMPLE_ITEMS: TrackQueryItem[] = [
     artists: [{ slug: "dan", name: "Dan" }],
     projects: [{ slug: "night-runs", name: "Night Runs" }],
     tags: [{ slug: "keeper", name: "Keeper" }],
-    hasLyrics: true,
-    hasChords: false,
     hasNotes: true,
     audioCount: 3
   },
@@ -26,8 +24,6 @@ const SAMPLE_ITEMS: TrackQueryItem[] = [
     artists: [{ slug: "mia", name: "Mia" }],
     projects: [{ slug: "daybreak", name: "Daybreak" }],
     tags: [{ slug: "draft", name: "Draft" }],
-    hasLyrics: false,
-    hasChords: true,
     hasNotes: false,
     audioCount: 1
   },
@@ -40,8 +36,6 @@ const SAMPLE_ITEMS: TrackQueryItem[] = [
     ],
     projects: [{ slug: "night-runs", name: "Night Runs" }],
     tags: [{ slug: "draft", name: "Draft" }],
-    hasLyrics: true,
-    hasChords: true,
     hasNotes: false,
     audioCount: 2
   },
@@ -51,8 +45,6 @@ const SAMPLE_ITEMS: TrackQueryItem[] = [
     artists: [],
     projects: [],
     tags: [],
-    hasLyrics: false,
-    hasChords: false,
     hasNotes: true,
     audioCount: 0
   }
@@ -158,7 +150,7 @@ describe("track query utilities", () => {
     ]);
   });
 
-  it("sorts numeric and boolean columns", () => {
+  it("sorts numeric and notes columns", () => {
     const byAudio = filterAndSortTracks(SAMPLE_ITEMS, {
       title: "",
       matchMode: "all",
@@ -171,7 +163,7 @@ describe("track query utilities", () => {
       sortKey: "audio",
       sortDirection: "desc"
     });
-    const byLyrics = filterAndSortTracks(SAMPLE_ITEMS, {
+    const byNotes = filterAndSortTracks(SAMPLE_ITEMS, {
       title: "",
       matchMode: "all",
       artistInclude: [],
@@ -180,7 +172,7 @@ describe("track query utilities", () => {
       projectExclude: [],
       tagInclude: [],
       tagExclude: [],
-      sortKey: "lyrics",
+      sortKey: "notes",
       sortDirection: "desc"
     });
 
@@ -190,11 +182,6 @@ describe("track query utilities", () => {
       "sunrise-demo",
       "orphan-song"
     ]);
-    expect(byLyrics.map((item) => item.slug)).toEqual([
-      "night-signal",
-      "midnight-drive",
-      "sunrise-demo",
-      "orphan-song"
-    ]);
+    expect(byNotes.map((item) => item.slug)).toEqual(["orphan-song", "midnight-drive", "sunrise-demo", "night-signal"]);
   });
 });

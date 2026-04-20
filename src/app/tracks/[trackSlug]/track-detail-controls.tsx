@@ -196,6 +196,7 @@ export function TrackDetailControls({
             tagSlugs: initialTagSlugs,
             audio: initialAudio
           }}
+          showAudio={false}
           artistOptions={artistOptions}
           projectOptions={projectOptions}
           tagOptions={tagOptions}

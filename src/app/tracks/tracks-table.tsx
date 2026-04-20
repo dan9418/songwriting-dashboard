@@ -45,8 +45,6 @@ export interface TracksTableItem {
   projects: TrackMetadataOption[];
   artists: TrackMetadataOption[];
   tags: TrackMetadataOption[];
-  hasLyrics: boolean;
-  hasChords: boolean;
   hasNotes: boolean;
   audioCount: number;
 }
@@ -830,38 +828,6 @@ export function TracksTable({
                 </th>
                 <th className="w-16 px-2 py-1.5 font-semibold">
                   <SortableHeader
-                    label="Lyrics"
-                    sortKey="lyrics"
-                    queryState={draftQueryState}
-                    onSort={(sortKey) =>
-                      patchQueryState({
-                        sortKey,
-                        sortDirection:
-                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
-                            ? "desc"
-                            : "asc"
-                      })
-                    }
-                  />
-                </th>
-                <th className="w-16 px-2 py-1.5 font-semibold">
-                  <SortableHeader
-                    label="Chords"
-                    sortKey="chords"
-                    queryState={draftQueryState}
-                    onSort={(sortKey) =>
-                      patchQueryState({
-                        sortKey,
-                        sortDirection:
-                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
-                            ? "desc"
-                            : "asc"
-                      })
-                    }
-                  />
-                </th>
-                <th className="w-16 px-2 py-1.5 font-semibold">
-                  <SortableHeader
                     label="Notes"
                     sortKey="notes"
                     queryState={draftQueryState}
@@ -943,8 +909,6 @@ export function TracksTable({
                     <td className="max-w-[7rem] px-2 py-1.5 align-middle whitespace-normal">
                       <MetadataLinks items={item.tags} hrefBase="/tags" charLimit={14} wrap />
                     </td>
-                    <td className="whitespace-nowrap px-2 py-1.5 align-middle">{item.hasLyrics ? "\u2713" : "-"}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5 align-middle">{item.hasChords ? "\u2713" : "-"}</td>
                     <td className="whitespace-nowrap px-2 py-1.5 align-middle">{item.hasNotes ? "\u2713" : "-"}</td>
                     <td className="whitespace-nowrap px-2 py-1.5 align-middle">{truncateLabel(String(item.audioCount), 4)}</td>
                     <td className="px-2 py-1.5 align-middle text-center">
@@ -972,6 +936,7 @@ export function TracksTable({
       {editingItem ? (
         <TrackQuickEditModal
           trackSlug={editingItem.slug}
+          showAudio
           artistOptions={artistOptions}
           projectOptions={projectOptions}
           tagOptions={allTagOptions}

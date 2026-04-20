@@ -4,8 +4,6 @@ export type TrackSortKey =
   | "projects"
   | "artists"
   | "tags"
-  | "lyrics"
-  | "chords"
   | "notes"
   | "audio";
 export type TrackSortDirection = "asc" | "desc";
@@ -30,8 +28,6 @@ export interface TrackQueryItem {
   artists: Array<{ slug: string; name: string }>;
   projects: Array<{ slug: string; name: string }>;
   tags: Array<{ slug: string; name: string }>;
-  hasLyrics: boolean;
-  hasChords: boolean;
   hasNotes: boolean;
   audioCount: number;
 }
@@ -66,8 +62,6 @@ function normalizeSortKey(value: string | null): TrackSortKey {
     value === "projects" ||
     value === "artists" ||
     value === "tags" ||
-    value === "lyrics" ||
-    value === "chords" ||
     value === "notes" ||
     value === "audio"
   ) {
@@ -268,10 +262,6 @@ export function sortTracks<T extends TrackQueryItem>(items: T[], state: TrackQue
       result = compareText(labelListValue(left.artists), labelListValue(right.artists));
     } else if (state.sortKey === "tags") {
       result = compareText(labelListValue(left.tags), labelListValue(right.tags));
-    } else if (state.sortKey === "lyrics") {
-      result = compareBoolean(left.hasLyrics, right.hasLyrics);
-    } else if (state.sortKey === "chords") {
-      result = compareBoolean(left.hasChords, right.hasChords);
     } else if (state.sortKey === "notes") {
       result = compareBoolean(left.hasNotes, right.hasNotes);
     } else if (state.sortKey === "audio") {

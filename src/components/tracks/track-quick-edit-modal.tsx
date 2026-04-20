@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TrackMetadataEditor } from "@/components/tracks/track-metadata-editor";
+import { AppIcon } from "@/components/ui/app-icons";
 import { ModalShell } from "@/components/ui/modal-shell";
 import { api } from "@/lib/client/api";
 import type { TrackMetadataOption, TrackQuickEditRecord } from "@/lib/tracks/types";
@@ -9,6 +10,7 @@ import type { TrackMetadataOption, TrackQuickEditRecord } from "@/lib/tracks/typ
 export function TrackQuickEditModal({
   trackSlug,
   initialTrack,
+  showAudio = false,
   artistOptions,
   projectOptions,
   tagOptions,
@@ -18,6 +20,7 @@ export function TrackQuickEditModal({
 }: {
   trackSlug: string;
   initialTrack?: TrackQuickEditRecord;
+  showAudio?: boolean;
   artistOptions: TrackMetadataOption[];
   projectOptions: TrackMetadataOption[];
   tagOptions: TrackMetadataOption[];
@@ -61,13 +64,14 @@ export function TrackQuickEditModal({
     };
   }, [initialTrack, trackSlug]);
 
-  const modalTitle = `Quick Edit: ${(track ?? initialTrack)?.name ?? trackSlug}`;
+  const modalTitle = `Edit: ${(track ?? initialTrack)?.name ?? trackSlug}`;
   const modalDescription = (track ?? initialTrack)?.slug ?? trackSlug;
 
   return (
     <ModalShell
       title={modalTitle}
       description={modalDescription}
+      headerLeading={<AppIcon name="pencil" className="h-6 w-6" />}
       onClose={onClose}
     >
       {track ? (
@@ -78,6 +82,7 @@ export function TrackQuickEditModal({
           initialProjectSlugs={track.projectSlugs}
           initialTagSlugs={track.tagSlugs}
           initialAudio={track.audio}
+          showAudio={showAudio}
           artistOptions={artistOptions}
           projectOptions={projectOptions}
           tagOptions={tagOptions}

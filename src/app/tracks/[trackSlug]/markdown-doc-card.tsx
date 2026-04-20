@@ -1,10 +1,10 @@
 "use client";
 
 import MDEditor from "@uiw/react-md-editor";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 
-type DocType = "lyrics" | "chords" | "notes";
+type DocType = "notes";
 
 interface DocResponse {
   type: DocType;
@@ -22,17 +22,14 @@ function toLabel(type: DocType): string {
   return `${type.charAt(0).toUpperCase()}${type.slice(1)}`;
 }
 
-function buildStarterText(type: DocType): string {
-  return `# ${toLabel(type)}\n\n`;
+function buildStarterText(): string {
+  return "# Notes\n\n";
 }
 
 export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: DocType }) {
   const [mode, setMode] = useState<"published" | "edit">("published");
-  const label = useMemo(() => toLabel(type), [type]);
-  const endpoint = useMemo(
-    () => `/api/tracks/${encodeURIComponent(trackSlug)}/docs/${type}`,
-    [trackSlug, type]
-  );
+  const label = toLabel(type);
+  const endpoint = `/api/tracks/${encodeURIComponent(trackSlug)}/docs/${type}`;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -81,7 +78,7 @@ export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: 
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ content: buildStarterText(type) })
+        body: JSON.stringify({ content: buildStarterText() })
       });
       const payload = (await response.json()) as DocResponse | { error?: { message?: string } };
       if (!response.ok) {
@@ -197,8 +194,6 @@ export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: 
 
       {!loading && record && record.exists ? (
         <div data-color-mode="light" className="mt-3 grid gap-3">
-          <p className="text-xs text-[color:var(--muted)] break-all">{record.path}</p>
-
           {mode === "published" ? (
             <MDEditor.Markdown
               source={

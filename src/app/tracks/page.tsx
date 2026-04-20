@@ -39,8 +39,6 @@ export default async function TracksPage() {
         slug,
         name: tagNameBySlug[slug] ?? slugToTitle(slug)
       })),
-      hasLyrics: item.hasLyrics,
-      hasChords: item.hasChords,
       hasNotes: item.hasNotes,
       audioCount: item.audioCount
     }));

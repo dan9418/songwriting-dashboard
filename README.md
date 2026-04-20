@@ -33,7 +33,7 @@ Supplemental schema tables exist for images/external link metadata:
 
 - D1 schema and seed scripts: `scripts/sql/` and `scripts/seed-d1.js`
 - R2 backfill helper: `scripts/backfill-audio-from-r2.js`
-- Track markdown docs (lyrics/chords/notes): `tracks/{trackSlug}/{docType}.md` in R2
+- Track markdown docs: one canonical combined file per track in R2. During phase 1 storage, the app-facing Notes document is stored at `tracks/{trackSlug}/lyrics.md`.
 
 ## Audio Filename Convention
 

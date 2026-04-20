@@ -3,7 +3,10 @@ import { badRequest, conflict, notFound } from "@/lib/api/errors";
 import { queryD1 } from "@/lib/cloudflare/d1";
 import { deleteObject, getMarkdownObject, putMarkdownObject } from "@/lib/cloudflare/r2";
 
-export type TrackDocType = "lyrics" | "chords" | "notes";
+export type TrackDocType = "notes";
+
+const TRACK_DOC_TYPE = "notes";
+const TRACK_DOC_FILE_NAME = "lyrics.md";
 
 interface TrackExistsRow {
   slug: string;
@@ -22,14 +25,24 @@ export interface TrackDocRecord {
 }
 
 export function parseTrackDocType(value: string): TrackDocType {
-  if (value === "lyrics" || value === "chords" || value === "notes") {
+  if (value === TRACK_DOC_TYPE) {
     return value;
   }
   throw badRequest(`Invalid doc type: ${value}`);
 }
 
-function docPath(trackSlug: string, type: TrackDocType): string {
-  return `tracks/${trackSlug}/${type}.md`;
+export function getCanonicalTrackDocPath(trackSlug: string): string {
+  return `tracks/${trackSlug}/${TRACK_DOC_FILE_NAME}`;
+}
+
+export function parseCanonicalTrackDocPath(path: string): { trackSlug: string } | null {
+  const match = /^tracks\/([^/]+)\/lyrics\.md$/i.exec(path);
+  if (!match) {
+    return null;
+  }
+  return {
+    trackSlug: match[1]
+  };
 }
 
 function parseMarkdown(content: string) {
@@ -57,11 +70,11 @@ async function assertTrackExists(trackSlug: string): Promise<void> {
 
 export async function getTrackDoc(trackSlug: string, type: TrackDocType): Promise<TrackDocRecord> {
   await assertTrackExists(trackSlug);
-  const path = docPath(trackSlug, type);
+  const path = getCanonicalTrackDocPath(trackSlug);
   const object = await getMarkdownObject(path);
   if (!object) {
     return {
-      type,
+      type: TRACK_DOC_TYPE,
       path,
       exists: false,
       content: "",
@@ -86,7 +99,7 @@ export async function createTrackDoc(
   content: string
 ): Promise<TrackDocRecord> {
   await assertTrackExists(trackSlug);
-  const path = docPath(trackSlug, type);
+  const path = getCanonicalTrackDocPath(trackSlug);
   const existingObject = await getMarkdownObject(path);
   if (existingObject) {
     throw conflict(`${type} document already exists.`);
@@ -102,7 +115,7 @@ export async function updateTrackDoc(
   content: string
 ): Promise<TrackDocRecord> {
   await assertTrackExists(trackSlug);
-  const path = docPath(trackSlug, type);
+  const path = getCanonicalTrackDocPath(trackSlug);
   const existingObject = await getMarkdownObject(path);
   if (!existingObject) {
     throw notFound(`${type} document does not exist.`);
@@ -114,10 +127,11 @@ export async function updateTrackDoc(
 
 export async function deleteTrackDoc(
   trackSlug: string,
-  type: TrackDocType
+  _type: TrackDocType
 ): Promise<{ deleted: boolean }> {
+  void _type;
   await assertTrackExists(trackSlug);
-  const path = docPath(trackSlug, type);
+  const path = getCanonicalTrackDocPath(trackSlug);
   const existingObject = await getMarkdownObject(path);
   if (!existingObject) {
     return { deleted: false };

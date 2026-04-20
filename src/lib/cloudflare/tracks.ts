@@ -1,7 +1,11 @@
 import { queryD1 } from "@/lib/cloudflare/d1";
-import { listObjectSummaries } from "@/lib/cloudflare/r2";
+import { listObjectSummaries, objectExists } from "@/lib/cloudflare/r2";
 import { syncTrackAudioMetadataFromR2 } from "@/lib/cloudflare/audio-sync";
 import { listTrackAudioFilesFromR2 } from "@/lib/cloudflare/track-audio-files";
+import {
+  getCanonicalTrackDocPath,
+  parseCanonicalTrackDocPath
+} from "@/lib/cloudflare/track-docs";
 
 interface TrackRow {
   slug: string;
@@ -33,8 +37,6 @@ export interface CloudflareTrackListItem {
   projectSlugs: string[];
   artistSlugs: string[];
   tagSlugs: string[];
-  hasLyrics: boolean;
-  hasChords: boolean;
   hasNotes: boolean;
   audioCount: number;
   noteCount: number;
@@ -73,75 +75,30 @@ function toInt(value: number | string | null): number {
   return typeof value === "number" ? value : Number(value);
 }
 
-interface TrackDocFlags {
-  hasLyrics: boolean;
-  hasChords: boolean;
-  hasNotes: boolean;
-}
-
-function createEmptyTrackDocFlags(): TrackDocFlags {
-  return {
-    hasLyrics: false,
-    hasChords: false,
-    hasNotes: false
-  };
-}
-
-function applyDocFlag(flags: TrackDocFlags, docType: string): TrackDocFlags {
-  if (docType === "lyrics") {
-    return { ...flags, hasLyrics: true };
-  }
-  if (docType === "chords") {
-    return { ...flags, hasChords: true };
-  }
-  if (docType === "notes") {
-    return { ...flags, hasNotes: true };
-  }
-  return flags;
-}
-
-async function listTrackDocFlagsByTrackSlug(): Promise<Map<string, TrackDocFlags>> {
+async function listTrackDocTrackSlugs(): Promise<Set<string>> {
   const summaries = await listObjectSummaries({
     prefix: "tracks/",
     limit: 10000
   });
-  const map = new Map<string, TrackDocFlags>();
+  const trackSlugs = new Set<string>();
 
   for (const item of summaries) {
-    const match = /^tracks\/([^/]+)\/(lyrics|chords|notes)\.md$/i.exec(item.key);
-    if (!match) {
+    const parsed = parseCanonicalTrackDocPath(item.key);
+    if (!parsed) {
       continue;
     }
-    const trackSlug = match[1];
-    const docType = match[2].toLowerCase();
-    const current = map.get(trackSlug) ?? createEmptyTrackDocFlags();
-    map.set(trackSlug, applyDocFlag(current, docType));
+    trackSlugs.add(parsed.trackSlug);
   }
 
-  return map;
+  return trackSlugs;
 }
 
-async function getTrackDocFlags(trackSlug: string): Promise<TrackDocFlags> {
-  const summaries = await listObjectSummaries({
-    prefix: `tracks/${trackSlug}/`,
-    limit: 200
-  });
-  let flags = createEmptyTrackDocFlags();
-
-  for (const item of summaries) {
-    const match = new RegExp(`^tracks/${trackSlug}/(lyrics|chords|notes)\\.md$`, "i").exec(item.key);
-    if (!match) {
-      continue;
-    }
-    flags = applyDocFlag(flags, match[1].toLowerCase());
-  }
-
-  return flags;
+async function hasTrackDoc(trackSlug: string): Promise<boolean> {
+  return objectExists(getCanonicalTrackDocPath(trackSlug));
 }
 
 export async function listTracksFromCloudflare(): Promise<CloudflareTrackListItem[]> {
-  const docFlagsByTrack =
-    (await listTrackDocFlagsByTrackSlug().catch(() => null)) ?? new Map<string, TrackDocFlags>();
+  const trackSlugsWithDocs = (await listTrackDocTrackSlugs().catch(() => null)) ?? new Set<string>();
   const rows = await queryD1<TrackRow>(
     `
     SELECT
@@ -210,12 +167,12 @@ export async function listTracksFromCloudflare(): Promise<CloudflareTrackListIte
   }
 
   return rows.map((row) => ({
-    ...(docFlagsByTrack.get(row.slug) ?? createEmptyTrackDocFlags()),
     slug: row.slug,
     name: row.name,
     projectSlugs: projectSlugsByTrack.get(row.slug) ?? [],
     artistSlugs: artistSlugsByTrack.get(row.slug) ?? [],
     tagSlugs: tagSlugsByTrack.get(row.slug) ?? [],
+    hasNotes: trackSlugsWithDocs.has(row.slug),
     audioCount: toInt(row.audioCount),
     noteCount: toInt(row.noteCount),
     demoCount: toInt(row.demoCount),
@@ -304,15 +261,15 @@ export async function getTrackMetadataFromCloudflare(
   const noteCount = audioRows.filter((item) => item.type === "note").length;
   const demoCount = audioRows.filter((item) => item.type === "demo").length;
   const liveCount = audioRows.filter((item) => item.type === "live").length;
-  const docFlags = await getTrackDocFlags(trackSlug).catch(() => createEmptyTrackDocFlags());
+  const hasNotes = await hasTrackDoc(trackSlug).catch(() => false);
 
   return {
-    ...docFlags,
     slug: track.slug,
     name: track.name,
     projectSlugs: projectRows.map((item) => item.projectSlug),
     artistSlugs: artistRows.map((item) => item.artistSlug),
     tagSlugs: tagRows.map((item) => item.tagSlug),
+    hasNotes,
     audioCount: audioRows.length,
     noteCount,
     demoCount,
