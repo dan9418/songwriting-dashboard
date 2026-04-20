@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { TrackAudioTable } from "@/components/tracks/track-audio-table";
 import { ActionButton } from "@/components/ui/action-button";
 import { Field } from "@/components/ui/field";
 import { TextInput } from "@/components/ui/text-input";
 import { useToast } from "@/components/ui/toast";
 import { useProgressRouter } from "@/components/navigation/route-progress";
 import { api } from "@/lib/client/api";
-import type { TrackMetadataOption } from "@/lib/tracks/types";
+import type { TrackAudioTableItem, TrackMetadataOption } from "@/lib/tracks/types";
 
 function arraysEqual(left: string[], right: string[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
@@ -43,10 +44,10 @@ function SelectionChips({
           key={slug}
           type="button"
           onClick={() => onRemove(slug)}
-          className="inline-flex max-w-full items-center gap-2 rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] px-3 py-1 text-sm transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]"
+          className="inline-flex h-10 max-w-full items-center rounded-full border border-[color:var(--border-strong)] bg-white px-3 text-xs underline-offset-4 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
         >
           <span className="truncate">{nameBySlug[slug] ?? slug}</span>
-          <span aria-hidden className="text-xs">
+          <span aria-hidden className="ml-1 text-[10px]">
             x
           </span>
         </button>
@@ -81,14 +82,8 @@ function RelationshipField({
   return (
     <Field label={label}>
       <div className="grid gap-3">
-        <SelectionChips
-          selectedSlugs={selectedSlugs}
-          nameBySlug={optionNameBySlug}
-          onRemove={(slug) => onChange(selectedSlugs.filter((value) => value !== slug))}
-          emptyLabel={emptyLabel}
-        />
         <select
-          className="theme-input ring-0"
+          className="theme-input h-10 ring-0"
           value=""
           disabled={disabled || availableOptions.length === 0}
           onChange={(event) => {
@@ -106,6 +101,12 @@ function RelationshipField({
             </option>
           ))}
         </select>
+        <SelectionChips
+          selectedSlugs={selectedSlugs}
+          nameBySlug={optionNameBySlug}
+          onRemove={(slug) => onChange(selectedSlugs.filter((value) => value !== slug))}
+          emptyLabel={emptyLabel}
+        />
       </div>
     </Field>
   );
@@ -117,6 +118,7 @@ export function TrackMetadataEditor({
   initialArtistSlugs,
   initialProjectSlugs,
   initialTagSlugs,
+  initialAudio,
   artistOptions,
   projectOptions,
   tagOptions,
@@ -133,6 +135,7 @@ export function TrackMetadataEditor({
   initialArtistSlugs: string[];
   initialProjectSlugs: string[];
   initialTagSlugs: string[];
+  initialAudio?: TrackAudioTableItem[];
   artistOptions: TrackMetadataOption[];
   projectOptions: TrackMetadataOption[];
   tagOptions: TrackMetadataOption[];
@@ -249,22 +252,20 @@ export function TrackMetadataEditor({
         <div className="grid gap-1">
           {title ? <h2 className="text-lg font-semibold">{title}</h2> : null}
           {description ? <p className="text-sm text-[color:var(--muted)]">{description}</p> : null}
-          <p className="text-sm text-[color:var(--muted)]">{trackSlug}</p>
         </div>
-      ) : (
-        <p className="text-sm text-[color:var(--muted)]">{trackSlug}</p>
-      )}
+      ) : null}
 
       <Field label="Track Name">
         <TextInput
           value={name}
           disabled={saving}
+          className="h-10"
           placeholder="Track name"
           onChange={(event) => setName(event.currentTarget.value)}
         />
       </Field>
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <RelationshipField
           label="Artists"
           selectedSlugs={artistSlugs}
@@ -274,6 +275,25 @@ export function TrackMetadataEditor({
           disabled={saving}
           onChange={setArtistSlugs}
         />
+        <Field label="Create New Tag">
+          <div className="grid gap-3">
+            <TextInput
+              value={newTagName}
+              disabled={saving || creatingTag}
+              className="h-10"
+              placeholder="New tag name"
+              onChange={(event) => setNewTagName(event.currentTarget.value)}
+            />
+            <ActionButton
+              tone="ghost"
+              className="h-10 justify-center"
+              disabled={saving || creatingTag || newTagName.trim().length === 0}
+              onClick={handleCreateTag}
+            >
+              {creatingTag ? "Creating..." : "Create Tag"}
+            </ActionButton>
+          </div>
+        </Field>
         <RelationshipField
           label="Projects"
           selectedSlugs={projectSlugs}
@@ -283,34 +303,18 @@ export function TrackMetadataEditor({
           disabled={saving}
           onChange={setProjectSlugs}
         />
-        <div className="grid gap-4">
-          <RelationshipField
-            label="Tags"
-            selectedSlugs={tagSlugs}
-            options={allTagOptions}
-            addLabel="Add tag..."
-            emptyLabel="No tags linked."
-            disabled={saving || creatingTag}
-            onChange={setTagSlugs}
-          />
-          <Field label="Create New Tag">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <TextInput
-                value={newTagName}
-                disabled={saving || creatingTag}
-                placeholder="New tag name"
-                onChange={(event) => setNewTagName(event.currentTarget.value)}
-              />
-              <ActionButton
-                disabled={saving || creatingTag || newTagName.trim().length === 0}
-                onClick={handleCreateTag}
-              >
-                {creatingTag ? "Creating..." : "Create Tag"}
-              </ActionButton>
-            </div>
-          </Field>
-        </div>
+        <RelationshipField
+          label="Tags"
+          selectedSlugs={tagSlugs}
+          options={allTagOptions}
+          addLabel="Add tag..."
+          emptyLabel="No tags linked."
+          disabled={saving || creatingTag}
+          onChange={setTagSlugs}
+        />
       </div>
+
+      {initialAudio ? <TrackAudioTable audio={initialAudio} /> : null}
 
       {errorMessage ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{errorMessage}</p>

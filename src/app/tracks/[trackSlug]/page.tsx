@@ -3,25 +3,12 @@ import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
 import { listTagsFromCloudflare } from "@/lib/cloudflare/tags";
 import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
 import { TrackDetailControls } from "@/app/tracks/[trackSlug]/track-detail-controls";
+import { TrackAudioTable } from "@/components/tracks/track-audio-table";
 import { listArtistsFromCloudflare, listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
 import { getTrackDisplayImageSlug, imageApiHref } from "@/lib/cloudflare/images";
 import { getRequestOrigin } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
-
-function formatDateForTable(value: string): string {
-  const [year, month, day] = value.split("-");
-  if (!year || !month || !day) {
-    return value;
-  }
-  const yearTwo = year.slice(-2);
-  const monthNumber = Number(month);
-  const dayNumber = Number(day);
-  if (!Number.isInteger(monthNumber) || !Number.isInteger(dayNumber)) {
-    return value;
-  }
-  return `${monthNumber}/${dayNumber}/${yearTwo}`;
-}
 
 export default async function TrackByIdPage({
   params
@@ -50,6 +37,7 @@ export default async function TrackByIdPage({
         initialArtistSlugs={track.artistSlugs}
         initialProjectSlugs={track.projectSlugs}
         initialTagSlugs={track.tagSlugs}
+        initialAudio={track.audio}
         imageHref={imageSlug ? imageApiHref(imageSlug, requestOrigin) : null}
         artistOptions={artists.map((artist) => ({
           slug: artist.slug,
@@ -72,43 +60,7 @@ export default async function TrackByIdPage({
       </div>
 
       <div className="panel overflow-x-auto p-4">
-        <h2 className="text-lg font-semibold">Audio</h2>
-        <table className="theme-table mt-3 text-sm">
-          <thead>
-            <tr className="text-xs uppercase tracking-wide">
-              <th className="px-2 py-2 font-semibold">Filename</th>
-              <th className="px-2 py-2 font-semibold">Version</th>
-              <th className="px-2 py-2 font-semibold">Description</th>
-              <th className="px-2 py-2 font-semibold">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {track.audio.map((audioItem) => (
-              <tr key={audioItem.slug}>
-                <td className="px-2 py-2">
-                  {audioItem.fileHref ? (
-                    <a
-                      href={audioItem.fileHref}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline decoration-[color:var(--border-strong)] underline-offset-4 hover:text-[color:var(--accent)]"
-                    >
-                      {audioItem.fileName}
-                    </a>
-                  ) : (
-                    audioItem.fileName
-                  )}
-                </td>
-                <td className="px-2 py-2">{`${audioItem.type} v${audioItem.typeVersion}`}</td>
-                <td className="px-2 py-2">{audioItem.description ?? "-"}</td>
-                <td className="px-2 py-2">{audioItem.dateOverride ?? formatDateForTable(audioItem.date)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {track.audio.length === 0 ? (
-          <p className="mt-3 text-sm text-[color:var(--muted)]">No audio metadata rows found.</p>
-        ) : null}
+        <TrackAudioTable audio={track.audio} />
       </div>
     </section>
   );

@@ -4,12 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
 import { useProgressRouter } from "@/components/navigation/route-progress";
-import { TrackMetadataEditor } from "@/components/tracks/track-metadata-editor";
+import { TrackQuickEditModal } from "@/components/tracks/track-quick-edit-modal";
 import { ActionButton } from "@/components/ui/action-button";
 import { AppIcon } from "@/components/ui/app-icons";
-import { ModalShell } from "@/components/ui/modal-shell";
 import { useToast } from "@/components/ui/toast";
-import type { TrackMetadataOption } from "@/lib/tracks/types";
+import type { TrackAudioTableItem, TrackMetadataOption } from "@/lib/tracks/types";
 import { api } from "@/lib/client/api";
 
 function buildOptionMap(options: TrackMetadataOption[]): Record<string, string> {
@@ -87,6 +86,7 @@ export function TrackDetailControls({
   initialArtistSlugs,
   initialProjectSlugs,
   initialTagSlugs,
+  initialAudio,
   imageHref,
   artistOptions,
   projectOptions,
@@ -97,6 +97,7 @@ export function TrackDetailControls({
   initialArtistSlugs: string[];
   initialProjectSlugs: string[];
   initialTagSlugs: string[];
+  initialAudio: TrackAudioTableItem[];
   imageHref: string | null;
   artistOptions: TrackMetadataOption[];
   projectOptions: TrackMetadataOption[];
@@ -185,31 +186,27 @@ export function TrackDetailControls({
       </div>
 
       {editingMetadata ? (
-        <ModalShell
-          title={`Quick Edit: ${initialName}`}
-          description="Update the track name and linked artists, projects, or tags."
+        <TrackQuickEditModal
+          trackSlug={trackSlug}
+          initialTrack={{
+            slug: trackSlug,
+            name: initialName,
+            artistSlugs: initialArtistSlugs,
+            projectSlugs: initialProjectSlugs,
+            tagSlugs: initialTagSlugs,
+            audio: initialAudio
+          }}
+          artistOptions={artistOptions}
+          projectOptions={projectOptions}
+          tagOptions={tagOptions}
+          footerActions={
+            <ActionButton tone="danger" disabled={deleting} onClick={() => void onDelete()}>
+              {deleting ? "Deleting..." : "Delete Track"}
+            </ActionButton>
+          }
           onClose={() => setEditingMetadata(false)}
-        >
-          <TrackMetadataEditor
-            trackSlug={trackSlug}
-            initialName={initialName}
-            initialArtistSlugs={initialArtistSlugs}
-            initialProjectSlugs={initialProjectSlugs}
-            initialTagSlugs={initialTagSlugs}
-            artistOptions={artistOptions}
-            projectOptions={projectOptions}
-            tagOptions={tagOptions}
-            withPanel={false}
-            submitLabel="Save Track"
-            footerActions={
-              <ActionButton tone="danger" disabled={deleting} onClick={() => void onDelete()}>
-                {deleting ? "Deleting..." : "Delete Track"}
-              </ActionButton>
-            }
-            onCancel={() => setEditingMetadata(false)}
-            onSaved={() => setEditingMetadata(false)}
-          />
-        </ModalShell>
+          onSaved={() => setEditingMetadata(false)}
+        />
       ) : null}
     </div>
   );

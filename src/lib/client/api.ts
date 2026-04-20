@@ -1,5 +1,6 @@
 import type { NotebookPageListItem, NotebookPageRecord } from "@/lib/domain/models";
 import type { TrackBulkMetadataOperation } from "@/lib/tracks/bulk";
+import type { TrackQuickEditRecord } from "@/lib/tracks/types";
 
 interface CreatedEntityResponse {
   slug: string;
@@ -159,6 +160,9 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload)
     }),
+
+  getTrack: (trackSlug: string) =>
+    apiRequest<TrackQuickEditRecord>(`/api/tracks/${encodeURIComponent(trackSlug)}`),
 
   deleteTrack: (trackSlug: string) =>
     apiRequest<{ deleted: boolean }>(`/api/tracks/${encodeURIComponent(trackSlug)}`, {

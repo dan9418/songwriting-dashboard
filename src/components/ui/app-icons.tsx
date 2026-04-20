@@ -10,6 +10,10 @@ export type AppIconName =
   | "plus"
   | "note"
   | "notebook"
+  | "play"
+  | "pause"
+  | "chevron-right"
+  | "chevron-down"
   | "pencil"
   | "trash";
 
@@ -132,6 +136,39 @@ export function AppIcon({ name, className, ...props }: { name: AppIconName } & I
       <BaseIcon className={className} {...props}>
         <path d="M12 5v14" />
         <path d="M5 12h14" />
+      </BaseIcon>
+    );
+  }
+
+  if (name === "play") {
+    return (
+      <BaseIcon className={className} {...props}>
+        <path d="M8 6.5v11l8.5-5.5L8 6.5Z" fill="currentColor" stroke="none" />
+      </BaseIcon>
+    );
+  }
+
+  if (name === "pause") {
+    return (
+      <BaseIcon className={className} {...props}>
+        <rect x="7.25" y="6.5" width="3.25" height="11" rx="0.8" fill="currentColor" stroke="none" />
+        <rect x="13.5" y="6.5" width="3.25" height="11" rx="0.8" fill="currentColor" stroke="none" />
+      </BaseIcon>
+    );
+  }
+
+  if (name === "chevron-right") {
+    return (
+      <BaseIcon className={className} {...props}>
+        <path d="m9 6 6 6-6 6" />
+      </BaseIcon>
+    );
+  }
+
+  if (name === "chevron-down") {
+    return (
+      <BaseIcon className={className} {...props}>
+        <path d="m6 9 6 6 6-6" />
       </BaseIcon>
     );
   }

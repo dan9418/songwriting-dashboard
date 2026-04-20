@@ -13,7 +13,7 @@ import {
   type SetStateAction
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { TrackMetadataEditor } from "@/components/tracks/track-metadata-editor";
+import { TrackQuickEditModal } from "@/components/tracks/track-quick-edit-modal";
 import { ModalShell } from "@/components/ui/modal-shell";
 import { ActionButton } from "@/components/ui/action-button";
 import { AppIcon } from "@/components/ui/app-icons";
@@ -970,26 +970,14 @@ export function TracksTable({
       </div>
 
       {editingItem ? (
-        <ModalShell
-          title={`Quick Edit: ${editingItem.name}`}
-          description="Update the track name and linked artists, projects, or tags."
+        <TrackQuickEditModal
+          trackSlug={editingItem.slug}
+          artistOptions={artistOptions}
+          projectOptions={projectOptions}
+          tagOptions={allTagOptions}
           onClose={() => setEditingTrackSlug(null)}
-        >
-          <TrackMetadataEditor
-            trackSlug={editingItem.slug}
-            initialName={editingItem.name}
-            initialArtistSlugs={editingItem.artists.map((artist) => artist.slug)}
-            initialProjectSlugs={editingItem.projects.map((project) => project.slug)}
-            initialTagSlugs={editingItem.tags.map((tag) => tag.slug)}
-            artistOptions={artistOptions}
-            projectOptions={projectOptions}
-            tagOptions={allTagOptions}
-            withPanel={false}
-            submitLabel="Save Track"
-            onCancel={() => setEditingTrackSlug(null)}
-            onSaved={() => setEditingTrackSlug(null)}
-          />
-        </ModalShell>
+          onSaved={() => setEditingTrackSlug(null)}
+        />
       ) : null}
 
       {bulkOpen ? (

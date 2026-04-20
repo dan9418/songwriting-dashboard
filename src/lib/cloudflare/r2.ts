@@ -71,6 +71,9 @@ export async function getObjectData(path: string): Promise<{
   body: Uint8Array;
   etag: string | null;
   contentType: string | null;
+  contentLength: number | null;
+  contentRange: string | null;
+  acceptRanges: string | null;
 } | null> {
   try {
     const response = await getClient().send(
@@ -83,7 +86,46 @@ export async function getObjectData(path: string): Promise<{
     return {
       body,
       etag: normalizeEtag(response.ETag),
-      contentType: response.ContentType ?? null
+      contentType: response.ContentType ?? null,
+      contentLength: typeof response.ContentLength === "number" ? response.ContentLength : null,
+      contentRange: response.ContentRange ?? null,
+      acceptRanges: response.AcceptRanges ?? null
+    };
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function getObjectDataRange(
+  path: string,
+  range: string
+): Promise<{
+  body: Uint8Array;
+  etag: string | null;
+  contentType: string | null;
+  contentLength: number | null;
+  contentRange: string | null;
+  acceptRanges: string | null;
+} | null> {
+  try {
+    const response = await getClient().send(
+      new GetObjectCommand({
+        Bucket: getBucketName(),
+        Key: path,
+        Range: range
+      })
+    );
+    const body = response.Body ? await response.Body.transformToByteArray() : new Uint8Array();
+    return {
+      body,
+      etag: normalizeEtag(response.ETag),
+      contentType: response.ContentType ?? null,
+      contentLength: typeof response.ContentLength === "number" ? response.ContentLength : null,
+      contentRange: response.ContentRange ?? null,
+      acceptRanges: response.AcceptRanges ?? null
     };
   } catch (error) {
     if (isNotFoundError(error)) {
