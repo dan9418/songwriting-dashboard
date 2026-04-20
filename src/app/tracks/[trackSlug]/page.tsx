@@ -60,7 +60,7 @@ export default async function TrackByIdPage({
       </div>
 
       <div className="panel overflow-x-auto p-4">
-        <TrackAudioTable audio={track.audio} />
+        <TrackAudioTable trackSlug={track.slug} audio={track.audio} />
       </div>
     </section>
   );

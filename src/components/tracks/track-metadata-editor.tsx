@@ -314,7 +314,7 @@ export function TrackMetadataEditor({
         />
       </div>
 
-      {initialAudio ? <TrackAudioTable audio={initialAudio} /> : null}
+      {initialAudio ? <TrackAudioTable trackSlug={trackSlug} audio={initialAudio} /> : null}
 
       {errorMessage ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{errorMessage}</p>

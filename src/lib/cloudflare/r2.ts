@@ -1,6 +1,7 @@
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client
@@ -208,6 +209,42 @@ export async function putMarkdownObject(path: string, content: string): Promise<
   return {
     etag: normalizeEtag(response.ETag)
   };
+}
+
+export async function putObjectData(
+  path: string,
+  body: Uint8Array,
+  contentType?: string | null
+): Promise<{ etag: string | null }> {
+  const response = await getClient().send(
+    new PutObjectCommand({
+      Bucket: getBucketName(),
+      Key: path,
+      Body: body,
+      ContentType: contentType ?? "application/octet-stream"
+    })
+  );
+
+  return {
+    etag: normalizeEtag(response.ETag)
+  };
+}
+
+export async function objectExists(path: string): Promise<boolean> {
+  try {
+    await getClient().send(
+      new HeadObjectCommand({
+        Bucket: getBucketName(),
+        Key: path
+      })
+    );
+    return true;
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 export async function deleteObject(path: string): Promise<void> {

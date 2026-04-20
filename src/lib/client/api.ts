@@ -108,6 +108,24 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function multipartRequest<T>(url: string, body: FormData, init?: Omit<RequestInit, "body">): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    method: init?.method ?? "POST",
+    body,
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: { message?: string } }
+      | null;
+    throw new Error(payload?.error?.message ?? `Request failed: ${response.status}`);
+  }
+
+  return (await response.json()) as T;
+}
+
 export const api = {
   postArtist: (payload: ArtistCreatePayload) =>
     apiRequest<CreatedEntityResponse>(`/api/artists`, {
@@ -163,6 +181,12 @@ export const api = {
 
   getTrack: (trackSlug: string) =>
     apiRequest<TrackQuickEditRecord>(`/api/tracks/${encodeURIComponent(trackSlug)}`),
+
+  uploadTrackAudio: (trackSlug: string, file: File) => {
+    const body = new FormData();
+    body.set("file", file);
+    return multipartRequest<TrackQuickEditRecord>(`/api/tracks/${encodeURIComponent(trackSlug)}/audio`, body);
+  },
 
   deleteTrack: (trackSlug: string) =>
     apiRequest<{ deleted: boolean }>(`/api/tracks/${encodeURIComponent(trackSlug)}`, {

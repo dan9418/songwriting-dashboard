@@ -1,7 +1,11 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { useProgressRouter } from "@/components/navigation/route-progress";
 import { AppIcon } from "@/components/ui/app-icons";
+import { ActionButton } from "@/components/ui/action-button";
+import { useToast } from "@/components/ui/toast";
+import { api } from "@/lib/client/api";
 import type { TrackAudioTableItem } from "@/lib/tracks/types";
 
 function formatDateForTable(value: string): string {
@@ -21,16 +25,53 @@ function formatDateForTable(value: string): string {
 }
 
 export function TrackAudioTable({
+  trackSlug,
   audio,
   title = "Audio"
 }: {
+  trackSlug: string;
   audio: TrackAudioTableItem[];
   title?: string;
 }) {
+  const router = useProgressRouter();
+  const { showToast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [expandedAudioSlug, setExpandedAudioSlug] = useState<string | null>(null);
+  const [audioItems, setAudioItems] = useState(audio);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    setAudioItems(audio);
+  }, [audio]);
 
   function toggleExpanded(slug: string) {
     setExpandedAudioSlug((current) => (current === slug ? null : slug));
+  }
+
+  async function handleUpload() {
+    if (!selectedFile) {
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const updatedTrack = await api.uploadTrackAudio(trackSlug, selectedFile);
+      setAudioItems(updatedTrack.audio);
+      setSelectedFile(null);
+      setExpandedAudioSlug(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      showToast("Audio uploaded.");
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to upload audio.";
+      showToast(message, "error");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -46,7 +87,7 @@ export function TrackAudioTable({
           </tr>
         </thead>
         <tbody>
-          {audio.map((audioItem) => {
+          {audioItems.map((audioItem) => {
             const isExpanded = expandedAudioSlug === audioItem.slug;
 
             return (
@@ -98,9 +139,40 @@ export function TrackAudioTable({
           })}
         </tbody>
       </table>
-      {audio.length === 0 ? (
+      {audioItems.length === 0 ? (
         <p className="mt-3 text-sm text-[color:var(--muted)]">No audio metadata rows found.</p>
       ) : null}
+
+      <div className="mt-6 grid gap-3 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-4">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+            Upload Audio
+          </h3>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
+            <code>{`{track-slug}_{category}_v{version}_{date}_{optionalDescription}.{mp3|m4a|mp4}`}</code>
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".mp3,.m4a,.mp4,audio/mpeg,audio/mp4,audio/x-m4a"
+            disabled={uploading}
+            className="theme-input h-10 flex-1 file:mr-3 file:rounded-md file:border-0 file:bg-[color:var(--button-ghost-bg)] file:px-3 file:py-2 file:text-sm file:text-[color:var(--button-ghost-text)]"
+            onChange={(event) => {
+              setSelectedFile(event.currentTarget.files?.[0] ?? null);
+            }}
+          />
+          <ActionButton
+            tone="ghost"
+            className="h-10 justify-center md:self-stretch"
+            disabled={uploading || !selectedFile}
+            onClick={() => void handleUpload()}
+          >
+            {uploading ? "Uploading..." : "Upload Audio"}
+          </ActionButton>
+        </div>
+      </div>
     </div>
   );
 }
