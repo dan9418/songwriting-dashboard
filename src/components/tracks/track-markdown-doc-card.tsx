@@ -26,7 +26,7 @@ function buildStarterText(): string {
   return "# Notes\n\n";
 }
 
-export function MarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: DocType }) {
+export function TrackMarkdownDocCard({ trackSlug, type }: { trackSlug: string; type: DocType }) {
   const [mode, setMode] = useState<"published" | "edit">("published");
   const label = toLabel(type);
   const endpoint = `/api/tracks/${encodeURIComponent(trackSlug)}/docs/${type}`;

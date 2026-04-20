@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
 import { listTagsFromCloudflare } from "@/lib/cloudflare/tags";
-import { MarkdownDocCard } from "@/app/tracks/[trackSlug]/markdown-doc-card";
+import { TrackMarkdownDocCard } from "@/components/tracks/track-markdown-doc-card";
 import { TrackDetailControls } from "@/app/tracks/[trackSlug]/track-detail-controls";
 import { TrackAudioTable } from "@/components/tracks/track-audio-table";
 import { listArtistsFromCloudflare, listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
@@ -54,7 +54,7 @@ export default async function TrackByIdPage({
       />
 
       <div className="grid gap-4">
-        <MarkdownDocCard trackSlug={track.slug} type="notes" />
+        <TrackMarkdownDocCard trackSlug={track.slug} type="notes" />
       </div>
 
       <div className="panel overflow-x-auto p-4">

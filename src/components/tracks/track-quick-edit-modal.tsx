@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { TrackMarkdownDocCard } from "@/components/tracks/track-markdown-doc-card";
 import { TrackMetadataEditor } from "@/components/tracks/track-metadata-editor";
 import { AppIcon } from "@/components/ui/app-icons";
 import { ModalShell } from "@/components/ui/modal-shell";
@@ -75,23 +76,26 @@ export function TrackQuickEditModal({
       onClose={onClose}
     >
       {track ? (
-        <TrackMetadataEditor
-          trackSlug={track.slug}
-          initialName={track.name}
-          initialArtistSlugs={track.artistSlugs}
-          initialProjectSlugs={track.projectSlugs}
-          initialTagSlugs={track.tagSlugs}
-          initialAudio={track.audio}
-          showAudio={showAudio}
-          artistOptions={artistOptions}
-          projectOptions={projectOptions}
-          tagOptions={tagOptions}
-          withPanel={false}
-          submitLabel="Save Track"
-          footerActions={footerActions}
-          onCancel={onClose}
-          onSaved={onSaved}
-        />
+        <div className="grid gap-4">
+          <TrackMetadataEditor
+            trackSlug={track.slug}
+            initialName={track.name}
+            initialArtistSlugs={track.artistSlugs}
+            initialProjectSlugs={track.projectSlugs}
+            initialTagSlugs={track.tagSlugs}
+            initialAudio={track.audio}
+            showAudio={showAudio}
+            artistOptions={artistOptions}
+            projectOptions={projectOptions}
+            tagOptions={tagOptions}
+            withPanel={false}
+            submitLabel="Save Track"
+            footerActions={footerActions}
+            onCancel={onClose}
+            onSaved={onSaved}
+          />
+          <TrackMarkdownDocCard trackSlug={track.slug} type="notes" />
+        </div>
       ) : null}
       {loading && !track ? <p className="text-sm text-[color:var(--muted)]">Loading track metadata...</p> : null}
       {errorMessage ? (
