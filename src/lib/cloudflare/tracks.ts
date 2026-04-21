@@ -1,6 +1,5 @@
 import { queryD1 } from "@/lib/cloudflare/d1";
 import { listObjectSummaries, objectExists } from "@/lib/cloudflare/r2";
-import { syncTrackAudioMetadataFromR2 } from "@/lib/cloudflare/audio-sync";
 import { listTrackAudioFilesFromR2 } from "@/lib/cloudflare/track-audio-files";
 import {
   getCanonicalTrackDocPath,
@@ -212,8 +211,6 @@ export async function getTrackMetadataFromCloudflare(
   if (!track) {
     return null;
   }
-
-  await syncTrackAudioMetadataFromR2(trackSlug);
 
   const audioRows = await queryD1<AudioRow>(
     `

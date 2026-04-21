@@ -20,4 +20,4 @@ All database operations for this repo must be performed against the remote Cloud
 
 Do not run local D1 migration, execute, or apply commands.
 Do not use `--local` or `--preview` for D1 operations in this repo.
-Before any remote D1 operation, get explicit user consent and state the exact command you plan to run.
+Before any destructive remote D1 operation, get explicit user consent and state the exact command you plan to run. Dry runs and readonly queries do not require approval.

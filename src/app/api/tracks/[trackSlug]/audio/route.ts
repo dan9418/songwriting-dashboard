@@ -1,5 +1,6 @@
 import { conflict, apiErrorResponse, badRequest, notFound } from "@/lib/api/errors";
 import { ok } from "@/lib/api/response";
+import { syncTrackAudioMetadataFromR2 } from "@/lib/cloudflare/audio-sync";
 import { queryD1 } from "@/lib/cloudflare/d1";
 import { deleteObject, objectExists, putObjectData } from "@/lib/cloudflare/r2";
 import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
@@ -63,6 +64,7 @@ export async function POST(
     await putObjectData(objectPath, payload, fileEntry.type || "application/octet-stream");
 
     try {
+      await syncTrackAudioMetadataFromR2(trackSlug);
       const track = await getTrackMetadataFromCloudflare(trackSlug);
       if (!track) {
         throw notFound(`Track not found after upload: ${trackSlug}`);
