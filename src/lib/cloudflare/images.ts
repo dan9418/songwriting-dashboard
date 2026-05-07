@@ -65,6 +65,40 @@ export async function getPrimaryArtistImageSlug(artistSlug: string): Promise<str
   return rows[0]?.imageSlug ?? null;
 }
 
+export async function getPrimaryDirectArtistImage(
+  artistSlug: string
+): Promise<{ imageSlug: string; imagePath: string } | null> {
+  const rows = await queryD1<TrackImageRow>(
+    `
+    SELECT
+      i.slug AS imageSlug,
+      i.path AS imagePath
+    FROM artist_images ai
+    INNER JOIN images i
+      ON i.slug = ai.image_slug
+    WHERE ai.artist_slug = ?
+    ORDER BY
+      CASE
+        WHEN i.slug = ai.artist_slug THEN 0
+        ELSE 1
+      END,
+      i.slug ASC
+    LIMIT 1;
+    `,
+    [artistSlug]
+  );
+
+  const row = rows[0];
+  if (!row) {
+    return null;
+  }
+
+  return {
+    imageSlug: row.imageSlug,
+    imagePath: row.imagePath
+  };
+}
+
 export async function listPrimaryArtistImageSlugs(): Promise<Map<string, string>> {
   const rows = await queryD1<EntityImageRow>(
     `
@@ -106,6 +140,41 @@ export async function getPrimaryProjectImageSlug(projectSlug: string): Promise<s
     [projectSlug]
   );
   return rows[0]?.imageSlug ?? null;
+}
+
+export async function getPrimaryDirectProjectImage(
+  projectSlug: string
+): Promise<{ imageSlug: string; imagePath: string } | null> {
+  const rows = await queryD1<TrackImageRow>(
+    `
+    SELECT
+      i.slug AS imageSlug,
+      i.path AS imagePath
+    FROM project_images pi
+    INNER JOIN images i
+      ON i.slug = pi.image_slug
+    WHERE pi.project_slug = ?
+    ORDER BY
+      CASE
+        WHEN i.slug = pi.project_slug || '-front' THEN 0
+        WHEN i.slug = pi.project_slug THEN 1
+        ELSE 2
+      END,
+      i.slug ASC
+    LIMIT 1;
+    `,
+    [projectSlug]
+  );
+
+  const row = rows[0];
+  if (!row) {
+    return null;
+  }
+
+  return {
+    imageSlug: row.imageSlug,
+    imagePath: row.imagePath
+  };
 }
 
 export async function listPrimaryProjectImageSlugs(): Promise<Map<string, string>> {

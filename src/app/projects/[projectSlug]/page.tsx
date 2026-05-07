@@ -77,6 +77,7 @@ export default async function ProjectBySlugPage({
         initialType={project.type}
         initialReleaseDate={details?.releaseDate ?? null}
         initialRemasterDate={details?.remasterDate ?? null}
+        initialImageSlug={imageSlug}
         initialArtistSlugs={project.artistSlugs.map((artist) => artist.slug)}
         initialTrackSlugs={project.trackSlugs}
         initialExternalLinks={externalLinkRows}

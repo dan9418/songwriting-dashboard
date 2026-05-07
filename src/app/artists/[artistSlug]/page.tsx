@@ -67,6 +67,7 @@ export default async function ArtistBySlugPage({
         artistSlug={artist.slug}
         initialName={artist.name || slugToTitle(artist.slug)}
         initialDescription={details?.description ?? ""}
+        initialImageSlug={imageSlug}
         initialProjectSlugs={artist.projectSlugs.map((project) => project.slug)}
         initialTrackSlugs={artist.trackSlugs}
         initialExternalLinks={externalLinkRows}

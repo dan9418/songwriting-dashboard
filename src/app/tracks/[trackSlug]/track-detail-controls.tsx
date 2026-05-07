@@ -140,51 +140,49 @@ export function TrackDetailControls({
   return (
     <div className="grid gap-4">
       <div className="panel p-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
-            <EntityPlaceholderArtwork
-              kind="track"
-              variant="detail-cover"
-              imageHref={imageHref}
-              alt={`${initialName} artwork`}
-            />
-            <div className="min-w-0 flex-1">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <EntityPlaceholderArtwork
+            kind="track"
+            variant="detail-cover"
+            imageHref={imageHref}
+            alt={`${initialName} artwork`}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
               <h1 className="truncate text-2xl font-semibold">{initialName}</h1>
-              <div className="mt-2 grid gap-1.5">
-                <MetadataTextRow
-                  label="Artist"
-                  slugs={initialArtistSlugs}
-                  nameBySlug={artistNameBySlug}
-                  hrefBase="/artists"
-                  emptyLabel="No artists linked."
-                />
-                <MetadataTextRow
-                  label="Project"
-                  slugs={initialProjectSlugs}
-                  nameBySlug={projectNameBySlug}
-                  hrefBase="/projects"
-                  emptyLabel="No projects linked."
-                />
-              </div>
-              <div className="mt-3">
-                <TagPillList
-                  slugs={initialTagSlugs}
-                  nameBySlug={tagNameBySlug}
-                  hrefBase="/tags"
-                  emptyLabel="No tags linked."
-                />
-              </div>
+              <button
+                type="button"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+                aria-label={`Edit ${initialName}`}
+                onClick={() => setEditingMetadata(true)}
+              >
+                <AppIcon name="pencil" className="h-4 w-4" />
+              </button>
             </div>
-          </div>
-          <div className="flex flex-wrap items-start justify-end gap-2">
-            <button
-              type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
-              aria-label={`Edit ${initialName}`}
-              onClick={() => setEditingMetadata(true)}
-            >
-              <AppIcon name="pencil" className="h-4 w-4" />
-            </button>
+            <div className="mt-2 grid gap-1.5">
+              <MetadataTextRow
+                label="Artist"
+                slugs={initialArtistSlugs}
+                nameBySlug={artistNameBySlug}
+                hrefBase="/artists"
+                emptyLabel="No artists linked."
+              />
+              <MetadataTextRow
+                label="Project"
+                slugs={initialProjectSlugs}
+                nameBySlug={projectNameBySlug}
+                hrefBase="/projects"
+                emptyLabel="No projects linked."
+              />
+            </div>
+            <div className="mt-3">
+              <TagPillList
+                slugs={initialTagSlugs}
+                nameBySlug={tagNameBySlug}
+                hrefBase="/tags"
+                emptyLabel="No tags linked."
+              />
+            </div>
           </div>
         </div>
       </div>

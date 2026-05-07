@@ -7,6 +7,10 @@ interface CreatedEntityResponse {
   name: string;
 }
 
+interface EntityImageResponse {
+  imageSlug: string | null;
+}
+
 export interface ArtistCreatePayload {
   name: string;
   description?: string;
@@ -144,6 +148,17 @@ export const api = {
       method: "DELETE"
     }),
 
+  uploadArtistImage: (artistSlug: string, file: File) => {
+    const body = new FormData();
+    body.set("file", file);
+    return multipartRequest<EntityImageResponse>(`/api/artists/${encodeURIComponent(artistSlug)}/image`, body);
+  },
+
+  deleteArtistImage: (artistSlug: string) =>
+    apiRequest<EntityImageResponse>(`/api/artists/${encodeURIComponent(artistSlug)}/image`, {
+      method: "DELETE"
+    }),
+
   postProject: (payload: ProjectCreatePayload) =>
     apiRequest<CreatedEntityResponse>(`/api/projects`, {
       method: "POST",
@@ -158,6 +173,17 @@ export const api = {
 
   deleteProject: (projectSlug: string) =>
     apiRequest<{ deleted: boolean }>(`/api/projects/${encodeURIComponent(projectSlug)}`, {
+      method: "DELETE"
+    }),
+
+  uploadProjectImage: (projectSlug: string, file: File) => {
+    const body = new FormData();
+    body.set("file", file);
+    return multipartRequest<EntityImageResponse>(`/api/projects/${encodeURIComponent(projectSlug)}/image`, body);
+  },
+
+  deleteProjectImage: (projectSlug: string) =>
+    apiRequest<EntityImageResponse>(`/api/projects/${encodeURIComponent(projectSlug)}/image`, {
       method: "DELETE"
     }),
 

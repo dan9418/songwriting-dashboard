@@ -4,10 +4,9 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useProgressRouter } from "@/components/navigation/route-progress";
 import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
+import { ProjectQuickEditModal } from "@/components/projects/project-quick-edit-modal";
 import { ActionButton } from "@/components/ui/action-button";
-import { Field } from "@/components/ui/field";
-import { SelectInput } from "@/components/ui/select-input";
-import { TextArea } from "@/components/ui/text-area";
+import { AppIcon } from "@/components/ui/app-icons";
 import { TextInput } from "@/components/ui/text-input";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
@@ -23,15 +22,6 @@ interface SlugOption {
 interface ExternalLink {
   platform: string;
   url: string;
-}
-
-function PencilIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 3.5a2.1 2.1 0 1 1 3 3L7 16l-4 1 1-4 9.5-9.5Z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="m12 5 3 3" />
-    </svg>
-  );
 }
 
 function UnlinkIcon({ className = "" }: { className?: string }) {
@@ -78,6 +68,7 @@ export function ProjectDetailControls({
   initialType,
   initialReleaseDate,
   initialRemasterDate,
+  initialImageSlug,
   initialArtistSlugs,
   initialTrackSlugs,
   initialExternalLinks,
@@ -91,6 +82,7 @@ export function ProjectDetailControls({
   initialType: ProjectType;
   initialReleaseDate: string | null;
   initialRemasterDate: string | null;
+  initialImageSlug: string | null;
   initialArtistSlugs: string[];
   initialTrackSlugs: string[];
   initialExternalLinks: ExternalLink[];
@@ -117,14 +109,12 @@ export function ProjectDetailControls({
     createTrackNameMap(trackOptions)
   );
 
-  const [editingName, setEditingName] = useState(false);
+  const [editingMetadata, setEditingMetadata] = useState(false);
   const [editingTracks, setEditingTracks] = useState(false);
   const [editingTrackSlug, setEditingTrackSlug] = useState<string | null>(null);
   const [draggedTrackSlug, setDraggedTrackSlug] = useState<string | null>(null);
-  const [savingHeader, setSavingHeader] = useState(false);
   const [savingArtists, setSavingArtists] = useState(false);
   const [savingTracks, setSavingTracks] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [addArtistSlug, setAddArtistSlug] = useState("");
   const [addTrackSlug, setAddTrackSlug] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -155,31 +145,6 @@ export function ProjectDetailControls({
     () => draftTrackSlugs.some((slug) => !(draftTrackNamesBySlug[slug] ?? "").trim()),
     [draftTrackNamesBySlug, draftTrackSlugs]
   );
-
-  async function saveHeader() {
-    setSavingHeader(true);
-    setErrorMessage(null);
-    try {
-      const trimmedName = name.trim();
-      await api.updateProject(projectSlug, {
-        slug: projectSlug,
-        name: trimmedName,
-        description,
-        type,
-        releaseDate: releaseDate.trim() ? releaseDate.trim() : null,
-        remasterDate: remasterDate.trim() ? remasterDate.trim() : null
-      });
-      setName(trimmedName);
-      setEditingName(false);
-      showToast("Project updated.");
-      router.refresh();
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to update project.");
-      showToast("Failed to update project.", "error");
-    } finally {
-      setSavingHeader(false);
-    }
-  }
 
   async function saveArtistLinks(nextArtistSlugs: string[]) {
     setSavingArtists(true);
@@ -318,28 +283,6 @@ export function ProjectDetailControls({
     }
   }
 
-  async function onDelete() {
-    const confirmed = window.confirm(
-      `Delete project "${name || projectSlug}"? This cannot be undone and linked rows will be removed.`
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    setDeleting(true);
-    setErrorMessage(null);
-    try {
-      await api.deleteProject(projectSlug);
-      showToast("Project deleted.");
-      router.push("/projects");
-      router.refresh();
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to delete project.");
-      showToast("Failed to delete project.", "error");
-      setDeleting(false);
-    }
-  }
-
   return (
     <>
       <div className="panel flex flex-col gap-4 p-4 xl:flex-row xl:items-start xl:justify-between">
@@ -351,103 +294,38 @@ export function ProjectDetailControls({
             alt={`${name} artwork`}
           />
           <div className="min-w-0 flex-1">
-          {!editingName ? (
-            <>
-              <div className="flex items-center gap-2">
-                <h1 className="truncate text-2xl font-semibold">{name}</h1>
-                <button
-                  type="button"
-                  className="rounded-lg bg-[color:var(--button-ghost-bg)] px-2 py-1 text-sm text-[color:var(--button-ghost-text)] transition hover:bg-[color:var(--button-ghost-hover)]"
-                  aria-label="Edit project header"
-                  onClick={() => setEditingName(true)}
-                >
-                  <PencilIcon className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="text-sm text-[color:var(--muted)]">{type}</p>
-              {description.trim() ? (
-                <p className="mt-1 text-sm text-[color:var(--muted)]">{description}</p>
-              ) : null}
-              {initialExternalLinks.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2 text-sm">
-                  {initialExternalLinks.map((link) => (
-                    <a
-                      key={`${link.platform}-${link.url}`}
-                      href={link.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline-offset-4 hover:underline"
-                    >
-                      {slugToTitle(link.platform)}
-                    </a>
-                  ))}
-                </div>
-              ) : null}
-              <p className="mt-1 text-xs text-[color:var(--muted)]">Release: {releaseDate.trim() || "-"}</p>
-            </>
-          ) : (
-            <div className="grid gap-2">
-              <Field label="Name">
-                <TextInput value={name} onChange={(event) => setName(event.currentTarget.value)} />
-              </Field>
-              <Field label="Description">
-                <TextArea
-                  rows={2}
-                  value={description}
-                  onChange={(event) => setDescription(event.currentTarget.value)}
-                />
-              </Field>
-              <Field label="Type">
-                <SelectInput
-                  options={["album", "ep", "single", "setlist"]}
-                  value={type}
-                  onChange={(event) => setType(event.currentTarget.value as ProjectType)}
-                />
-              </Field>
-              <div className="grid gap-2 md:grid-cols-2">
-                <Field label="Release Date (YYYY-MM-DD)">
-                  <TextInput
-                    value={releaseDate}
-                    onChange={(event) => setReleaseDate(event.currentTarget.value)}
-                  />
-                </Field>
-                <Field label="Remaster Date (YYYY-MM-DD)">
-                  <TextInput
-                    value={remasterDate}
-                    onChange={(event) => setRemasterDate(event.currentTarget.value)}
-                  />
-                </Field>
-              </div>
-              <div className="flex items-center gap-2">
-                <ActionButton
-                  disabled={savingHeader || name.trim().length === 0}
-                  onClick={saveHeader}
-                >
-                  {savingHeader ? "Saving..." : "Save"}
-                </ActionButton>
-                <ActionButton
-                  tone="ghost"
-                  disabled={savingHeader}
-                  onClick={() => {
-                    setEditingName(false);
-                    setName(initialName);
-                    setDescription(initialDescription);
-                    setType(initialType);
-                    setReleaseDate(initialReleaseDate ?? "");
-                    setRemasterDate(initialRemasterDate ?? "");
-                  }}
-                >
-                  Cancel
-                </ActionButton>
-              </div>
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-2xl font-semibold">{name}</h1>
+              <button
+                type="button"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+                aria-label={`Edit ${name}`}
+                onClick={() => setEditingMetadata(true)}
+              >
+                <AppIcon name="pencil" className="h-4 w-4" />
+              </button>
             </div>
-          )}
-        </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-          <ActionButton tone="danger" disabled={deleting || savingHeader} onClick={onDelete}>
-            {deleting ? "Deleting..." : "Delete"}
-          </ActionButton>
+            <p className="text-sm text-[color:var(--muted)]">{type}</p>
+            {description.trim() ? (
+              <p className="mt-1 text-sm text-[color:var(--muted)]">{description}</p>
+            ) : null}
+            {initialExternalLinks.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2 text-sm">
+                {initialExternalLinks.map((link) => (
+                  <a
+                    key={`${link.platform}-${link.url}`}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline-offset-4 hover:underline"
+                  >
+                    {slugToTitle(link.platform)}
+                  </a>
+                ))}
+              </div>
+            ) : null}
+            <p className="mt-1 text-xs text-[color:var(--muted)]">Release: {releaseDate.trim() || "-"}</p>
+          </div>
         </div>
       </div>
 
@@ -513,7 +391,7 @@ export function ProjectDetailControls({
             </div>
             {!editingTracks ? (
               <ActionButton tone="ghost" aria-label="Edit tracks" onClick={beginTrackEditing}>
-                <PencilIcon className="h-4 w-4" />
+                <AppIcon name="pencil" className="h-4 w-4" />
               </ActionButton>
             ) : (
               <div className="flex items-center gap-2">
@@ -617,7 +495,7 @@ export function ProjectDetailControls({
                                 setEditingTrackSlug((current) => (current === trackSlug ? null : trackSlug))
                               }
                             >
-                              <PencilIcon className="h-4 w-4" />
+                              <AppIcon name="pencil" className="h-4 w-4" />
                             </button>
                             <button
                               type="button"
@@ -670,6 +548,27 @@ export function ProjectDetailControls({
 
       {errorMessage ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{errorMessage}</p>
+      ) : null}
+
+      {editingMetadata ? (
+        <ProjectQuickEditModal
+          projectSlug={projectSlug}
+          initialName={name}
+          initialDescription={description}
+          initialType={type}
+          initialReleaseDate={releaseDate.trim() ? releaseDate.trim() : null}
+          initialRemasterDate={remasterDate.trim() ? remasterDate.trim() : null}
+          initialImageSlug={initialImageSlug}
+          onClose={() => setEditingMetadata(false)}
+          onSaved={(next) => {
+            setName(next.name);
+            setDescription(next.description);
+            setType(next.type);
+            setReleaseDate(next.releaseDate ?? "");
+            setRemasterDate(next.remasterDate ?? "");
+            setEditingMetadata(false);
+          }}
+        />
       ) : null}
     </>
   );
