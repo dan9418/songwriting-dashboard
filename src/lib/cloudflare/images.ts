@@ -4,6 +4,10 @@ interface ImageSlugRow {
   imageSlug: string;
 }
 
+interface TrackImageRow extends ImageSlugRow {
+  imagePath: string;
+}
+
 interface EntityImageRow extends ImageSlugRow {
   entitySlug: string;
 }
@@ -126,10 +130,14 @@ export async function listPrimaryProjectImageSlugs(): Promise<Map<string, string
   return toSlugMap(rows);
 }
 
-export async function getTrackDisplayImageSlug(trackSlug: string): Promise<string | null> {
-  const directRows = await queryD1<ImageSlugRow>(
+export async function getPrimaryDirectTrackImage(
+  trackSlug: string
+): Promise<{ imageSlug: string; imagePath: string } | null> {
+  const rows = await queryD1<TrackImageRow>(
     `
-    SELECT i.slug AS imageSlug
+    SELECT
+      i.slug AS imageSlug,
+      i.path AS imagePath
     FROM track_images ti
     INNER JOIN images i
       ON i.slug = ti.image_slug
@@ -144,8 +152,22 @@ export async function getTrackDisplayImageSlug(trackSlug: string): Promise<strin
     `,
     [trackSlug]
   );
-  if (directRows[0]?.imageSlug) {
-    return directRows[0].imageSlug;
+
+  const row = rows[0];
+  if (!row) {
+    return null;
+  }
+
+  return {
+    imageSlug: row.imageSlug,
+    imagePath: row.imagePath
+  };
+}
+
+export async function getTrackDisplayImageSlug(trackSlug: string): Promise<string | null> {
+  const directImage = await getPrimaryDirectTrackImage(trackSlug);
+  if (directImage?.imageSlug) {
+    return directImage.imageSlug;
   }
 
   const fallbackRows = await queryD1<ImageSlugRow>(

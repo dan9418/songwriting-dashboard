@@ -1,6 +1,7 @@
 import { queryD1 } from "@/lib/cloudflare/d1";
 import { listObjectSummaries, objectExists } from "@/lib/cloudflare/r2";
 import { listTrackAudioFilesFromR2 } from "@/lib/cloudflare/track-audio-files";
+import { getPrimaryDirectTrackImage, getTrackDisplayImageSlug } from "@/lib/cloudflare/images";
 import {
   getCanonicalTrackDocPath,
   parseCanonicalTrackDocPath
@@ -64,6 +65,8 @@ export interface CloudflareTrackAudioItem {
 }
 
 export interface CloudflareTrackMetadata extends CloudflareTrackListItem {
+  directImageSlug: string | null;
+  displayImageSlug: string | null;
   audio: CloudflareTrackAudioItem[];
 }
 
@@ -258,7 +261,11 @@ export async function getTrackMetadataFromCloudflare(
   const noteCount = audioRows.filter((item) => item.type === "note").length;
   const demoCount = audioRows.filter((item) => item.type === "demo").length;
   const liveCount = audioRows.filter((item) => item.type === "live").length;
-  const hasNotes = await hasTrackDoc(trackSlug).catch(() => false);
+  const [hasNotes, directImage, displayImageSlug] = await Promise.all([
+    hasTrackDoc(trackSlug).catch(() => false),
+    getPrimaryDirectTrackImage(trackSlug).catch(() => null),
+    getTrackDisplayImageSlug(trackSlug).catch(() => null)
+  ]);
 
   return {
     slug: track.slug,
@@ -267,6 +274,8 @@ export async function getTrackMetadataFromCloudflare(
     artistSlugs: artistRows.map((item) => item.artistSlug),
     tagSlugs: tagRows.map((item) => item.tagSlug),
     hasNotes,
+    directImageSlug: directImage?.imageSlug ?? null,
+    displayImageSlug,
     audioCount: audioRows.length,
     noteCount,
     demoCount,

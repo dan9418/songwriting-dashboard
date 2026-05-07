@@ -202,7 +202,6 @@ export function ArtistDetailControls({
                     <PencilIcon className="h-4 w-4" />
                   </button>
                 </div>
-                <p className="text-sm text-[color:var(--muted)]">{artistSlug}</p>
                 {description.trim() ? (
                   <p className="mt-1 text-sm text-[color:var(--muted)]">{description}</p>
                 ) : null}

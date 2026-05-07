@@ -364,9 +364,7 @@ export function ProjectDetailControls({
                   <PencilIcon className="h-4 w-4" />
                 </button>
               </div>
-              <p className="text-sm text-[color:var(--muted)]">
-                {projectSlug} {String.fromCharCode(8226)} {type}
-              </p>
+              <p className="text-sm text-[color:var(--muted)]">{type}</p>
               {description.trim() ? (
                 <p className="mt-1 text-sm text-[color:var(--muted)]">{description}</p>
               ) : null}
@@ -385,9 +383,7 @@ export function ProjectDetailControls({
                   ))}
                 </div>
               ) : null}
-              <p className="mt-1 text-xs text-[color:var(--muted)]">
-                Release: {releaseDate.trim() || "-"} | Remaster: {remasterDate.trim() || "-"}
-              </p>
+              <p className="mt-1 text-xs text-[color:var(--muted)]">Release: {releaseDate.trim() || "-"}</p>
             </>
           ) : (
             <div className="grid gap-2">

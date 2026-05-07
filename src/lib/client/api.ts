@@ -188,6 +188,17 @@ export const api = {
     return multipartRequest<TrackQuickEditRecord>(`/api/tracks/${encodeURIComponent(trackSlug)}/audio`, body);
   },
 
+  uploadTrackImage: (trackSlug: string, file: File) => {
+    const body = new FormData();
+    body.set("file", file);
+    return multipartRequest<TrackQuickEditRecord>(`/api/tracks/${encodeURIComponent(trackSlug)}/image`, body);
+  },
+
+  deleteTrackImage: (trackSlug: string) =>
+    apiRequest<TrackQuickEditRecord>(`/api/tracks/${encodeURIComponent(trackSlug)}/image`, {
+      method: "DELETE"
+    }),
+
   deleteTrack: (trackSlug: string) =>
     apiRequest<{ deleted: boolean }>(`/api/tracks/${encodeURIComponent(trackSlug)}`, {
       method: "DELETE"

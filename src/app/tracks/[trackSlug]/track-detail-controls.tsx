@@ -87,6 +87,8 @@ export function TrackDetailControls({
   initialProjectSlugs,
   initialTagSlugs,
   initialAudio,
+  initialDirectImageSlug,
+  initialDisplayImageSlug,
   imageHref,
   artistOptions,
   projectOptions,
@@ -98,6 +100,8 @@ export function TrackDetailControls({
   initialProjectSlugs: string[];
   initialTagSlugs: string[];
   initialAudio: TrackAudioTableItem[];
+  initialDirectImageSlug: string | null;
+  initialDisplayImageSlug: string | null;
   imageHref: string | null;
   artistOptions: TrackMetadataOption[];
   projectOptions: TrackMetadataOption[];
@@ -194,6 +198,8 @@ export function TrackDetailControls({
             artistSlugs: initialArtistSlugs,
             projectSlugs: initialProjectSlugs,
             tagSlugs: initialTagSlugs,
+            directImageSlug: initialDirectImageSlug,
+            displayImageSlug: initialDisplayImageSlug,
             audio: initialAudio
           }}
           showAudio={false}

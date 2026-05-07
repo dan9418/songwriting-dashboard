@@ -20,5 +20,7 @@ export interface TrackQuickEditRecord {
   artistSlugs: string[];
   projectSlugs: string[];
   tagSlugs: string[];
+  directImageSlug: string | null;
+  displayImageSlug: string | null;
   audio: TrackAudioTableItem[];
 }
