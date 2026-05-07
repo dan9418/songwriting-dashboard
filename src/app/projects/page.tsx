@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { EntityPlaceholderArtwork } from "@/components/entities/entity-placeholder-artwork";
 import { EntityIndexLayout } from "@/components/entities/entity-index-layout";
+import { ProjectsArtistGroups } from "@/app/projects/projects-artist-groups";
 import { listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
 import { imageApiHref, listPrimaryProjectImageSlugs } from "@/lib/cloudflare/images";
 import { getRequestOrigin } from "@/lib/request-origin";
@@ -108,7 +108,23 @@ export default async function ProjectsPage() {
       .map(([artistSlug, group]) => ({
         artistSlug,
         artistName: group.artistName,
-        projects: [...group.projects].sort(compareProjects)
+        projects: [...group.projects].sort(compareProjects).map((project) => ({
+          slug: project.slug,
+          name: project.name || slugToTitle(project.slug),
+          releaseDateLabel: formatReleaseDate(project.releaseDate),
+          typeLabel: toTypeLabel(project.type),
+          imageHref: imageSlugsByProject.get(project.slug)
+            ? imageApiHref(imageSlugsByProject.get(project.slug) ?? "", requestOrigin)
+            : null,
+          artists: project.artistSlugs.map((artist) => ({
+            slug: artist.slug,
+            name: artist.name || slugToTitle(artist.slug)
+          })),
+          tracks: project.trackSlugs.map((trackSlug) => ({
+            slug: trackSlug,
+            name: slugToTitle(trackSlug)
+          }))
+        }))
       }))
       .sort((left, right) => {
         const nameCompare = left.artistName.localeCompare(right.artistName);
@@ -129,89 +145,7 @@ export default async function ProjectsPage() {
         {sourceItems.length === 0 ? (
           <p className="text-sm text-[color:var(--muted)]">No projects found.</p>
         ) : (
-          <div className="grid gap-8">
-            {artistGroups.map((group) => (
-              <section key={group.artistSlug} className="grid gap-3">
-                <div className="border-b border-[color:var(--border-soft)] pb-3">
-                  <h2 className="text-xl font-semibold text-[color:var(--ink)]">{group.artistName}</h2>
-                  <p className="text-sm text-[color:var(--muted)]">
-                    {group.projects.length} project{group.projects.length === 1 ? "" : "s"}
-                  </p>
-                </div>
-
-                <div className="grid gap-3">
-                  {group.projects.map((project) => (
-                    <article
-                      key={`${group.artistSlug}-${project.slug}`}
-                      id={project.slug}
-                      className="theme-card flex w-full flex-col gap-4 p-4 md:grid md:grid-cols-[160px_minmax(0,1fr)] md:items-start md:gap-5"
-                    >
-                      <div className="w-full self-start">
-                        <EntityPlaceholderArtwork
-                          kind="project"
-                          variant="list-cover"
-                          imageHref={
-                            imageSlugsByProject.get(project.slug)
-                              ? imageApiHref(imageSlugsByProject.get(project.slug) ?? "", requestOrigin)
-                              : null
-                          }
-                          alt={`${project.name || slugToTitle(project.slug)} artwork`}
-                        />
-                      </div>
-
-                      <div className="min-w-0 self-start grid gap-4">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <h3 className="text-xl font-semibold text-[color:var(--ink)]">
-                              <Link href={`/projects/${project.slug}`} className="underline-offset-4 hover:underline">
-                                {project.name || slugToTitle(project.slug)}
-                              </Link>
-                            </h3>
-                            <p className="mt-1 text-sm text-[color:var(--muted)]">{formatReleaseDate(project.releaseDate)}</p>
-                          </div>
-
-                          <span className="rounded-full bg-[color:var(--accent-soft)] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--icon-color)]">
-                            {toTypeLabel(project.type)}
-                          </span>
-                        </div>
-
-                        <div className="grid items-start gap-4 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)]">
-                          <div className="grid self-start gap-1">
-                            <p className="text-[11px] uppercase tracking-wide text-[color:var(--muted)]">Artists</p>
-                            <ul className="space-y-1 text-sm text-[color:var(--ink)]">
-                              {project.artistSlugs.map((artist) => (
-                                <li key={`${project.slug}-${artist.slug}`}>
-                                  <Link href={`/artists/${artist.slug}`} className="underline-offset-4 hover:underline">
-                                    {artist.name || slugToTitle(artist.slug)}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          <div className="grid self-start gap-1">
-                            <p className="text-[11px] uppercase tracking-wide text-[color:var(--muted)]">Tracks</p>
-                            <ol className="list-inside list-decimal text-sm leading-7 text-[color:var(--ink)] marker:font-semibold">
-                              {project.trackSlugs.map((trackSlug) => (
-                                <li
-                                  key={`${project.slug}-${trackSlug}`}
-                                  className="mr-4 [display:inline_list-item]"
-                                >
-                                  <Link href={`/tracks/${trackSlug}`} className="underline-offset-4 hover:underline">
-                                    {slugToTitle(trackSlug)}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ol>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+          <ProjectsArtistGroups artistGroups={artistGroups} />
         )}
       </EntityIndexLayout>
     );
