@@ -19,7 +19,8 @@ const JOIN_TABLE_NAMES = new Set([
   "project_external_links",
   "track_artists",
   "track_external_links",
-  "track_images"
+  "track_images",
+  "track_tags"
 ]);
 
 export function AdminConsole({
@@ -33,9 +34,11 @@ export function AdminConsole({
   const [bucketRows, setBucketRows] = useState<BucketRowsMap>({});
   const [tableErrors, setTableErrors] = useState<ErrorMap>({});
   const [bucketErrors, setBucketErrors] = useState<ErrorMap>({});
+  const [backupError, setBackupError] = useState("");
   const [tableLoading, setTableLoading] = useState<LoadingMap>({});
   const [bucketLoading, setBucketLoading] = useState<LoadingMap>({});
   const [loadingAll, setLoadingAll] = useState(false);
+  const [exportingBackup, setExportingBackup] = useState(false);
   const coreTables = tables.filter((table) => !JOIN_TABLE_NAMES.has(table.name));
   const joinTables = tables.filter((table) => JOIN_TABLE_NAMES.has(table.name));
 
@@ -91,12 +94,53 @@ export function AdminConsole({
     }
   }
 
+  async function exportBackup() {
+    setExportingBackup(true);
+    setBackupError("");
+    try {
+      const response = await fetch("/api/admin/backup", { cache: "no-store" });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
+        throw new Error(payload?.error?.message ?? "Failed to export backup.");
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("content-disposition") ?? "";
+      const fileNameMatch = /filename="([^"]+)"/.exec(disposition);
+      const fileName = fileNameMatch?.[1] ?? "songwriting-dashboard-backup.zip";
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setBackupError(error instanceof Error ? error.message : "Failed to export backup.");
+    } finally {
+      setExportingBackup(false);
+    }
+  }
+
   return (
     <div className="grid gap-6">
-      <section className="panel flex items-center justify-end p-4">
-        <ActionButton disabled={loadingAll} onClick={loadAllData}>
-          {loadingAll ? "Loading All..." : "Load All"}
-        </ActionButton>
+      <section className="panel grid gap-3 p-4 md:flex md:items-center md:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Backup Export</h2>
+          <p className="text-sm text-[color:var(--muted)]">
+            Download a zip with table CSVs, markdown files, media files, and a manifest.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <ActionButton disabled={exportingBackup} onClick={exportBackup}>
+            {exportingBackup ? "Exporting..." : "Export Backup"}
+          </ActionButton>
+          <ActionButton disabled={loadingAll} onClick={loadAllData} tone="ghost">
+            {loadingAll ? "Loading All..." : "Load All"}
+          </ActionButton>
+        </div>
+        {backupError ? <p className="text-sm text-red-700 md:col-span-2">{backupError}</p> : null}
       </section>
 
       <section className="grid gap-3">

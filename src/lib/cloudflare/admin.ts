@@ -94,7 +94,7 @@ export async function listD1TableShapes(): Promise<D1TableShape[]> {
           type: column.type,
           notNull: toInt(column.notnull) === 1,
           defaultValue: column.dflt_value,
-          isPrimaryKey: toInt(column.pk) === 1
+          isPrimaryKey: toInt(column.pk) > 0
         }))
       } satisfies D1TableShape;
     })

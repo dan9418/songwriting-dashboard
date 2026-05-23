@@ -100,6 +100,41 @@ export async function getObjectData(path: string): Promise<{
   }
 }
 
+export async function getBucketObjectData(
+  bucketName: string,
+  path: string
+): Promise<{
+  body: Uint8Array;
+  etag: string | null;
+  contentType: string | null;
+  contentLength: number | null;
+  contentRange: string | null;
+  acceptRanges: string | null;
+} | null> {
+  try {
+    const response = await getClient().send(
+      new GetObjectCommand({
+        Bucket: bucketName,
+        Key: path
+      })
+    );
+    const body = response.Body ? await response.Body.transformToByteArray() : new Uint8Array();
+    return {
+      body,
+      etag: normalizeEtag(response.ETag),
+      contentType: response.ContentType ?? null,
+      contentLength: typeof response.ContentLength === "number" ? response.ContentLength : null,
+      contentRange: response.ContentRange ?? null,
+      acceptRanges: response.AcceptRanges ?? null
+    };
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function getObjectDataRange(
   path: string,
   range: string
@@ -169,6 +204,45 @@ export async function listObjectSummaries({
         Prefix: prefix,
         ContinuationToken: continuationToken,
         MaxKeys: Math.min(remaining, 1000)
+      })
+    );
+
+    for (const item of response.Contents ?? []) {
+      if (!item.Key) {
+        continue;
+      }
+      summaries.push({
+        key: item.Key,
+        size: item.Size ?? 0,
+        etag: normalizeEtag(item.ETag),
+        lastModified: item.LastModified ? item.LastModified.toISOString() : null,
+        storageClass: item.StorageClass ?? null
+      });
+    }
+
+    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return summaries;
+}
+
+export async function listAllObjectSummaries({
+  bucketName,
+  prefix = ""
+}: {
+  bucketName?: string;
+  prefix?: string;
+}): Promise<R2ObjectSummary[]> {
+  const summaries: R2ObjectSummary[] = [];
+  let continuationToken: string | undefined;
+
+  do {
+    const response = await getClient().send(
+      new ListObjectsV2Command({
+        Bucket: bucketName ?? getBucketName(),
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+        MaxKeys: 1000
       })
     );
 
