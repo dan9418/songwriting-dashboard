@@ -9,6 +9,7 @@ type TableRowsMap = Record<string, Array<Record<string, unknown>>>;
 type BucketRowsMap = Record<string, R2ObjectSummary[]>;
 type ErrorMap = Record<string, string>;
 type LoadingMap = Record<string, boolean>;
+type BackupKind = "text" | "media";
 
 const JOIN_TABLE_NAMES = new Set([
   "artist_images",
@@ -34,11 +35,11 @@ export function AdminConsole({
   const [bucketRows, setBucketRows] = useState<BucketRowsMap>({});
   const [tableErrors, setTableErrors] = useState<ErrorMap>({});
   const [bucketErrors, setBucketErrors] = useState<ErrorMap>({});
-  const [backupError, setBackupError] = useState("");
+  const [backupErrors, setBackupErrors] = useState<ErrorMap>({});
   const [tableLoading, setTableLoading] = useState<LoadingMap>({});
   const [bucketLoading, setBucketLoading] = useState<LoadingMap>({});
   const [loadingAll, setLoadingAll] = useState(false);
-  const [exportingBackup, setExportingBackup] = useState(false);
+  const [exportingBackups, setExportingBackups] = useState<LoadingMap>({});
   const coreTables = tables.filter((table) => !JOIN_TABLE_NAMES.has(table.name));
   const joinTables = tables.filter((table) => JOIN_TABLE_NAMES.has(table.name));
 
@@ -94,11 +95,11 @@ export function AdminConsole({
     }
   }
 
-  async function exportBackup() {
-    setExportingBackup(true);
-    setBackupError("");
+  async function exportBackup(kind: BackupKind) {
+    setExportingBackups((prev) => ({ ...prev, [kind]: true }));
+    setBackupErrors((prev) => ({ ...prev, [kind]: "" }));
     try {
-      const response = await fetch("/api/admin/backup", { cache: "no-store" });
+      const response = await fetch(`/api/admin/backup/${kind}`, { cache: "no-store" });
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
         throw new Error(payload?.error?.message ?? "Failed to export backup.");
@@ -117,9 +118,12 @@ export function AdminConsole({
       anchor.remove();
       URL.revokeObjectURL(url);
     } catch (error) {
-      setBackupError(error instanceof Error ? error.message : "Failed to export backup.");
+      setBackupErrors((prev) => ({
+        ...prev,
+        [kind]: error instanceof Error ? error.message : "Failed to export backup."
+      }));
     } finally {
-      setExportingBackup(false);
+      setExportingBackups((prev) => ({ ...prev, [kind]: false }));
     }
   }
 
@@ -129,18 +133,22 @@ export function AdminConsole({
         <div>
           <h2 className="text-lg font-semibold">Backup Export</h2>
           <p className="text-sm text-[color:var(--muted)]">
-            Download a zip with table CSVs, markdown files, media files, and a manifest.
+            Download separate streaming zips for text data and media files.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ActionButton disabled={exportingBackup} onClick={exportBackup}>
-            {exportingBackup ? "Exporting..." : "Export Backup"}
+          <ActionButton disabled={exportingBackups.text === true} onClick={() => exportBackup("text")}>
+            {exportingBackups.text ? "Exporting Text..." : "Export Text"}
+          </ActionButton>
+          <ActionButton disabled={exportingBackups.media === true} onClick={() => exportBackup("media")}>
+            {exportingBackups.media ? "Exporting Media..." : "Export Media"}
           </ActionButton>
           <ActionButton disabled={loadingAll} onClick={loadAllData} tone="ghost">
             {loadingAll ? "Loading All..." : "Load All"}
           </ActionButton>
         </div>
-        {backupError ? <p className="text-sm text-red-700 md:col-span-2">{backupError}</p> : null}
+        {backupErrors.text ? <p className="text-sm text-red-700 md:col-span-2">{backupErrors.text}</p> : null}
+        {backupErrors.media ? <p className="text-sm text-red-700 md:col-span-2">{backupErrors.media}</p> : null}
       </section>
 
       <section className="grid gap-3">

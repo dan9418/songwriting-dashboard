@@ -135,6 +135,50 @@ export async function getBucketObjectData(
   }
 }
 
+export async function getBucketObjectStream(
+  bucketName: string,
+  path: string
+): Promise<{
+  body: ReadableStream<Uint8Array>;
+  etag: string | null;
+  contentType: string | null;
+  contentLength: number | null;
+} | null> {
+  try {
+    const response = await getClient().send(
+      new GetObjectCommand({
+        Bucket: bucketName,
+        Key: path
+      })
+    );
+    const body = response.Body as unknown as {
+      transformToWebStream?: () => ReadableStream<Uint8Array>;
+      transformToByteArray?: () => Promise<Uint8Array>;
+    } | undefined;
+    const stream = body?.transformToWebStream
+      ? body.transformToWebStream()
+      : new ReadableStream<Uint8Array>({
+          async start(controller) {
+            const bytes = body?.transformToByteArray ? await body.transformToByteArray() : new Uint8Array();
+            controller.enqueue(bytes);
+            controller.close();
+          }
+        });
+
+    return {
+      body: stream,
+      etag: normalizeEtag(response.ETag),
+      contentType: response.ContentType ?? null,
+      contentLength: typeof response.ContentLength === "number" ? response.ContentLength : null
+    };
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function getObjectDataRange(
   path: string,
   range: string
