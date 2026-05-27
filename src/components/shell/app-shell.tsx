@@ -13,10 +13,13 @@ const PRIMARY_NAV_ITEMS = [
   { href: "/artists", label: "Artists", icon: "artist" },
   { href: "/projects", label: "Projects", icon: "project" },
   { href: "/tracks", label: "Tracks", icon: "track" },
+  { href: "/audio", label: "Audio", icon: "note" },
+  { href: "/tags", label: "Tags", icon: "tag" },
   { href: "/admin", label: "Admin", icon: "admin" }
 ] satisfies Array<{ href: string; label: string; icon: AppIconName }>;
 
 const BREADCRUMB_LABELS: Record<string, string> = {
+  audio: "Audio",
   notebook: "Notebook",
   artists: "Artists",
   projects: "Projects",

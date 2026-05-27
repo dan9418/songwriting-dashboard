@@ -26,9 +26,29 @@ const ENTITIES = [
     title: "Tracks",
     icon: "track",
     brief: "",
-    description: "Track song details, files, and where it belongs.",//
+    description: "Track song details, files, and where it belongs.",
     addHref: "/tracks/add",
     listHref: "/tracks",
+    addLabel: "Add New",
+    listLabel: "See All"
+  },
+  {
+    title: "Audio",
+    icon: "note",
+    brief: "",
+    description: "Browse recordings by track and upload new audio files.",
+    addHref: "/audio/add",
+    listHref: "/audio",
+    addLabel: "Add New",
+    listLabel: "See All"
+  },
+  {
+    title: "Tags",
+    icon: "tag",
+    brief: "",
+    description: "Group tracks with flexible labels for ideas, status, and sound.",
+    addHref: "/tags/add",
+    listHref: "/tags",
     addLabel: "Add New",
     listLabel: "See All"
   }
@@ -56,7 +76,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {ENTITIES.map((entity) => (
           <article key={entity.title} className="panel grid gap-4 p-5">
             <div className="flex items-center gap-3">

@@ -18,6 +18,32 @@ interface TrackAudioFileRow {
   contentType: string | null;
 }
 
+interface AudioIndexRow {
+  id: string;
+  trackSlug: string;
+  trackName: string;
+  name: string;
+  type: string;
+  date: string;
+  dateDescriptor: string | null;
+  objectKey: string;
+  originalFilename: string | null;
+  contentType: string | null;
+}
+
+export interface AudioIndexItem {
+  id: string;
+  trackSlug: string;
+  trackName: string;
+  name: string;
+  fileName: string;
+  type: string;
+  date: string;
+  dateDescriptor: string | null;
+  contentType: string | null;
+  fileHref: string;
+}
+
 export function fileNameFromObjectKey(key: string): string {
   const parts = key.split("/");
   return parts[parts.length - 1] || key;
@@ -73,4 +99,39 @@ export async function getTrackAudioFileFromD1(
     [trackSlug, audioId]
   );
   return row ? rowToTrackAudioFile(row) : null;
+}
+
+export async function listAudioIndexItemsFromD1(): Promise<AudioIndexItem[]> {
+  const rows = await queryD1<AudioIndexRow>(
+    `
+    SELECT
+      a.id,
+      a.track_slug AS trackSlug,
+      t.name AS trackName,
+      a.name,
+      a.type,
+      a.date,
+      a.date_descriptor AS dateDescriptor,
+      a.object_key AS objectKey,
+      a.original_filename AS originalFilename,
+      a.content_type AS contentType
+    FROM audio a
+    INNER JOIN tracks t
+      ON t.slug = a.track_slug
+    ORDER BY t.name COLLATE NOCASE ASC, a.track_slug ASC, a.type ASC, a.date ASC, a.name COLLATE NOCASE ASC, a.id ASC;
+    `
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    trackSlug: row.trackSlug,
+    trackName: row.trackName,
+    name: row.name,
+    fileName: row.originalFilename ?? fileNameFromObjectKey(row.objectKey),
+    type: row.type,
+    date: row.date,
+    dateDescriptor: row.dateDescriptor,
+    contentType: row.contentType,
+    fileHref: `/api/tracks/${encodeURIComponent(row.trackSlug)}/audio/${encodeURIComponent(row.id)}`
+  }));
 }
