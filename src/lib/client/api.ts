@@ -231,6 +231,23 @@ export const api = {
     return multipartRequest<TrackQuickEditRecord>(`/api/tracks/${encodeURIComponent(trackSlug)}/audio`, body);
   },
 
+  updateTrackAudio: (
+    trackSlug: string,
+    audioId: string,
+    payload: {
+      name: string;
+      type: "note" | "demo" | "live";
+      date: string;
+    }
+  ) =>
+    apiRequest<TrackQuickEditRecord>(
+      `/api/tracks/${encodeURIComponent(trackSlug)}/audio/${encodeURIComponent(audioId)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(payload)
+      }
+    ),
+
   uploadTrackImage: (trackSlug: string, file: File) => {
     const body = new FormData();
     body.set("file", file);

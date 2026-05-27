@@ -4,6 +4,10 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { useProgressRouter } from "@/components/navigation/route-progress";
 import { AppIcon } from "@/components/ui/app-icons";
 import { ActionButton } from "@/components/ui/action-button";
+import { Field } from "@/components/ui/field";
+import { ModalShell } from "@/components/ui/modal-shell";
+import { SelectInput } from "@/components/ui/select-input";
+import { TextInput } from "@/components/ui/text-input";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
 import type { TrackAudioTableItem } from "@/lib/tracks/types";
@@ -22,6 +26,37 @@ function formatDateForTable(value: string): string {
   }
 
   return `${monthNumber}/${dayNumber}/${yearTwo}`;
+}
+
+function buildTypeIndexes(audioItems: TrackAudioTableItem[]): Map<string, number | null> {
+  const byType = new Map<string, TrackAudioTableItem[]>();
+  for (const item of audioItems) {
+    byType.set(item.type, [...(byType.get(item.type) ?? []), item]);
+  }
+
+  const indexes = new Map<string, number | null>();
+  for (const items of byType.values()) {
+    const descriptorCount = items.filter((item) => item.dateDescriptor).length;
+    for (const item of items) {
+      if (item.dateDescriptor) {
+        indexes.set(item.id, null);
+      }
+    }
+
+    items
+      .filter((item) => !item.dateDescriptor)
+      .sort((left, right) => {
+        const dateSort = left.date.localeCompare(right.date);
+        if (dateSort !== 0) {
+          return dateSort;
+        }
+        return left.name.localeCompare(right.name) || left.id.localeCompare(right.id);
+      })
+      .forEach((item, index) => {
+        indexes.set(item.id, descriptorCount + index + 1);
+      });
+  }
+  return indexes;
 }
 
 export function TrackAudioTable({
@@ -46,10 +81,17 @@ export function TrackAudioTable({
   const [audioDate, setAudioDate] = useState("");
   const [audioDateDescriptor, setAudioDateDescriptor] = useState("");
   const [audioName, setAudioName] = useState("");
+  const [editingAudio, setEditingAudio] = useState<TrackAudioTableItem | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editType, setEditType] = useState<"note" | "demo" | "live">("demo");
+  const [editDate, setEditDate] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     setAudioItems(audio);
   }, [audio]);
+
+  const typeIndexes = buildTypeIndexes(audioItems);
 
   function toggleExpanded(slug: string) {
     setExpandedAudioSlug((current) => (current === slug ? null : slug));
@@ -88,15 +130,49 @@ export function TrackAudioTable({
     }
   }
 
+  function openEditModal(audioItem: TrackAudioTableItem) {
+    setEditingAudio(audioItem);
+    setEditName(audioItem.name);
+    setEditType(audioItem.type as "note" | "demo" | "live");
+    setEditDate(audioItem.date);
+  }
+
+  async function handleEditSave() {
+    if (!editingAudio) {
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      const updatedTrack = await api.updateTrackAudio(trackSlug, editingAudio.id, {
+        name: editName,
+        type: editType,
+        date: editDate
+      });
+      setAudioItems(updatedTrack.audio);
+      setEditingAudio(null);
+      setExpandedAudioSlug(null);
+      showToast("Audio details updated.");
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update audio.";
+      showToast(message, "error");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
   return (
     <div className="overflow-x-auto">
       {showTitle ? <h2 className="text-lg font-semibold">{title}</h2> : null}
       <table className={`theme-table text-sm ${showTitle ? "mt-3" : ""}`}>
         <thead>
           <tr className="text-xs uppercase tracking-wide">
-            <th className="px-2 py-2 font-semibold">Filename</th>
+            <th className="px-2 py-2 font-semibold">Name</th>
             <th className="px-2 py-2 font-semibold">Type</th>
+            <th className="px-2 py-2 font-semibold">Index</th>
             <th className="px-2 py-2 font-semibold">Date</th>
+            <th className="px-2 py-2 font-semibold">Edit</th>
           </tr>
         </thead>
         <tbody>
@@ -132,12 +208,26 @@ export function TrackAudioTable({
                   </td>
                   <td className={`px-2 py-2 ${isExpanded ? "border-b-0" : ""}`}>{audioItem.type}</td>
                   <td className={`px-2 py-2 ${isExpanded ? "border-b-0" : ""}`}>
+                    {typeIndexes.get(audioItem.id) ?? "--"}
+                  </td>
+                  <td className={`px-2 py-2 ${isExpanded ? "border-b-0" : ""}`}>
                     {audioItem.dateDescriptor ?? formatDateForTable(audioItem.date)}
+                  </td>
+                  <td className={`px-2 py-2 ${isExpanded ? "border-b-0" : ""}`}>
+                    <button
+                      type="button"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--border)] text-[color:var(--muted)] transition hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--ink)]"
+                      aria-label={`Edit ${audioItem.name}`}
+                      title={`Edit ${audioItem.name}`}
+                      onClick={() => openEditModal(audioItem)}
+                    >
+                      <AppIcon name="pencil" className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
                 {isExpanded && audioItem.fileHref ? (
                   <tr>
-                    <td colSpan={3} className="px-2 pb-3 pt-0">
+                    <td colSpan={5} className="px-2 pb-3 pt-0">
                       <audio
                         key={audioItem.id}
                         controls
@@ -229,6 +319,52 @@ export function TrackAudioTable({
           {selectedFile ? selectedFile.name : "No file selected"}
         </p>
       </div>
+      {editingAudio ? (
+        <ModalShell
+          title="Audio Details"
+          onClose={() => {
+            if (!savingEdit) {
+              setEditingAudio(null);
+            }
+          }}
+          footer={
+            <div className="flex justify-end gap-2">
+              <ActionButton tone="ghost" disabled={savingEdit} onClick={() => setEditingAudio(null)}>
+                Cancel
+              </ActionButton>
+              <ActionButton disabled={savingEdit || !editName.trim() || !editDate} onClick={() => void handleEditSave()}>
+                {savingEdit ? "Saving..." : "Save"}
+              </ActionButton>
+            </div>
+          }
+        >
+          <div className="grid gap-4 md:grid-cols-3">
+            <Field label="Type">
+              <SelectInput
+                value={editType}
+                options={["note", "demo", "live"]}
+                disabled={savingEdit}
+                onChange={(event) => setEditType(event.currentTarget.value as "note" | "demo" | "live")}
+              />
+            </Field>
+            <Field label="Name">
+              <TextInput
+                value={editName}
+                disabled={savingEdit}
+                onChange={(event) => setEditName(event.currentTarget.value)}
+              />
+            </Field>
+            <Field label="Date">
+              <TextInput
+                type="date"
+                value={editDate}
+                disabled={savingEdit}
+                onChange={(event) => setEditDate(event.currentTarget.value)}
+              />
+            </Field>
+          </div>
+        </ModalShell>
+      ) : null}
     </div>
   );
 }
