@@ -49,13 +49,17 @@ erDiagram
 
   %% Track media metadata.
   AUDIO {
-    TEXT slug PK
+    TEXT id PK
     TEXT track_slug FK
+    TEXT name
     TEXT type
-    INTEGER type_version
-    TEXT description
     TEXT date
-    TEXT date_override
+    TEXT date_descriptor
+    TEXT object_key
+    TEXT original_filename
+    TEXT content_type
+    TEXT created_at
+    TEXT updated_at
   }
 
   %% Supplemental metadata tables present in schema.

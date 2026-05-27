@@ -49,12 +49,16 @@ export const projectEntitySchema = z.object({
 });
 
 export const trackAudioSchema = z.object({
-  slug: slugSchema,
+  id: z.uuid(),
+  name: nameSchema,
   type: audioTypeSchema,
-  typeVersion: z.number().int().positive(),
-  description: z.string().nullable(),
   date: isoDateSchema,
-  dateOverride: z.string().nullable()
+  dateDescriptor: z.string().nullable(),
+  objectKey: z.string().trim().min(1),
+  originalFilename: z.string().nullable(),
+  contentType: z.string().nullable(),
+  createdAt: z.string().trim().min(1),
+  updatedAt: z.string().trim().min(1)
 });
 
 export const trackEntitySchema = z.object({

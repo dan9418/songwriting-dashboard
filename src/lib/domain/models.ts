@@ -24,12 +24,16 @@ export interface ProjectEntity {
 }
 
 export interface TrackAudioEntity {
-  slug: string;
+  id: string;
+  name: string;
   type: AudioType;
-  typeVersion: number;
-  description: string | null;
   date: string;
-  dateOverride: string | null;
+  dateDescriptor: string | null;
+  objectKey: string;
+  originalFilename: string | null;
+  contentType: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TrackEntity {

@@ -42,6 +42,10 @@ export function TrackAudioTable({
   const [audioItems, setAudioItems] = useState(audio);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [audioType, setAudioType] = useState<"note" | "demo" | "live">("demo");
+  const [audioDate, setAudioDate] = useState("");
+  const [audioDateDescriptor, setAudioDateDescriptor] = useState("");
+  const [audioName, setAudioName] = useState("");
 
   useEffect(() => {
     setAudioItems(audio);
@@ -59,9 +63,17 @@ export function TrackAudioTable({
     setUploading(true);
 
     try {
-      const updatedTrack = await api.uploadTrackAudio(trackSlug, selectedFile);
+      const updatedTrack = await api.uploadTrackAudio(trackSlug, {
+        file: selectedFile,
+        type: audioType,
+        date: audioDate,
+        dateDescriptor: audioDateDescriptor,
+        name: audioName
+      });
       setAudioItems(updatedTrack.audio);
       setSelectedFile(null);
+      setAudioDateDescriptor("");
+      setAudioName("");
       setExpandedAudioSlug(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -83,48 +95,51 @@ export function TrackAudioTable({
         <thead>
           <tr className="text-xs uppercase tracking-wide">
             <th className="px-2 py-2 font-semibold">Filename</th>
-            <th className="px-2 py-2 font-semibold">Version</th>
-            <th className="px-2 py-2 font-semibold">Description</th>
+            <th className="px-2 py-2 font-semibold">Type</th>
             <th className="px-2 py-2 font-semibold">Date</th>
           </tr>
         </thead>
         <tbody>
           {audioItems.map((audioItem) => {
-            const isExpanded = expandedAudioSlug === audioItem.slug;
+            const isExpanded = expandedAudioSlug === audioItem.id;
 
             return (
-              <Fragment key={audioItem.slug}>
+              <Fragment key={audioItem.id}>
                 <tr data-expanded={isExpanded ? "true" : "false"}>
                   <td className={`px-2 py-2 ${isExpanded ? "border-b-0" : ""}`}>
                     {audioItem.fileHref ? (
                       <button
                         type="button"
                         aria-expanded={isExpanded}
-                        aria-label={`${isExpanded ? "Hide" : "Play"} ${audioItem.fileName}`}
+                        aria-label={`${isExpanded ? "Hide" : "Play"} ${audioItem.name}`}
                         className="inline-flex items-center gap-2 text-left underline decoration-[color:var(--border-strong)] underline-offset-4 transition hover:text-[color:var(--accent)]"
-                        onClick={() => toggleExpanded(audioItem.slug)}
+                        onClick={() => toggleExpanded(audioItem.id)}
                       >
                         <AppIcon
                           name={isExpanded ? "chevron-down" : "chevron-right"}
                           className="h-4 w-4 shrink-0"
                         />
-                        {audioItem.fileName}
+                        {audioItem.name}
                       </button>
                     ) : (
-                      audioItem.fileName
+                      <span>
+                        {audioItem.name}
+                        {audioItem.fileMissing ? (
+                          <span className="ml-2 text-xs text-red-700">File missing</span>
+                        ) : null}
+                      </span>
                     )}
                   </td>
-                  <td className={`px-2 py-2 ${isExpanded ? "border-b-0" : ""}`}>{`${audioItem.type} v${audioItem.typeVersion}`}</td>
-                  <td className={`px-2 py-2 ${isExpanded ? "border-b-0" : ""}`}>{audioItem.description ?? "-"}</td>
+                  <td className={`px-2 py-2 ${isExpanded ? "border-b-0" : ""}`}>{audioItem.type}</td>
                   <td className={`px-2 py-2 ${isExpanded ? "border-b-0" : ""}`}>
-                    {audioItem.dateOverride ?? formatDateForTable(audioItem.date)}
+                    {audioItem.dateDescriptor ?? formatDateForTable(audioItem.date)}
                   </td>
                 </tr>
                 {isExpanded && audioItem.fileHref ? (
                   <tr>
-                    <td colSpan={4} className="px-2 pb-3 pt-0">
+                    <td colSpan={3} className="px-2 pb-3 pt-0">
                       <audio
-                        key={audioItem.slug}
+                        key={audioItem.id}
                         controls
                         autoPlay
                         preload="metadata"
@@ -156,6 +171,42 @@ export function TrackAudioTable({
             setSelectedFile(event.currentTarget.files?.[0] ?? null);
           }}
         />
+        <div className="grid gap-2 md:grid-cols-4">
+          <select
+            value={audioType}
+            disabled={uploading}
+            className="h-10 rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm"
+            onChange={(event) => setAudioType(event.currentTarget.value as "note" | "demo" | "live")}
+          >
+            <option value="note">Note</option>
+            <option value="demo">Demo</option>
+            <option value="live">Live</option>
+          </select>
+          <input
+            type="date"
+            value={audioDate}
+            disabled={uploading}
+            required
+            className="h-10 rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm"
+            onChange={(event) => setAudioDate(event.currentTarget.value)}
+          />
+          <input
+            type="text"
+            value={audioName}
+            disabled={uploading}
+            placeholder="Name"
+            className="h-10 rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm"
+            onChange={(event) => setAudioName(event.currentTarget.value)}
+          />
+          <input
+            type="text"
+            value={audioDateDescriptor}
+            disabled={uploading}
+            placeholder="Date label"
+            className="h-10 rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm"
+            onChange={(event) => setAudioDateDescriptor(event.currentTarget.value)}
+          />
+        </div>
         <div className="flex flex-col gap-2 md:flex-row md:items-center">
           <ActionButton
             tone="ghost"
@@ -168,16 +219,14 @@ export function TrackAudioTable({
           <ActionButton
             tone="ghost"
             className="h-10 justify-center md:self-stretch"
-            disabled={uploading || !selectedFile}
+            disabled={uploading || !selectedFile || !audioDate}
             onClick={() => void handleUpload()}
           >
             {uploading ? "Uploading..." : "Upload Audio"}
           </ActionButton>
         </div>
         <p className="text-xs text-[color:var(--muted)]">
-          {selectedFile
-            ? selectedFile.name
-            : "{track-slug}_{category}_v{version}_{date}_{optionalDescription}.{mp3|m4a|mp4}"}
+          {selectedFile ? selectedFile.name : "No file selected"}
         </p>
       </div>
     </div>

@@ -4,14 +4,15 @@ export interface TrackMetadataOption {
 }
 
 export interface TrackAudioTableItem {
-  slug: string;
+  id: string;
+  name: string;
   fileName: string;
   fileHref: string | null;
+  fileMissing: boolean;
   type: string;
-  typeVersion: number;
-  description: string | null;
   date: string;
-  dateOverride: string | null;
+  dateDescriptor: string | null;
+  contentType: string | null;
 }
 
 export interface TrackQuickEditRecord {

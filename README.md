@@ -32,20 +32,18 @@ Supplemental schema tables exist for images/external link metadata:
 ## Data Architecture
 
 - D1 schema and seed scripts: `scripts/sql/` and `scripts/seed-d1.js`
-- R2 backfill helper: `scripts/backfill-audio-from-r2.js`
+- Audio migration map validator: `scripts/validate-audio-migration-map.js`
 - Track markdown docs: one canonical combined file per track in R2. During phase 1 storage, the app-facing Notes document is stored at `tracks/{trackSlug}/lyrics.md`.
 
-## Audio Filename Convention
+## Audio Files
 
-Required format:
+Audio metadata is stored in D1. Each row has an independent UUID, display name,
+musical category, date, optional date descriptor, and R2 object key. R2 remains
+blob storage, with objects nested under `tracks/{trackSlug}/audio/`.
 
-`{track-slug}_{category}_v{versionNumber}_{M-D-YY|descriptor|YYYY-MM-DD|YYYY}_{optionalDescription}.{mp3|m4a|mp4}`
-
-Example:
-
-`midnight-drive_demo_v2_02-14-25_acoustic.m4a`
-
-The app parses filename metadata, validates consistency with track metadata, and auto-renames metadata filenames when required fields change.
+The app treats D1 as the source of truth. Missing R2 objects are surfaced as
+missing files in the UI, and orphaned R2 objects can be reported by the audio
+reconciliation endpoint without automatically creating metadata.
 
 ## Cloudflare Deploy
 

@@ -208,9 +208,26 @@ export const api = {
   getTrack: (trackSlug: string) =>
     apiRequest<TrackQuickEditRecord>(`/api/tracks/${encodeURIComponent(trackSlug)}`),
 
-  uploadTrackAudio: (trackSlug: string, file: File) => {
+  uploadTrackAudio: (
+    trackSlug: string,
+    input: {
+      file: File;
+      type: "note" | "demo" | "live";
+      date: string;
+      dateDescriptor?: string;
+      name?: string;
+    }
+  ) => {
     const body = new FormData();
-    body.set("file", file);
+    body.set("file", input.file);
+    body.set("type", input.type);
+    body.set("date", input.date);
+    if (input.dateDescriptor) {
+      body.set("dateDescriptor", input.dateDescriptor);
+    }
+    if (input.name) {
+      body.set("name", input.name);
+    }
     return multipartRequest<TrackQuickEditRecord>(`/api/tracks/${encodeURIComponent(trackSlug)}/audio`, body);
   },
 

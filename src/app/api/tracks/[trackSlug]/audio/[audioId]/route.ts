@@ -1,18 +1,18 @@
 import { apiErrorResponse, notFound } from "@/lib/api/errors";
 import { getObjectData, getObjectDataRange } from "@/lib/cloudflare/r2";
-import { getTrackAudioFileFromR2 } from "@/lib/cloudflare/track-audio-files";
+import { getTrackAudioFileFromD1 } from "@/lib/cloudflare/track-audio-files";
 
 export const runtime = "nodejs";
 
 export async function GET(
   request: Request,
-  context: { params: Promise<{ trackSlug: string; audioSlug: string }> }
+  context: { params: Promise<{ trackSlug: string; audioId: string }> }
 ) {
   try {
-    const { trackSlug, audioSlug } = await context.params;
-    const audioFile = await getTrackAudioFileFromR2(trackSlug, audioSlug);
+    const { trackSlug, audioId } = await context.params;
+    const audioFile = await getTrackAudioFileFromD1(trackSlug, audioId);
     if (!audioFile) {
-      throw notFound(`Audio file not found for slug: ${audioSlug}`);
+      throw notFound(`Audio file metadata not found for id: ${audioId}`);
     }
 
     const requestedRange = request.headers.get("range");

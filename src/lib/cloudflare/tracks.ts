@@ -1,6 +1,6 @@
 import { queryD1 } from "@/lib/cloudflare/d1";
 import { listObjectSummaries, objectExists } from "@/lib/cloudflare/r2";
-import { listTrackAudioFilesFromR2 } from "@/lib/cloudflare/track-audio-files";
+import { fileNameFromObjectKey } from "@/lib/cloudflare/track-audio-files";
 import { getPrimaryDirectTrackImage, getTrackDisplayImageSlug } from "@/lib/cloudflare/images";
 import {
   getCanonicalTrackDocPath,
@@ -45,23 +45,26 @@ export interface CloudflareTrackListItem {
 }
 
 interface AudioRow {
-  slug: string;
+  id: string;
+  name: string;
   type: string;
-  typeVersion: number | string;
-  description: string | null;
   date: string;
-  dateOverride: string | null;
+  dateDescriptor: string | null;
+  objectKey: string;
+  originalFilename: string | null;
+  contentType: string | null;
 }
 
 export interface CloudflareTrackAudioItem {
-  slug: string;
+  id: string;
+  name: string;
   fileName: string;
   fileHref: string | null;
+  fileMissing: boolean;
   type: string;
-  typeVersion: number;
-  description: string | null;
   date: string;
-  dateOverride: string | null;
+  dateDescriptor: string | null;
+  contentType: string | null;
 }
 
 export interface CloudflareTrackMetadata extends CloudflareTrackListItem {
@@ -218,15 +221,17 @@ export async function getTrackMetadataFromCloudflare(
   const audioRows = await queryD1<AudioRow>(
     `
     SELECT
-      slug,
+      id,
+      name,
       type,
-      type_version AS typeVersion,
-      description,
       date,
-      date_override AS dateOverride
+      date_descriptor AS dateDescriptor,
+      object_key AS objectKey,
+      original_filename AS originalFilename,
+      content_type AS contentType
     FROM audio
     WHERE track_slug = ?
-    ORDER BY type ASC, type_version ASC, slug ASC;
+    ORDER BY type ASC, date ASC, name COLLATE NOCASE ASC, id ASC;
     `,
     [trackSlug]
   );
@@ -256,15 +261,14 @@ export async function getTrackMetadataFromCloudflare(
     `,
     [trackSlug]
   );
-  const audioFiles = await listTrackAudioFilesFromR2(trackSlug);
-  const audioFileBySlug = new Map(audioFiles.map((item) => [item.slug, item]));
   const noteCount = audioRows.filter((item) => item.type === "note").length;
   const demoCount = audioRows.filter((item) => item.type === "demo").length;
   const liveCount = audioRows.filter((item) => item.type === "live").length;
-  const [hasNotes, directImage, displayImageSlug] = await Promise.all([
+  const [hasNotes, directImage, displayImageSlug, audioExists] = await Promise.all([
     hasTrackDoc(trackSlug).catch(() => false),
     getPrimaryDirectTrackImage(trackSlug).catch(() => null),
-    getTrackDisplayImageSlug(trackSlug).catch(() => null)
+    getTrackDisplayImageSlug(trackSlug).catch(() => null),
+    Promise.all(audioRows.map((item) => objectExists(item.objectKey).catch(() => false)))
   ]);
 
   return {
@@ -280,17 +284,18 @@ export async function getTrackMetadataFromCloudflare(
     noteCount,
     demoCount,
     liveCount,
-    audio: audioRows.map((item) => ({
-      slug: item.slug,
-      fileName: audioFileBySlug.get(item.slug)?.fileName ?? item.slug,
-      fileHref: audioFileBySlug.get(item.slug)
-        ? `/api/tracks/${encodeURIComponent(trackSlug)}/audio/${encodeURIComponent(item.slug)}`
+    audio: audioRows.map((item, index) => ({
+      id: item.id,
+      name: item.name,
+      fileName: item.originalFilename ?? fileNameFromObjectKey(item.objectKey),
+      fileHref: audioExists[index]
+        ? `/api/tracks/${encodeURIComponent(trackSlug)}/audio/${encodeURIComponent(item.id)}`
         : null,
+      fileMissing: !audioExists[index],
       type: item.type,
-      typeVersion: toInt(item.typeVersion),
-      description: item.description,
       date: item.date,
-      dateOverride: item.dateOverride
+      dateDescriptor: item.dateDescriptor,
+      contentType: item.contentType
     }))
   };
 }

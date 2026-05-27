@@ -56,15 +56,20 @@ CREATE TABLE IF NOT EXISTS external_links (
 );
 
 CREATE TABLE IF NOT EXISTS audio (
-  slug TEXT NOT NULL CHECK (length(trim(slug)) > 0),
+  id TEXT NOT NULL CHECK (length(trim(id)) > 0),
   track_slug TEXT NOT NULL,
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
   type TEXT NOT NULL CHECK (type IN ('note', 'demo', 'live')),
-  type_version INTEGER NOT NULL CHECK (type_version > 0),
-  description TEXT,
-  date TEXT NOT NULL CHECK (date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
-  date_override TEXT,
-  PRIMARY KEY (slug),
-  UNIQUE (track_slug, type, type_version),
+  date TEXT NOT NULL DEFAULT '1970-01-01' CHECK (date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
+  date_descriptor TEXT,
+  object_key TEXT NOT NULL CHECK (length(trim(object_key)) > 0),
+  original_filename TEXT,
+  content_type TEXT,
+  created_at TEXT NOT NULL CHECK (length(trim(created_at)) > 0),
+  updated_at TEXT NOT NULL CHECK (length(trim(updated_at)) > 0),
+  PRIMARY KEY (id),
+  UNIQUE (object_key),
+  UNIQUE (track_slug, name),
   FOREIGN KEY (track_slug) REFERENCES tracks(slug) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -151,6 +156,8 @@ CREATE TABLE IF NOT EXISTS track_images (
 );
 
 CREATE INDEX IF NOT EXISTS idx_audio_track ON audio(track_slug);
+CREATE INDEX IF NOT EXISTS idx_audio_type ON audio(type);
+CREATE INDEX IF NOT EXISTS idx_audio_date ON audio(date);
 CREATE INDEX IF NOT EXISTS idx_notebook_pages_name ON notebook_pages(name);
 CREATE INDEX IF NOT EXISTS idx_notebook_pages_page_type ON notebook_pages(page_type);
 CREATE INDEX IF NOT EXISTS idx_notebook_pages_updated_at ON notebook_pages(updated_at);
