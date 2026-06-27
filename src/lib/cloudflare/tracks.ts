@@ -264,11 +264,10 @@ export async function getTrackMetadataFromCloudflare(
   const noteCount = audioRows.filter((item) => item.type === "note").length;
   const demoCount = audioRows.filter((item) => item.type === "demo").length;
   const liveCount = audioRows.filter((item) => item.type === "live").length;
-  const [hasNotes, directImage, displayImageSlug, audioExists] = await Promise.all([
+  const [hasNotes, directImage, displayImageSlug] = await Promise.all([
     hasTrackDoc(trackSlug).catch(() => false),
     getPrimaryDirectTrackImage(trackSlug).catch(() => null),
-    getTrackDisplayImageSlug(trackSlug).catch(() => null),
-    Promise.all(audioRows.map((item) => objectExists(item.objectKey).catch(() => false)))
+    getTrackDisplayImageSlug(trackSlug).catch(() => null)
   ]);
 
   return {
@@ -284,14 +283,12 @@ export async function getTrackMetadataFromCloudflare(
     noteCount,
     demoCount,
     liveCount,
-    audio: audioRows.map((item, index) => ({
+    audio: audioRows.map((item) => ({
       id: item.id,
       name: item.name,
       fileName: item.originalFilename ?? fileNameFromObjectKey(item.objectKey),
-      fileHref: audioExists[index]
-        ? `/api/tracks/${encodeURIComponent(trackSlug)}/audio/${encodeURIComponent(item.id)}`
-        : null,
-      fileMissing: !audioExists[index],
+      fileHref: `/api/tracks/${encodeURIComponent(trackSlug)}/audio/${encodeURIComponent(item.id)}`,
+      fileMissing: false,
       type: item.type,
       date: item.date,
       dateDescriptor: item.dateDescriptor,
