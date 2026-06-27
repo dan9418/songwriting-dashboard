@@ -1,6 +1,6 @@
 import { apiErrorResponse, notFound } from "@/lib/api/errors";
 import { getImagePathBySlug } from "@/lib/cloudflare/images";
-import { getObjectData } from "@/lib/cloudflare/r2";
+import { getObjectStream } from "@/lib/cloudflare/r2";
 
 export const runtime = "nodejs";
 
@@ -15,7 +15,7 @@ export async function GET(
       throw notFound(`Image not found for slug: ${imageSlug}`);
     }
 
-    const object = await getObjectData(imagePath);
+    const object = await getObjectStream(imagePath);
     if (!object) {
       throw notFound(`R2 object not found: ${imagePath}`);
     }
@@ -25,8 +25,11 @@ export async function GET(
     if (object.etag) {
       headers.set("etag", object.etag);
     }
+    if (object.contentLength !== null) {
+      headers.set("content-length", String(object.contentLength));
+    }
 
-    return new Response(new Uint8Array(object.body), { status: 200, headers });
+    return new Response(object.body, { status: 200, headers });
   } catch (error) {
     return apiErrorResponse(error);
   }

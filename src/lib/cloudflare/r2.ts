@@ -111,7 +111,16 @@ function parseRangeHeader(range: string): R2Range | null {
 }
 
 function objectContentLength(object: R2ObjectBody): number {
-  return object.range?.length ?? object.range?.suffix ?? object.size;
+  if (typeof object.range?.length === "number") {
+    return object.range.length;
+  }
+  if (typeof object.range?.suffix === "number") {
+    return Math.min(object.range.suffix, object.size);
+  }
+  if (typeof object.range?.offset === "number") {
+    return Math.max(0, object.size - object.range.offset);
+  }
+  return object.size;
 }
 
 function objectContentRange(object: R2ObjectBody): string | null {
@@ -128,12 +137,38 @@ function objectContentRange(object: R2ObjectBody): string | null {
   return `bytes ${start}-${end}/${object.size}`;
 }
 
+function bodyToWebStream(body: {
+  transformToWebStream?: () => ReadableStream<Uint8Array>;
+  transformToByteArray?: () => Promise<Uint8Array>;
+} | undefined): ReadableStream<Uint8Array> {
+  if (body?.transformToWebStream) {
+    return body.transformToWebStream();
+  }
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const bytes = body?.transformToByteArray ? await body.transformToByteArray() : new Uint8Array();
+      controller.enqueue(bytes);
+      controller.close();
+    }
+  });
+}
+
 function isNotFoundError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
     return false;
   }
   const maybeError = error as { name?: string; $metadata?: { httpStatusCode?: number } };
   return maybeError.name === "NoSuchKey" || maybeError.$metadata?.httpStatusCode === 404;
+}
+
+export interface R2ObjectStream {
+  body: ReadableStream<Uint8Array>;
+  etag: string | null;
+  contentType: string | null;
+  contentLength: number | null;
+  contentRange: string | null;
+  acceptRanges: string | null;
 }
 
 export async function getMarkdownObject(path: string): Promise<{ content: string; etag: string | null } | null> {
@@ -160,6 +195,53 @@ export async function getMarkdownObject(path: string): Promise<{ content: string
     return {
       content,
       etag: normalizeEtag(response.ETag)
+    };
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function getObjectStream(path: string, range?: string | null): Promise<R2ObjectStream | null> {
+  const bucket = getBoundBucket();
+  const parsedRange = range ? parseRangeHeader(range) : null;
+  if (bucket) {
+    const object = await bucket.get(path, parsedRange ? { range: parsedRange } : undefined);
+    if (!object) {
+      return null;
+    }
+    return {
+      body: object.body,
+      etag: r2ObjectEtag(object),
+      contentType: r2ObjectContentType(object),
+      contentLength: objectContentLength(object),
+      contentRange: objectContentRange(object),
+      acceptRanges: "bytes"
+    };
+  }
+
+  try {
+    const response = await getClient().send(
+      new GetObjectCommand({
+        Bucket: getBucketName(),
+        Key: path,
+        Range: range && parsedRange ? range : undefined
+      })
+    );
+    const body = response.Body as unknown as {
+      transformToWebStream?: () => ReadableStream<Uint8Array>;
+      transformToByteArray?: () => Promise<Uint8Array>;
+    } | undefined;
+
+    return {
+      body: bodyToWebStream(body),
+      etag: normalizeEtag(response.ETag),
+      contentType: response.ContentType ?? null,
+      contentLength: typeof response.ContentLength === "number" ? response.ContentLength : null,
+      contentRange: response.ContentRange ?? null,
+      acceptRanges: response.AcceptRanges ?? null
     };
   } catch (error) {
     if (isNotFoundError(error)) {
@@ -302,18 +384,9 @@ export async function getBucketObjectStream(
       transformToWebStream?: () => ReadableStream<Uint8Array>;
       transformToByteArray?: () => Promise<Uint8Array>;
     } | undefined;
-    const stream = body?.transformToWebStream
-      ? body.transformToWebStream()
-      : new ReadableStream<Uint8Array>({
-          async start(controller) {
-            const bytes = body?.transformToByteArray ? await body.transformToByteArray() : new Uint8Array();
-            controller.enqueue(bytes);
-            controller.close();
-          }
-        });
 
     return {
-      body: stream,
+      body: bodyToWebStream(body),
       etag: normalizeEtag(response.ETag),
       contentType: response.ContentType ?? null,
       contentLength: typeof response.ContentLength === "number" ? response.ContentLength : null

@@ -2,7 +2,7 @@ import { apiErrorResponse, badRequest, conflict, notFound } from "@/lib/api/erro
 import { ok } from "@/lib/api/response";
 import { isAudioType } from "@/lib/audio/metadata";
 import { queryD1 } from "@/lib/cloudflare/d1";
-import { getObjectData, getObjectDataRange } from "@/lib/cloudflare/r2";
+import { getObjectStream } from "@/lib/cloudflare/r2";
 import { getTrackAudioFileFromD1 } from "@/lib/cloudflare/track-audio-files";
 import { getTrackMetadataFromCloudflare } from "@/lib/cloudflare/tracks";
 
@@ -20,9 +20,7 @@ export async function GET(
     }
 
     const requestedRange = request.headers.get("range");
-    const object = requestedRange
-      ? await getObjectDataRange(audioFile.key, requestedRange)
-      : await getObjectData(audioFile.key);
+    const object = await getObjectStream(audioFile.key, requestedRange);
     if (!object) {
       throw notFound(`R2 object not found: ${audioFile.key}`);
     }
@@ -41,8 +39,7 @@ export async function GET(
       headers.set("content-range", object.contentRange);
     }
 
-    const payload = new Uint8Array(object.body);
-    return new Response(payload, { status: object.contentRange ? 206 : 200, headers });
+    return new Response(object.body, { status: object.contentRange ? 206 : 200, headers });
   } catch (error) {
     return apiErrorResponse(error);
   }
