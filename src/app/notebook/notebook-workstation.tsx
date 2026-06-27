@@ -253,6 +253,15 @@ export function NotebookWorkstation() {
     }
   }
 
+  function handleCancelContentEdit() {
+    if (!selectedPage) {
+      return;
+    }
+    setDraftContent(selectedPage.content);
+    setPageDetailError(null);
+    setMode("readonly");
+  }
+
   async function handleDeletePage() {
     if (!selectedPage) {
       return;
@@ -524,10 +533,10 @@ export function NotebookWorkstation() {
                       <div className="flex gap-2">
                         <ActionButton
                           tone="ghost"
-                          disabled={savingPage || !selectedPage || !isDirty}
-                          onClick={() => setDraftContent(selectedPage.content)}
+                          disabled={savingPage || !selectedPage}
+                          onClick={handleCancelContentEdit}
                         >
-                          Revert
+                          Cancel
                         </ActionButton>
                         <ActionButton disabled={savingPage || !isDirty} onClick={handleSaveContent}>
                           {savingPage ? "Saving..." : "Save Changes"}

@@ -168,6 +168,13 @@ export function TrackMarkdownDocCard({
     }
   }
 
+  function cancelEdit() {
+    setContent(record?.content ?? "");
+    setError(null);
+    setMessage(null);
+    setMode("published");
+  }
+
   return (
     <div className={containerClassName}>
       {hasHeader ? (
@@ -178,6 +185,9 @@ export function TrackMarkdownDocCard({
             <div className="flex items-center gap-2">
               {mode === "edit" ? (
                 <>
+                  <ActionButton tone="ghost" disabled={saving || deleting} onClick={cancelEdit}>
+                    Cancel
+                  </ActionButton>
                   <ActionButton tone="danger" disabled={saving || deleting} onClick={removeDoc}>
                     {deleting ? "Deleting..." : "Delete"}
                   </ActionButton>
