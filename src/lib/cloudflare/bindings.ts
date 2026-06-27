@@ -75,3 +75,15 @@ export function getCloudflareBindings(): CloudflareBindings | null {
     return null;
   }
 }
+
+export function shouldUseCloudflareBindings(): boolean {
+  const mode = process.env.CLOUDFLARE_BINDING_MODE?.trim().toLowerCase();
+  if (mode === "always" || mode === "binding" || mode === "bindings") {
+    return true;
+  }
+  if (mode === "never" || mode === "remote" || mode === "rest") {
+    return false;
+  }
+
+  return process.env.NODE_ENV === "production";
+}

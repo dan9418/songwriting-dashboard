@@ -1,5 +1,9 @@
 import { ApiError } from "@/lib/api/errors";
-import { getCloudflareBindings, type D1Value } from "@/lib/cloudflare/bindings";
+import {
+  getCloudflareBindings,
+  shouldUseCloudflareBindings,
+  type D1Value
+} from "@/lib/cloudflare/bindings";
 
 interface D1Error {
   message?: string;
@@ -51,20 +55,8 @@ function returnsRows(sql: string): boolean {
   return trimmed.startsWith("select") || trimmed.startsWith("pragma") || trimmed.startsWith("with");
 }
 
-function shouldUseD1Binding(): boolean {
-  const mode = process.env.CLOUDFLARE_D1_BINDING_MODE?.trim().toLowerCase();
-  if (mode === "always" || mode === "binding") {
-    return true;
-  }
-  if (mode === "never" || mode === "remote" || mode === "rest") {
-    return false;
-  }
-
-  return process.env.NODE_ENV === "production";
-}
-
 async function queryD1Binding<T>(sql: string, params: unknown[]): Promise<T[] | null> {
-  if (!shouldUseD1Binding()) {
+  if (!shouldUseCloudflareBindings()) {
     return null;
   }
 

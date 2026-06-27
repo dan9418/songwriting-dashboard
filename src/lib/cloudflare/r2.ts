@@ -9,6 +9,7 @@ import {
 import { ApiError } from "@/lib/api/errors";
 import {
   getCloudflareBindings,
+  shouldUseCloudflareBindings,
   type R2BucketBinding,
   type R2Object,
   type R2ObjectBody,
@@ -40,6 +41,10 @@ function getBucketName(): string {
 }
 
 function getBoundBucket(bucketName?: string): R2BucketBinding | null {
+  if (!shouldUseCloudflareBindings()) {
+    return null;
+  }
+
   const defaultBucketName = getBucketName();
   if (bucketName && bucketName !== defaultBucketName) {
     return null;
