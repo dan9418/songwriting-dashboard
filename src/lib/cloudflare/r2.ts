@@ -7,6 +7,13 @@ import {
   S3Client
 } from "@aws-sdk/client-s3";
 import { ApiError } from "@/lib/api/errors";
+import {
+  getCloudflareBindings,
+  type R2BucketBinding,
+  type R2Object,
+  type R2ObjectBody,
+  type R2Range
+} from "@/lib/cloudflare/bindings";
 
 function getRequiredEnv(name: string): string {
   const value = process.env[name];
@@ -32,11 +39,93 @@ function getBucketName(): string {
   return process.env.CLOUDFLARE_R2_BUCKET ?? "songwriting-media";
 }
 
-function normalizeEtag(value: string | undefined): string | null {
+function getBoundBucket(bucketName?: string): R2BucketBinding | null {
+  const defaultBucketName = getBucketName();
+  if (bucketName && bucketName !== defaultBucketName) {
+    return null;
+  }
+  return getCloudflareBindings()?.songwriting_media ?? null;
+}
+
+function normalizeEtag(value: string | null | undefined): string | null {
   if (!value) {
     return null;
   }
   return value.replace(/^"+|"+$/g, "");
+}
+
+function r2ObjectEtag(object: R2Object): string | null {
+  return normalizeEtag(object.httpEtag ?? object.etag);
+}
+
+function r2ObjectContentType(object: R2Object): string | null {
+  return object.httpMetadata?.contentType ?? null;
+}
+
+function r2ObjectLastModified(object: R2Object): string | null {
+  return object.uploaded ? object.uploaded.toISOString() : null;
+}
+
+function toObjectSummary(object: R2Object): R2ObjectSummary {
+  return {
+    key: object.key,
+    size: object.size,
+    etag: r2ObjectEtag(object),
+    lastModified: r2ObjectLastModified(object),
+    storageClass: object.storageClass ?? null
+  };
+}
+
+function parseRangeHeader(range: string): R2Range | null {
+  const match = /^bytes=(\d*)-(\d*)$/i.exec(range.trim());
+  if (!match) {
+    return null;
+  }
+
+  const [, start, end] = match;
+  if (!start && !end) {
+    return null;
+  }
+  if (!start) {
+    const suffix = Number(end);
+    return Number.isSafeInteger(suffix) && suffix > 0 ? { suffix } : null;
+  }
+
+  const offset = Number(start);
+  if (!Number.isSafeInteger(offset) || offset < 0) {
+    return null;
+  }
+  if (!end) {
+    return { offset };
+  }
+
+  const endOffset = Number(end);
+  if (!Number.isSafeInteger(endOffset) || endOffset < offset) {
+    return null;
+  }
+
+  return {
+    offset,
+    length: endOffset - offset + 1
+  };
+}
+
+function objectContentLength(object: R2ObjectBody): number {
+  return object.range?.length ?? object.range?.suffix ?? object.size;
+}
+
+function objectContentRange(object: R2ObjectBody): string | null {
+  if (!object.range) {
+    return null;
+  }
+
+  const length = objectContentLength(object);
+  const start =
+    typeof object.range.offset === "number"
+      ? object.range.offset
+      : Math.max(0, object.size - length);
+  const end = start + length - 1;
+  return `bytes ${start}-${end}/${object.size}`;
 }
 
 function isNotFoundError(error: unknown): boolean {
@@ -48,6 +137,18 @@ function isNotFoundError(error: unknown): boolean {
 }
 
 export async function getMarkdownObject(path: string): Promise<{ content: string; etag: string | null } | null> {
+  const bucket = getBoundBucket();
+  if (bucket) {
+    const object = await bucket.get(path);
+    if (!object) {
+      return null;
+    }
+    return {
+      content: await object.text(),
+      etag: r2ObjectEtag(object)
+    };
+  }
+
   try {
     const response = await getClient().send(
       new GetObjectCommand({
@@ -76,6 +177,22 @@ export async function getObjectData(path: string): Promise<{
   contentRange: string | null;
   acceptRanges: string | null;
 } | null> {
+  const bucket = getBoundBucket();
+  if (bucket) {
+    const object = await bucket.get(path);
+    if (!object) {
+      return null;
+    }
+    return {
+      body: new Uint8Array(await object.arrayBuffer()),
+      etag: r2ObjectEtag(object),
+      contentType: r2ObjectContentType(object),
+      contentLength: objectContentLength(object),
+      contentRange: objectContentRange(object),
+      acceptRanges: "bytes"
+    };
+  }
+
   try {
     const response = await getClient().send(
       new GetObjectCommand({
@@ -111,6 +228,22 @@ export async function getBucketObjectData(
   contentRange: string | null;
   acceptRanges: string | null;
 } | null> {
+  const bucket = getBoundBucket(bucketName);
+  if (bucket) {
+    const object = await bucket.get(path);
+    if (!object) {
+      return null;
+    }
+    return {
+      body: new Uint8Array(await object.arrayBuffer()),
+      etag: r2ObjectEtag(object),
+      contentType: r2ObjectContentType(object),
+      contentLength: objectContentLength(object),
+      contentRange: objectContentRange(object),
+      acceptRanges: "bytes"
+    };
+  }
+
   try {
     const response = await getClient().send(
       new GetObjectCommand({
@@ -144,6 +277,20 @@ export async function getBucketObjectStream(
   contentType: string | null;
   contentLength: number | null;
 } | null> {
+  const bucket = getBoundBucket(bucketName);
+  if (bucket) {
+    const object = await bucket.get(path);
+    if (!object) {
+      return null;
+    }
+    return {
+      body: object.body,
+      etag: r2ObjectEtag(object),
+      contentType: r2ObjectContentType(object),
+      contentLength: objectContentLength(object)
+    };
+  }
+
   try {
     const response = await getClient().send(
       new GetObjectCommand({
@@ -190,6 +337,23 @@ export async function getObjectDataRange(
   contentRange: string | null;
   acceptRanges: string | null;
 } | null> {
+  const bucket = getBoundBucket();
+  const parsedRange = parseRangeHeader(range);
+  if (bucket && parsedRange) {
+    const object = await bucket.get(path, { range: parsedRange });
+    if (!object) {
+      return null;
+    }
+    return {
+      body: new Uint8Array(await object.arrayBuffer()),
+      etag: r2ObjectEtag(object),
+      contentType: r2ObjectContentType(object),
+      contentLength: objectContentLength(object),
+      contentRange: objectContentRange(object),
+      acceptRanges: "bytes"
+    };
+  }
+
   try {
     const response = await getClient().send(
       new GetObjectCommand({
@@ -232,6 +396,30 @@ export async function listObjectSummaries({
   prefix?: string;
   limit?: number;
 }): Promise<R2ObjectSummary[]> {
+  const bucket = getBoundBucket(bucketName);
+  if (bucket) {
+    const summaries: R2ObjectSummary[] = [];
+    let cursor: string | undefined;
+    const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 200;
+
+    do {
+      const remaining = safeLimit - summaries.length;
+      if (remaining <= 0) {
+        break;
+      }
+
+      const response = await bucket.list({
+        prefix,
+        cursor,
+        limit: Math.min(remaining, 1000)
+      });
+      summaries.push(...response.objects.map(toObjectSummary));
+      cursor = response.truncated ? response.cursor : undefined;
+    } while (cursor);
+
+    return summaries;
+  }
+
   const summaries: R2ObjectSummary[] = [];
   let continuationToken: string | undefined;
   const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 200;
@@ -277,6 +465,24 @@ export async function listAllObjectSummaries({
   bucketName?: string;
   prefix?: string;
 }): Promise<R2ObjectSummary[]> {
+  const bucket = getBoundBucket(bucketName);
+  if (bucket) {
+    const summaries: R2ObjectSummary[] = [];
+    let cursor: string | undefined;
+
+    do {
+      const response = await bucket.list({
+        prefix,
+        cursor,
+        limit: 1000
+      });
+      summaries.push(...response.objects.map(toObjectSummary));
+      cursor = response.truncated ? response.cursor : undefined;
+    } while (cursor);
+
+    return summaries;
+  }
+
   const summaries: R2ObjectSummary[] = [];
   let continuationToken: string | undefined;
 
@@ -315,6 +521,16 @@ export async function listObjectKeys(prefix: string): Promise<string[]> {
 }
 
 export async function putMarkdownObject(path: string, content: string): Promise<{ etag: string | null }> {
+  const bucket = getBoundBucket();
+  if (bucket) {
+    const object = await bucket.put(path, content, {
+      httpMetadata: { contentType: "text/markdown; charset=utf-8" }
+    });
+    return {
+      etag: object ? r2ObjectEtag(object) : null
+    };
+  }
+
   const response = await getClient().send(
     new PutObjectCommand({
       Bucket: getBucketName(),
@@ -334,6 +550,16 @@ export async function putObjectData(
   body: Uint8Array,
   contentType?: string | null
 ): Promise<{ etag: string | null }> {
+  const bucket = getBoundBucket();
+  if (bucket) {
+    const object = await bucket.put(path, body, {
+      httpMetadata: { contentType: contentType ?? "application/octet-stream" }
+    });
+    return {
+      etag: object ? r2ObjectEtag(object) : null
+    };
+  }
+
   const response = await getClient().send(
     new PutObjectCommand({
       Bucket: getBucketName(),
@@ -349,6 +575,11 @@ export async function putObjectData(
 }
 
 export async function objectExists(path: string): Promise<boolean> {
+  const bucket = getBoundBucket();
+  if (bucket) {
+    return (await bucket.head(path)) !== null;
+  }
+
   try {
     await getClient().send(
       new HeadObjectCommand({
@@ -366,6 +597,12 @@ export async function objectExists(path: string): Promise<boolean> {
 }
 
 export async function deleteObject(path: string): Promise<void> {
+  const bucket = getBoundBucket();
+  if (bucket) {
+    await bucket.delete(path);
+    return;
+  }
+
   await getClient().send(
     new DeleteObjectCommand({
       Bucket: getBucketName(),

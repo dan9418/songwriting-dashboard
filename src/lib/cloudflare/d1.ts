@@ -1,4 +1,5 @@
 import { ApiError } from "@/lib/api/errors";
+import { getCloudflareBindings, type D1Value } from "@/lib/cloudflare/bindings";
 
 interface D1Error {
   message?: string;
@@ -29,7 +30,48 @@ function toD1Error(payload: D1Response<unknown>): string {
   return message ?? "Cloudflare D1 query failed.";
 }
 
+function toD1Params(params: unknown[]): D1Value[] {
+  return params.map((value) => {
+    if (
+      value === null ||
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean" ||
+      value instanceof ArrayBuffer ||
+      value instanceof Uint8Array
+    ) {
+      return value;
+    }
+    throw new ApiError(500, "INTERNAL_ERROR", "Unsupported Cloudflare D1 query parameter.");
+  });
+}
+
+function returnsRows(sql: string): boolean {
+  const trimmed = sql.trimStart().toLowerCase();
+  return trimmed.startsWith("select") || trimmed.startsWith("pragma") || trimmed.startsWith("with");
+}
+
+async function queryD1Binding<T>(sql: string, params: unknown[]): Promise<T[] | null> {
+  const database = getCloudflareBindings()?.songwriting_dashboard;
+  if (!database) {
+    return null;
+  }
+
+  const statement = database.prepare(sql).bind(...toD1Params(params));
+  const result = returnsRows(sql) ? await statement.all<T>() : await statement.run<T>();
+  if (!result.success) {
+    throw new ApiError(502, "INTERNAL_ERROR", result.error ?? "Cloudflare D1 query failed.");
+  }
+
+  return result.results ?? [];
+}
+
 export async function queryD1<T>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const bindingRows = await queryD1Binding<T>(sql, params);
+  if (bindingRows) {
+    return bindingRows;
+  }
+
   const accountId = getRequiredEnv("CLOUDFLARE_ACCOUNT_ID");
   const databaseId = getRequiredEnv("CLOUDFLARE_D1_DATABASE_ID");
   const apiToken = getRequiredEnv("CLOUDFLARE_API_TOKEN");
