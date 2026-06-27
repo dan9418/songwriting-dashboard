@@ -1,6 +1,5 @@
 "use client";
 
-import MDEditor from "@uiw/react-md-editor";
 import { useEffect, useState } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 
@@ -52,6 +51,7 @@ export function TrackMarkdownDocCard({
   const containerClassName = withPanel ? "panel p-4" : "grid gap-3";
   const statusClassName = hasHeader ? "mt-2 text-sm" : "text-sm";
   const bodyClassName = hasHeader ? "mt-3 grid gap-3" : "grid gap-3";
+  const displayContent = record?.content.trim().length ? record.content : "No content yet.";
 
   useEffect(() => {
     let ignore = false;
@@ -209,20 +209,18 @@ export function TrackMarkdownDocCard({
       ) : null}
 
       {!loading && record && record.exists ? (
-        <div data-color-mode="light" className={bodyClassName}>
+        <div className={bodyClassName}>
           {mode === "published" ? (
-            <MDEditor.Markdown
-              source={
-                record.parsed?.content && record.parsed.content.trim().length > 0
-                  ? record.parsed.content
-                  : "_No content yet._"
-              }
-              style={{ backgroundColor: "transparent", padding: 0 }}
-            />
+            <pre className="min-h-24 whitespace-pre-wrap rounded-md border border-[color:var(--border-soft)] bg-white p-3 font-mono text-sm leading-6 text-[color:var(--ink)]">{displayContent}</pre>
           ) : null}
 
           {mode === "edit" ? (
-            <MDEditor value={content} onChange={(next) => setContent(next ?? "")} preview="edit" height={240} />
+            <textarea
+              value={content}
+              rows={12}
+              className="min-h-60 w-full resize-y rounded-md border border-[color:var(--border)] bg-white p-3 font-mono text-sm leading-6 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent-soft)]"
+              onChange={(event) => setContent(event.currentTarget.value)}
+            />
           ) : null}
         </div>
       ) : null}

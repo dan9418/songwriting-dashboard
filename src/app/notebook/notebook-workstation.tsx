@@ -1,6 +1,5 @@
 "use client";
 
-import MDEditor from "@uiw/react-md-editor";
 import { useEffect, useMemo, useState } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { Field } from "@/components/ui/field";
@@ -171,6 +170,7 @@ export function NotebookWorkstation() {
     () => Boolean(selectedPage && draftContent !== selectedPage.content),
     [draftContent, selectedPage]
   );
+  const displayContent = draftContent.trim().length > 0 ? draftContent : "No content yet.";
 
   async function loadPages(preferredSlug?: string | null) {
     setLoadingPages(true);
@@ -504,21 +504,13 @@ export function NotebookWorkstation() {
                     >
                       {mode === "readonly" ? (
                         <div className="p-5">
-                          <MDEditor.Markdown
-                            source={
-                              extractNotebookBody(draftContent).trim().length > 0
-                                ? extractNotebookBody(draftContent)
-                                : "_No content yet._"
-                            }
-                            style={{ backgroundColor: "transparent", padding: 0 }}
-                          />
+                          <pre className="whitespace-pre-wrap font-mono text-sm leading-6 text-[color:var(--ink)]">{displayContent}</pre>
                         </div>
                       ) : (
-                        <MDEditor
+                        <textarea
                           value={draftContent}
-                          onChange={(nextValue) => setDraftContent(nextValue ?? "")}
-                          preview="live"
-                          height={600}
+                          className="min-h-[37.5rem] w-full resize-y border-0 bg-white p-5 font-mono text-sm leading-6 text-[color:var(--ink)] outline-none"
+                          onChange={(event) => setDraftContent(event.currentTarget.value)}
                         />
                       )}
                     </div>
