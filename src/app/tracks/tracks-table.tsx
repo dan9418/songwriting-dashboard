@@ -763,16 +763,19 @@ export function TracksTable({
           <table className="theme-table tracks-table text-xs">
             <thead>
               <tr className="text-[11px] uppercase tracking-[0.12em]">
-                <th className="w-12 px-2 py-1.5 font-semibold">
-                  <div className="flex items-center justify-center">
-                    <input
-                      ref={selectAllRef}
-                      type="checkbox"
-                      checked={isAllFilteredSelected}
-                      disabled={filteredItems.length === 0}
-                      onChange={toggleSelectAll}
-                    />
-                  </div>
+                <th className="w-12 px-2 py-1.5 text-center font-semibold">
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center text-[color:var(--ink)] transition hover:text-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={selectedTrackSlugs.length === 0}
+                    aria-label="Bulk edit selected tracks"
+                    onClick={() => {
+                      setBulkDraft(createEmptyBulkDraft());
+                      setBulkOpen(true);
+                    }}
+                  >
+                    <AppIcon name="pencil" className="h-4 w-4" />
+                  </button>
                 </th>
                 <th className="min-w-[16rem] px-2 py-1.5 font-semibold">
                   <SortableHeader
@@ -872,19 +875,16 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="w-12 px-2 py-1.5 text-center font-semibold">
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center text-[color:var(--ink)] transition hover:text-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={selectedTrackSlugs.length === 0}
-                    aria-label="Bulk edit selected tracks"
-                    onClick={() => {
-                      setBulkDraft(createEmptyBulkDraft());
-                      setBulkOpen(true);
-                    }}
-                  >
-                    <AppIcon name="pencil" className="h-4 w-4" />
-                  </button>
+                <th className="w-12 px-2 py-1.5 font-semibold">
+                  <div className="flex items-center justify-center">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      checked={isAllFilteredSelected}
+                      disabled={filteredItems.length === 0}
+                      onChange={toggleSelectAll}
+                    />
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -895,14 +895,14 @@ export function TracksTable({
                 return (
                   <tr key={item.slug} id={item.slug} data-selected={isSelected ? "true" : "false"}>
                     <td className="px-2 py-1.5 align-middle text-center">
-                      <div className="flex items-center justify-center">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleTrackSelection(item.slug)}
-                          aria-label={`Select ${item.name}`}
-                        />
-                      </div>
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-md p-1 text-[color:var(--ink)] transition hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--accent)]"
+                        aria-label={`Edit ${item.name}`}
+                        onClick={() => setEditingTrackSlug(item.slug)}
+                      >
+                        <AppIcon name="pencil" className="h-4 w-4" />
+                      </button>
                     </td>
                     <td className="max-w-0 px-2 py-1.5 align-middle">
                       <div className="overflow-hidden">
@@ -928,14 +928,14 @@ export function TracksTable({
                     <td className="whitespace-nowrap px-2 py-1.5 align-middle">{item.hasNotes ? "\u2713" : "-"}</td>
                     <td className="whitespace-nowrap px-2 py-1.5 align-middle">{truncateLabel(String(item.audioCount), 4)}</td>
                     <td className="px-2 py-1.5 align-middle text-center">
-                      <button
-                        type="button"
-                        className="inline-flex items-center justify-center rounded-md p-1 text-[color:var(--ink)] transition hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--accent)]"
-                        aria-label={`Edit ${item.name}`}
-                        onClick={() => setEditingTrackSlug(item.slug)}
-                      >
-                        <AppIcon name="pencil" className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleTrackSelection(item.slug)}
+                          aria-label={`Select ${item.name}`}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );
