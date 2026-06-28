@@ -497,12 +497,16 @@ export function TracksTable({
   items,
   artistOptions,
   projectOptions,
-  tagOptions
+  tagOptions,
+  showTagsColumn = true,
+  showFilters = true
 }: {
   items: TracksTableItem[];
   artistOptions: TrackMetadataOption[];
   projectOptions: TrackMetadataOption[];
   tagOptions: TrackMetadataOption[];
+  showTagsColumn?: boolean;
+  showFilters?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -511,8 +515,8 @@ export function TracksTable({
   const { showToast } = useToast();
   const [, startTransition] = useTransition();
   const urlQueryState = useMemo(
-    () => parseTrackQueryState(new URLSearchParams(searchParamsString)),
-    [searchParamsString]
+    () => (showFilters ? parseTrackQueryState(new URLSearchParams(searchParamsString)) : DEFAULT_TRACK_QUERY_STATE),
+    [searchParamsString, showFilters]
   );
   const [draftQueryState, setDraftQueryState] = useState<TrackQueryState>(urlQueryState);
   const [selectedTrackSlugs, setSelectedTrackSlugs] = useState<string[]>([]);
@@ -584,10 +588,16 @@ export function TracksTable({
       return;
     }
 
-    updateUrlState(nextState);
+    if (showFilters) {
+      updateUrlState(nextState);
+    }
   }
 
   useEffect(() => {
+    if (!showFilters) {
+      return;
+    }
+
     if (draftQueryState.title === urlQueryState.title) {
       return;
     }
@@ -599,7 +609,7 @@ export function TracksTable({
     return () => {
       window.clearTimeout(timer);
     };
-  }, [draftQueryState, updateUrlState, urlQueryState]);
+  }, [draftQueryState, showFilters, updateUrlState, urlQueryState]);
 
   function toggleTrackSelection(trackSlug: string) {
     setSelectedTrackSlugs((current) =>
@@ -648,103 +658,105 @@ export function TracksTable({
 
   return (
     <div className="grid gap-4">
-      <div className="panel p-4">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="grid gap-3 lg:min-w-[22rem] lg:flex-1">
-              <Field label="Title Search">
-                <TextInput
-                  value={draftQueryState.title}
-                  placeholder="Filter by track title"
-                  onChange={(event) =>
-                    patchQueryState({ title: event.currentTarget.value }, { debounceTitle: true })
-                  }
-                />
-              </Field>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="inline-flex overflow-hidden rounded-lg border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] p-1">
-                <button
-                  type="button"
-                  className={`rounded-md px-3 py-2 text-sm transition ${
-                    draftQueryState.matchMode === "all"
-                      ? "bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
-                      : "text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--ink)]"
-                  }`}
-                  onClick={() => patchQueryState({ matchMode: "all" })}
-                >
-                  Match All
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-md px-3 py-2 text-sm transition ${
-                    draftQueryState.matchMode === "any"
-                      ? "bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
-                      : "text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--ink)]"
-                  }`}
-                  onClick={() => patchQueryState({ matchMode: "any" })}
-                >
-                  Match Any
-                </button>
+      {showFilters ? (
+        <div className="panel p-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="grid gap-3 lg:min-w-[22rem] lg:flex-1">
+                <Field label="Title Search">
+                  <TextInput
+                    value={draftQueryState.title}
+                    placeholder="Filter by track title"
+                    onChange={(event) =>
+                      patchQueryState({ title: event.currentTarget.value }, { debounceTitle: true })
+                    }
+                  />
+                </Field>
               </div>
 
-              <ActionButton
-                tone="ghost"
-                onClick={() => {
-                  setDraftQueryState(DEFAULT_TRACK_QUERY_STATE);
-                  updateUrlState(DEFAULT_TRACK_QUERY_STATE);
-                }}
-              >
-                Clear Filters
-              </ActionButton>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex overflow-hidden rounded-lg border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] p-1">
+                  <button
+                    type="button"
+                    className={`rounded-md px-3 py-2 text-sm transition ${
+                      draftQueryState.matchMode === "all"
+                        ? "bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
+                        : "text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--ink)]"
+                    }`}
+                    onClick={() => patchQueryState({ matchMode: "all" })}
+                  >
+                    Match All
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-md px-3 py-2 text-sm transition ${
+                      draftQueryState.matchMode === "any"
+                        ? "bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
+                        : "text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--ink)]"
+                    }`}
+                    onClick={() => patchQueryState({ matchMode: "any" })}
+                  >
+                    Match Any
+                  </button>
+                </div>
+
+                <ActionButton
+                  tone="ghost"
+                  onClick={() => {
+                    setDraftQueryState(DEFAULT_TRACK_QUERY_STATE);
+                    updateUrlState(DEFAULT_TRACK_QUERY_STATE);
+                  }}
+                >
+                  Clear Filters
+                </ActionButton>
+              </div>
+            </div>
+
+            <div className="grid gap-3 xl:grid-cols-3">
+              <DualSelectionField
+                label="Artists"
+                options={queryArtistOptions}
+                positiveLabel="Include"
+                negativeLabel="Exclude"
+                positiveValues={draftQueryState.artistInclude}
+                negativeValues={draftQueryState.artistExclude}
+                onPositiveChange={(nextValue) => patchQueryState({ artistInclude: nextValue })}
+                onNegativeChange={(nextValue) => patchQueryState({ artistExclude: nextValue })}
+              />
+              <DualSelectionField
+                label="Projects"
+                options={queryProjectOptions}
+                positiveLabel="Include"
+                negativeLabel="Exclude"
+                positiveValues={draftQueryState.projectInclude}
+                negativeValues={draftQueryState.projectExclude}
+                onPositiveChange={(nextValue) => patchQueryState({ projectInclude: nextValue })}
+                onNegativeChange={(nextValue) => patchQueryState({ projectExclude: nextValue })}
+              />
+              <DualSelectionField
+                label="Tags"
+                options={queryTagOptions}
+                positiveLabel="Include"
+                negativeLabel="Exclude"
+                positiveValues={draftQueryState.tagInclude}
+                negativeValues={draftQueryState.tagExclude}
+                onPositiveChange={(nextValue) => patchQueryState({ tagInclude: nextValue })}
+                onNegativeChange={(nextValue) => patchQueryState({ tagExclude: nextValue })}
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
+              <p>
+                Showing {filteredItems.length.toLocaleString()} of {items.length.toLocaleString()} tracks
+              </p>
+              <p>
+                Selected {selectedTrackSlugs.length.toLocaleString()}
+                {filteredSelectedCount > 0 ? ` (${filteredSelectedCount.toLocaleString()} visible)` : ""}
+              </p>
             </div>
           </div>
-
-          <div className="grid gap-3 xl:grid-cols-3">
-            <DualSelectionField
-              label="Artists"
-              options={queryArtistOptions}
-              positiveLabel="Include"
-              negativeLabel="Exclude"
-              positiveValues={draftQueryState.artistInclude}
-              negativeValues={draftQueryState.artistExclude}
-              onPositiveChange={(nextValue) => patchQueryState({ artistInclude: nextValue })}
-              onNegativeChange={(nextValue) => patchQueryState({ artistExclude: nextValue })}
-            />
-            <DualSelectionField
-              label="Projects"
-              options={queryProjectOptions}
-              positiveLabel="Include"
-              negativeLabel="Exclude"
-              positiveValues={draftQueryState.projectInclude}
-              negativeValues={draftQueryState.projectExclude}
-              onPositiveChange={(nextValue) => patchQueryState({ projectInclude: nextValue })}
-              onNegativeChange={(nextValue) => patchQueryState({ projectExclude: nextValue })}
-            />
-            <DualSelectionField
-              label="Tags"
-              options={queryTagOptions}
-              positiveLabel="Include"
-              negativeLabel="Exclude"
-              positiveValues={draftQueryState.tagInclude}
-              negativeValues={draftQueryState.tagExclude}
-              onPositiveChange={(nextValue) => patchQueryState({ tagInclude: nextValue })}
-              onNegativeChange={(nextValue) => patchQueryState({ tagExclude: nextValue })}
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
-            <p>
-              Showing {filteredItems.length.toLocaleString()} of {items.length.toLocaleString()} tracks
-            </p>
-            <p>
-              Selected {selectedTrackSlugs.length.toLocaleString()}
-              {filteredSelectedCount > 0 ? ` (${filteredSelectedCount.toLocaleString()} visible)` : ""}
-            </p>
-          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="panel overflow-hidden">
         <div className="overflow-x-auto">
@@ -810,22 +822,24 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="min-w-[7rem] px-2 py-1.5 font-semibold">
-                  <SortableHeader
-                    label="Tags"
-                    sortKey="tags"
-                    queryState={draftQueryState}
-                    onSort={(sortKey) =>
-                      patchQueryState({
-                        sortKey,
-                        sortDirection:
-                          draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
-                            ? "desc"
-                            : "asc"
-                      })
-                    }
-                  />
-                </th>
+                {showTagsColumn ? (
+                  <th className="min-w-[7rem] px-2 py-1.5 font-semibold">
+                    <SortableHeader
+                      label="Tags"
+                      sortKey="tags"
+                      queryState={draftQueryState}
+                      onSort={(sortKey) =>
+                        patchQueryState({
+                          sortKey,
+                          sortDirection:
+                            draftQueryState.sortKey === sortKey && draftQueryState.sortDirection === "asc"
+                              ? "desc"
+                              : "asc"
+                        })
+                      }
+                    />
+                  </th>
+                ) : null}
                 <th className="w-16 px-2 py-1.5 font-semibold">
                   <SortableHeader
                     label="Notes"
@@ -906,9 +920,11 @@ export function TracksTable({
                     <td className="max-w-[9rem] px-2 py-1.5 align-middle whitespace-nowrap">
                       <MetadataLinks items={item.artists} hrefBase="/artists" charLimit={18} />
                     </td>
-                    <td className="max-w-[7rem] px-2 py-1.5 align-middle whitespace-normal">
-                      <MetadataLinks items={item.tags} hrefBase="/tags" charLimit={14} wrap />
-                    </td>
+                    {showTagsColumn ? (
+                      <td className="max-w-[7rem] px-2 py-1.5 align-middle whitespace-normal">
+                        <MetadataLinks items={item.tags} hrefBase="/tags" charLimit={14} wrap />
+                      </td>
+                    ) : null}
                     <td className="whitespace-nowrap px-2 py-1.5 align-middle">{item.hasNotes ? "\u2713" : "-"}</td>
                     <td className="whitespace-nowrap px-2 py-1.5 align-middle">{truncateLabel(String(item.audioCount), 4)}</td>
                     <td className="px-2 py-1.5 align-middle text-center">
