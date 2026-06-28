@@ -61,6 +61,8 @@ interface DualSelectionFieldProps {
   positiveValues: string[];
   negativeValues: string[];
   disabled?: boolean;
+  collapsible?: boolean;
+  defaultExpanded?: boolean;
   leadingContent?: ReactNode;
   footerContent?: ReactNode;
   onPositiveChange: (nextValue: string[]) => void;
@@ -144,11 +146,14 @@ function DualSelectionField({
   positiveValues,
   negativeValues,
   disabled,
+  collapsible = false,
+  defaultExpanded = true,
   leadingContent,
   footerContent,
   onPositiveChange,
   onNegativeChange
 }: DualSelectionFieldProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const availablePositiveOptions = useMemo(
     () => sortOptions(options.filter((option) => !positiveValues.includes(option.slug))),
     [options, positiveValues]
@@ -157,79 +162,99 @@ function DualSelectionField({
     () => sortOptions(options.filter((option) => !negativeValues.includes(option.slug))),
     [options, negativeValues]
   );
+  const selectionCount = positiveValues.length + negativeValues.length;
+  const contentExpanded = !collapsible || expanded;
 
   return (
     <div className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
-      <div className="mb-3">
-        <h3 className="text-sm font-semibold">{label}</h3>
-      </div>
-      <div className="grid gap-3">
-        {leadingContent}
-        <div className="grid gap-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
-            {positiveLabel}
-          </p>
-          <SlugChipList
-            values={positiveValues}
-            options={options}
-            emptyLabel={`No ${positiveLabel.toLocaleLowerCase()} selections.`}
-            onRemove={(slug) => onPositiveChange(removeValue(positiveValues, slug))}
-          />
-          <select
-            className="theme-input ring-0"
-            value=""
-            disabled={disabled || availablePositiveOptions.length === 0}
-            onChange={(event) => {
-              const slug = event.currentTarget.value;
-              if (!slug) {
-                return;
-              }
-              onPositiveChange(addValue(positiveValues, slug));
-              onNegativeChange(removeValue(negativeValues, slug));
-            }}
-          >
-            <option value="">{buildSelectionPrompt(positiveLabel, label, availablePositiveOptions.length > 0)}</option>
-            {availablePositiveOptions.map((option) => (
-              <option key={option.slug} value={option.slug}>
-                {option.name}
-              </option>
-            ))}
-          </select>
+      {collapsible ? (
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 text-left"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
+        >
+          <span className="text-sm font-semibold">{label}</span>
+          <span className="flex items-center gap-2 text-xs text-[color:var(--muted)]">
+            {selectionCount > 0 ? `${selectionCount.toLocaleString()} selected` : "No selections"}
+            <AppIcon name={expanded ? "chevron-down" : "chevron-right"} className="h-4 w-4" />
+          </span>
+        </button>
+      ) : (
+        <div className="mb-3">
+          <h3 className="text-sm font-semibold">{label}</h3>
         </div>
+      )}
 
-        <div className="grid gap-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
-            {negativeLabel}
-          </p>
-          <SlugChipList
-            values={negativeValues}
-            options={options}
-            emptyLabel={`No ${negativeLabel.toLocaleLowerCase()} selections.`}
-            onRemove={(slug) => onNegativeChange(removeValue(negativeValues, slug))}
-          />
-          <select
-            className="theme-input ring-0"
-            value=""
-            disabled={disabled || availableNegativeOptions.length === 0}
-            onChange={(event) => {
-              const slug = event.currentTarget.value;
-              if (!slug) {
-                return;
-              }
-              onNegativeChange(addValue(negativeValues, slug));
-              onPositiveChange(removeValue(positiveValues, slug));
-            }}
-          >
-            <option value="">{buildSelectionPrompt(negativeLabel, label, availableNegativeOptions.length > 0)}</option>
-            {availableNegativeOptions.map((option) => (
-              <option key={option.slug} value={option.slug}>
-                {option.name}
-              </option>
-            ))}
-          </select>
+      {contentExpanded ? (
+        <div className={`${collapsible ? "mt-3" : ""} grid gap-3`}>
+          {leadingContent}
+          <div className="grid gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+              {positiveLabel}
+            </p>
+            <SlugChipList
+              values={positiveValues}
+              options={options}
+              emptyLabel={`No ${positiveLabel.toLocaleLowerCase()} selections.`}
+              onRemove={(slug) => onPositiveChange(removeValue(positiveValues, slug))}
+            />
+            <select
+              className="theme-input ring-0"
+              value=""
+              disabled={disabled || availablePositiveOptions.length === 0}
+              onChange={(event) => {
+                const slug = event.currentTarget.value;
+                if (!slug) {
+                  return;
+                }
+                onPositiveChange(addValue(positiveValues, slug));
+                onNegativeChange(removeValue(negativeValues, slug));
+              }}
+            >
+              <option value="">{buildSelectionPrompt(positiveLabel, label, availablePositiveOptions.length > 0)}</option>
+              {availablePositiveOptions.map((option) => (
+                <option key={option.slug} value={option.slug}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+              {negativeLabel}
+            </p>
+            <SlugChipList
+              values={negativeValues}
+              options={options}
+              emptyLabel={`No ${negativeLabel.toLocaleLowerCase()} selections.`}
+              onRemove={(slug) => onNegativeChange(removeValue(negativeValues, slug))}
+            />
+            <select
+              className="theme-input ring-0"
+              value=""
+              disabled={disabled || availableNegativeOptions.length === 0}
+              onChange={(event) => {
+                const slug = event.currentTarget.value;
+                if (!slug) {
+                  return;
+                }
+                onNegativeChange(addValue(negativeValues, slug));
+                onPositiveChange(removeValue(positiveValues, slug));
+              }}
+            >
+              <option value="">{buildSelectionPrompt(negativeLabel, label, availableNegativeOptions.length > 0)}</option>
+              {availableNegativeOptions.map((option) => (
+                <option key={option.slug} value={option.slug}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {footerContent}
         </div>
-        {footerContent}
-      </div>
+      ) : null}
     </div>
   );
 }
@@ -523,6 +548,7 @@ export function TracksTable({
   const [editingTrackSlug, setEditingTrackSlug] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [bulkDraft, setBulkDraft] =
     useState<Pick<TrackBulkMetadataOperation, "artists" | "projects" | "tags">>(createEmptyBulkDraft);
   const [allTagOptions, setAllTagOptions] = useState(tagOptions);
@@ -675,7 +701,29 @@ export function TracksTable({
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <div className="inline-flex overflow-hidden rounded-lg border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] p-1">
+                <ActionButton
+                  tone="ghost"
+                  aria-expanded={filtersExpanded}
+                  onClick={() => setFiltersExpanded((current) => !current)}
+                >
+                  {filtersExpanded ? "Hide Filters" : "Show Filters"}
+                </ActionButton>
+
+                <ActionButton
+                  tone="ghost"
+                  onClick={() => {
+                    setDraftQueryState(DEFAULT_TRACK_QUERY_STATE);
+                    updateUrlState(DEFAULT_TRACK_QUERY_STATE);
+                  }}
+                >
+                  Clear Filters
+                </ActionButton>
+              </div>
+            </div>
+
+            {filtersExpanded ? (
+              <div className="grid gap-3">
+                <div className="inline-flex overflow-hidden rounded-lg border border-[color:var(--border-strong)] bg-[color:var(--surface-muted)] p-1 sm:w-fit">
                   <button
                     type="button"
                     className={`rounded-md px-3 py-2 text-sm transition ${
@@ -700,50 +748,46 @@ export function TracksTable({
                   </button>
                 </div>
 
-                <ActionButton
-                  tone="ghost"
-                  onClick={() => {
-                    setDraftQueryState(DEFAULT_TRACK_QUERY_STATE);
-                    updateUrlState(DEFAULT_TRACK_QUERY_STATE);
-                  }}
-                >
-                  Clear Filters
-                </ActionButton>
+                <div className="grid gap-3 xl:grid-cols-3">
+                  <DualSelectionField
+                    label="Artists"
+                    options={queryArtistOptions}
+                    positiveLabel="Include"
+                    negativeLabel="Exclude"
+                    positiveValues={draftQueryState.artistInclude}
+                    negativeValues={draftQueryState.artistExclude}
+                    collapsible
+                    defaultExpanded={false}
+                    onPositiveChange={(nextValue) => patchQueryState({ artistInclude: nextValue })}
+                    onNegativeChange={(nextValue) => patchQueryState({ artistExclude: nextValue })}
+                  />
+                  <DualSelectionField
+                    label="Projects"
+                    options={queryProjectOptions}
+                    positiveLabel="Include"
+                    negativeLabel="Exclude"
+                    positiveValues={draftQueryState.projectInclude}
+                    negativeValues={draftQueryState.projectExclude}
+                    collapsible
+                    defaultExpanded={false}
+                    onPositiveChange={(nextValue) => patchQueryState({ projectInclude: nextValue })}
+                    onNegativeChange={(nextValue) => patchQueryState({ projectExclude: nextValue })}
+                  />
+                  <DualSelectionField
+                    label="Tags"
+                    options={queryTagOptions}
+                    positiveLabel="Include"
+                    negativeLabel="Exclude"
+                    positiveValues={draftQueryState.tagInclude}
+                    negativeValues={draftQueryState.tagExclude}
+                    collapsible
+                    defaultExpanded={false}
+                    onPositiveChange={(nextValue) => patchQueryState({ tagInclude: nextValue })}
+                    onNegativeChange={(nextValue) => patchQueryState({ tagExclude: nextValue })}
+                  />
+                </div>
               </div>
-            </div>
-
-            <div className="grid gap-3 xl:grid-cols-3">
-              <DualSelectionField
-                label="Artists"
-                options={queryArtistOptions}
-                positiveLabel="Include"
-                negativeLabel="Exclude"
-                positiveValues={draftQueryState.artistInclude}
-                negativeValues={draftQueryState.artistExclude}
-                onPositiveChange={(nextValue) => patchQueryState({ artistInclude: nextValue })}
-                onNegativeChange={(nextValue) => patchQueryState({ artistExclude: nextValue })}
-              />
-              <DualSelectionField
-                label="Projects"
-                options={queryProjectOptions}
-                positiveLabel="Include"
-                negativeLabel="Exclude"
-                positiveValues={draftQueryState.projectInclude}
-                negativeValues={draftQueryState.projectExclude}
-                onPositiveChange={(nextValue) => patchQueryState({ projectInclude: nextValue })}
-                onNegativeChange={(nextValue) => patchQueryState({ projectExclude: nextValue })}
-              />
-              <DualSelectionField
-                label="Tags"
-                options={queryTagOptions}
-                positiveLabel="Include"
-                negativeLabel="Exclude"
-                positiveValues={draftQueryState.tagInclude}
-                negativeValues={draftQueryState.tagExclude}
-                onPositiveChange={(nextValue) => patchQueryState({ tagInclude: nextValue })}
-                onNegativeChange={(nextValue) => patchQueryState({ tagExclude: nextValue })}
-              />
-            </div>
+            ) : null}
 
             <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
               <p>
@@ -793,7 +837,7 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="min-w-[9rem] px-2 py-1.5 font-semibold">
+                <th className="hidden min-w-[9rem] px-2 py-1.5 font-semibold md:table-cell">
                   <SortableHeader
                     label="Projects"
                     sortKey="projects"
@@ -809,7 +853,7 @@ export function TracksTable({
                     }
                   />
                 </th>
-                <th className="min-w-[9rem] px-2 py-1.5 font-semibold">
+                <th className="hidden min-w-[9rem] px-2 py-1.5 font-semibold md:table-cell">
                   <SortableHeader
                     label="Artists"
                     sortKey="artists"
@@ -914,10 +958,10 @@ export function TracksTable({
                         </Link>
                       </div>
                     </td>
-                    <td className="max-w-[9rem] px-2 py-1.5 align-middle whitespace-nowrap">
+                    <td className="hidden max-w-[9rem] px-2 py-1.5 align-middle whitespace-nowrap md:table-cell">
                       <MetadataLinks items={item.projects} hrefBase="/projects" charLimit={18} />
                     </td>
-                    <td className="max-w-[9rem] px-2 py-1.5 align-middle whitespace-nowrap">
+                    <td className="hidden max-w-[9rem] px-2 py-1.5 align-middle whitespace-nowrap md:table-cell">
                       <MetadataLinks items={item.artists} hrefBase="/artists" charLimit={18} />
                     </td>
                     {showTagsColumn ? (
