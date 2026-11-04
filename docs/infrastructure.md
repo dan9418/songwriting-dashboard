@@ -99,18 +99,28 @@ sure no repository `.env`, `.env.*`, or `.dev.vars` file supplies a
 Wrangler-recognized token, and authenticate with the browser flow:
 
 ```sh
-unset CLOUDFLARE_API_TOKEN
-unset CLOUDFLARE_ACCOUNT_ID
+unset CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
 npx wrangler logout
 npx wrangler login
-npm run deploy
+env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID npx wrangler whoami
+env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID npm run deploy
 ```
 
-Inspect token-variable *names* without printing values before using this path:
+Inspect token-variable *filenames* without printing values before using this
+path:
 
 ```sh
-grep -n "CLOUDFLARE_API_TOKEN\\|CF_API_TOKEN" .env .env.* .dev.vars 2>/dev/null
+rg -l --hidden -g '.env' -g '.env.*' -g '.dev.vars' \
+  '^(CLOUDFLARE_API_TOKEN|CF_API_TOKEN)=' .
 ```
+
+If this prints a file, temporarily remove or comment the matching assignment
+before browser login, then restore it immediately after the deploy attempt. Do
+not use `grep`, `rg -n`, `sed -n`, or another line-printing command on the file:
+it can expose the token value. Confirm that `wrangler whoami` reports the
+account ID in `wrangler.jsonc` before deploying. If a token reaches terminal
+output, logs, or chat, treat it as compromised and revoke/replace it at
+<https://dash.cloudflare.com/profile/api-tokens>.
 
 For automation, use an account-owned token with a Workers **Editor** role scoped
 to this Worker (or the Workers product); an existing Worker can be deployed by
@@ -124,6 +134,18 @@ are the authority for the exact, current permission set.
 Do not paste the token into issues, logs, or this repository. Once access is
 corrected, rerun `npm run deploy`; the existing build and OpenNext bundle need
 no code change for this authorization error.
+
+## Deployment verification
+
+Wrangler reports a completed publish with `Deployed songwriting-dashboard
+triggers` followed by a `Current Version ID`. When terminal output is truncated,
+inspect the newest local Wrangler deploy log for those markers rather than
+rerunning the deployment.
+
+Observed behavior: `npx wrangler deployments list --name songwriting-dashboard`
+can return `No access to the specified resource` after a successful browser-OAuth
+publish. Do not use that read-only history lookup to overturn a deploy command
+that reported a new version; it likely requires a distinct resource permission.
 
 ## Target development-data topology
 

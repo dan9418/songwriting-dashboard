@@ -69,12 +69,19 @@ rg -l --hidden -g '.env' -g '.env.*' -g '.dev.vars' \
 unset CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
 npx wrangler logout
 npx wrangler login
-npm run deploy
+env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID npx wrangler whoami
+env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID npm run deploy
 ```
 
 `wrangler login` opens the browser authorization flow. Use the
 [Wrangler login command reference](https://developers.cloudflare.com/workers/wrangler/commands/#login)
-if it does not open automatically.
+if it does not open automatically. Confirm that `whoami` reports the account ID
+in `wrangler.jsonc` before publishing. Do not use `rg -n`, `grep`, `sed -n`, or
+any other line-printing command on a credential file: the filename-only `rg -l`
+check is intentional. If the token assignment is temporarily disabled, restore
+it without printing its value immediately after the deployment attempt. Treat
+any token exposed in terminal output as compromised and direct the user to
+revoke and replace it.
 
 ### Path B: dedicated deploy token
 
@@ -100,6 +107,16 @@ Use Cloudflare's [Workers authorization guide](https://developers.cloudflare.com
 to choose the current resource scope. If `/memberships` still fails after the
 token scope is corrected, verify that the token identity is a member of the
 target account before retrying.
+
+## Confirming a publish
+
+Wrangler confirms a successful publish with `Deployed songwriting-dashboard
+triggers` and a `Current Version ID`. If command output is truncated, inspect
+the newest local Wrangler deploy log for those markers rather than repeating the
+deployment. A post-deploy `npx wrangler deployments list --name
+songwriting-dashboard` query can be denied even after a successful publish, so
+do not treat that read-only lookup as the source of truth when the deploy
+command already reported a version.
 
 ## Reporting
 
