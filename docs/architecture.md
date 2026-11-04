@@ -40,6 +40,12 @@ This fallback is deliberate: deployed requests should avoid an unnecessary trip
 back through Cloudflare's public APIs, while ordinary local Next.js development
 can use the same remote data with credentials in `.env.local`.
 
+The desired future state is local Worker-style development with remote bindings
+to separate development D1/R2 resources, rather than a direct REST/S3 fallback
+against shared data. That is not implemented yet; see [Infrastructure and
+deployment](infrastructure.md#target-development-data-topology) for the
+required topology and migration scope.
+
 ## Code organization
 
 | Location | Responsibility |
