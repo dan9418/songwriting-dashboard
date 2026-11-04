@@ -14,6 +14,14 @@ Do not guess when a material assumption could affect:
 
 When in doubt, pause and ask a concise clarification question first.
 
+### Commit exception
+
+When the user explicitly consents to implementing a code or documentation
+change, that consent also authorizes committing the directly related, reviewed
+repository changes without a separate request. Before committing, confirm the
+diff contains no unrelated work. A push remains a separate external action and
+still requires explicit user consent.
+
 ## Database Rule
 
 All database operations for this repo must be performed against the remote Cloudflare D1 database only.
