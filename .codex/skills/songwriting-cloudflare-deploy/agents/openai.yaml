@@ -1,0 +1,4 @@
+interface:
+  display_name: "Songwriting Cloudflare Deploy"
+  short_description: "Deploy or diagnose the Cloudflare Worker"
+  default_prompt: "Use $songwriting-cloudflare-deploy to deploy the current verified commit."
