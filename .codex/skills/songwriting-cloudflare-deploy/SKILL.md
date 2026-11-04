@@ -46,11 +46,60 @@ valid deploy token.
   `CLOUDFLARE_API_TOKEN` only for the deployment command.
 - Never print, copy, modify, or commit token values.
 
+## Authentication recovery
+
 If Cloudflare rejects `workers/services/songwriting-dashboard` with `No access
 to the specified service`, error `10000`, or a `/memberships` error such as
-`9106`, stop. The build may be valid, but the Worker was not published. Refer
-the user to `docs/infrastructure.md` for the account/token checks and recovery
-paths; do not guess at permissions or retry with unchanged credentials.
+`9106`, stop: the bundle may be valid, but the Worker was not published. State
+that outcome, then offer these two recovery paths directly. Do not retry with
+unchanged credentials.
+
+### Path A: one-off browser login
+
+This changes the local Wrangler login state, so present the following block for
+the user to copy or run it only after they explicitly approve that auth-state
+change. The first command prints matching filenames only, never token values.
+
+```sh
+# If this prints a file, temporarily remove or comment the token assignment in it
+# before continuing; otherwise Wrangler can keep choosing token auth.
+rg -l --hidden -g '.env' -g '.env.*' -g '.dev.vars' \
+  '^(CLOUDFLARE_API_TOKEN|CF_API_TOKEN)=' .
+
+unset CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
+npx wrangler logout
+npx wrangler login
+npm run deploy
+```
+
+`wrangler login` opens the browser authorization flow. Use the
+[Wrangler login command reference](https://developers.cloudflare.com/workers/wrangler/commands/#login)
+if it does not open automatically.
+
+### Path B: dedicated deploy token
+
+Create or review a token at
+`https://dash.cloudflare.com/profile/api-tokens`. It must belong to the
+Cloudflare account that owns `songwriting-dashboard` (the configured account ID
+is in `wrangler.jsonc`). For this existing Worker, grant **Workers Editor**
+either on this Worker or at the Workers product scope. Add **Workers Routes
+Write** only when the deployment manages routes or custom domains. Bound D1 and
+R2 resources do not need separate deploy permissions unless a separate command
+accesses them directly. If the Worker must be created rather than updated,
+Workers **Admin** is required.
+
+Store the token under a private shell variable; do not paste it into the repo,
+chat, or a `.env` file that Wrangler loads. Then map it only for deployment:
+
+```sh
+# Set CLOUDFLARE_API_TOKEN_DEPLOY privately in the current shell first.
+CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN_DEPLOY" npm run deploy
+```
+
+Use Cloudflare's [Workers authorization guide](https://developers.cloudflare.com/workers/authorization/)
+to choose the current resource scope. If `/memberships` still fails after the
+token scope is corrected, verify that the token identity is a member of the
+target account before retrying.
 
 ## Reporting
 
