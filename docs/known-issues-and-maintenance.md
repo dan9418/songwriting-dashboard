@@ -1,26 +1,36 @@
 # Known issues and maintenance
 
-## Current security maintenance item
+## Current security status
 
-The compatible dependency sweep completed on 2026-11-03 updated the lockfile to
-the latest versions permitted by existing semver ranges, including Next 15.5.29
-and Zod 4.6.7. Lint, type checking, unit tests, and the production build pass.
+The dependency sweep and framework migration completed on 2026-11-04. The app
+now uses Next 16.4.5, TypeScript 6.0.2, and Vitest 5.1.0; linting, type
+checking, unit tests, and the Next/OpenNext production builds pass.
+`npm audit --omit=dev` reports no production vulnerabilities.
 
-`npm audit --omit=dev` still reports two production findings (one high and one
-moderate) through the PostCSS bundled by Next 15. The audit's available remedy
-is Next 16, a major upgrade. Do not force that update as a routine patch; plan a
-dedicated migration that covers Next, `eslint-config-next`, and deployment
-compatibility.
+Next 16's native flat ESLint configuration replaced the legacy `FlatCompat`
+adapter. Its new React Compiler-oriented rules for error boundaries, synchronous
+effect state, and manual memoization are temporarily disabled because they flag
+existing patterns that require an intentional code-level migration. ESLint
+remains on the latest 9.x release: Next 16's bundled React, import, and JSX-a11y
+plugins do not yet declare support for ESLint 10.
 
 ## Planned dependency review
 
-The following available updates are majors and should be evaluated separately:
+The following available updates are still majors and should be evaluated
+separately:
 
-- Next.js 16
 - Tailwind CSS 4
 - TypeScript 7
 - ESLint 10
-- Vitest 5
+
+TypeScript 7 remains deferred until the ecosystem supports it. Version 7.0 does
+not expose the traditional compiler API used by tools such as `typescript-eslint`
+and Storybook's type-documentation tooling. The TypeScript 6 bridge migration
+removed the obsolete `baseUrl` compiler option, which TypeScript 7 rejects.
+
+Before enabling the deferred React Compiler-oriented ESLint rules, address each
+reported pattern deliberately and add coverage for changed rendering or state
+behavior.
 
 For each migration: create a focused branch, read the upstream migration notes,
 update the coupled packages together, run the full verification command set,
@@ -34,6 +44,9 @@ exercise the Worker preview, and inspect the production build/deploy output.
 - Some import/repair scripts embed historical Windows backup/source paths and
   source-specific slug aliases. Treat them as one-off recovery tools, not
   general-purpose product features.
+- OpenNext warns that the Worker `compatibility_date` in `wrangler.jsonc` is
+  behind the currently available runtime date. Review Cloudflare's compatibility
+  changes before advancing it; the setting can alter deployed Worker behavior.
 - Track document terminology is transitional: the supported type is `notes`,
   while the canonical stored filename is `lyrics.md`.
 - Notebook mutations span R2 and D1. The implementation performs compensating
