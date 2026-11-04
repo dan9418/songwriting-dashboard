@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { EntityIndexLayout } from "@/components/entities/entity-index-layout";
 import { ProjectsArtistGroups } from "@/app/projects/projects-artist-groups";
 import { listProjectsFromCloudflare } from "@/lib/cloudflare/catalog";
